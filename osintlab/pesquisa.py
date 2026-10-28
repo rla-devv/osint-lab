@@ -42,11 +42,13 @@ COORD_RX = re.compile(r"^\s*-?\d{1,2}\.\d+\s*,\s*-?\d{1,3}\.\d+\s*$")
 
 # conectores já existentes (módulo connectors) usados por tipo de entrada
 CONECTORES_POR_TIPO = {
-    "dominio": ["rdap", "dns", "crtsh", "subdominios", "favicon", "wayback", "urlscan", "otx"],
-    "ip": ["rdap", "asn", "internetdb", "urlscan", "otx", "abuseipdb"],
-    "url": ["wayback", "urlscan"],
+    "dominio": ["rdap", "dns", "crtsh", "subdominios", "favicon", "wayback", "urlscan", "otx", "threatfox", "virustotal", "shodan"],
+    "ip": ["rdap", "asn", "internetdb", "urlscan", "otx", "abuseipdb", "threatfox", "virustotal", "shodan", "greynoise", "censys"],
+    "url": ["wayback", "urlscan", "threatfox", "virustotal"],
+    "hash": ["malwarebazaar", "threatfox", "virustotal"],
     "cnpj": ["cnpj", "querido_diario"],
-    "coordenadas": ["geocodificacao_reversa"],
+    "coordenadas": ["geocodificacao_reversa", "firms", "opensky", "satelite"],
+    "cep": ["cep"],
     "organizacao": ["wikidata", "gdelt", "querido_diario", "sec_edgar", "companies_house"],
     "texto": ["gdelt", "wikipedia", "querido_diario"],
     "username": ["github", "bluesky", "mastodon"],
@@ -68,15 +70,19 @@ CAMPOS = {
     "processo": ("Processo", "Número CNJ: 0000000-00.0000.0.00.0000"),
     "municipio": ("Município", "Nome do município"),
     "username": ("Nome de usuário", "@usuario, usuario, nome.bsky.social ou usuario@mastodon.social"),
+    "hash": ("Hash de arquivo", "MD5, SHA-1 ou SHA-256"),
+    "cep": ("CEP", "00000-000"),
 }
 ESPERADO = {"telefone": {"telefone"}, "cpf": {"cpf"}, "cnpj": {"cnpj"}, "placa": {"placa"}, "aeronave": {"aeronave"}, "processo": {"processo"}, "municipio": {"municipio"},
-            "rede": {"dominio", "ip", "url", "email"}, "username": {"username"}}
+            "rede": {"dominio", "ip", "url", "email"}, "username": {"username"}, "hash": {"hash"}, "cep": {"cep"}}
 ERRO_CAMPO = {"telefone": "Não parece um número de telefone (informe com DDD).",
               "cpf": "Não é um CPF válido (confira os 11 dígitos e os dígitos verificadores).",
               "cnpj": "Não é um CNPJ válido (confira os 14 dígitos e os dígitos verificadores).",
               "placa": "Não é uma placa válida (formatos ABC1234 ou ABC1D23).",
               "aeronave": "Não é uma matrícula brasileira de aeronave (PP, PR, PS, PT ou PU seguido de 3 letras).",
               "username": "Não parece um nome de usuário (letras, números, ponto, hífen ou _; até 40 caracteres).",
+              "hash": "Não parece um hash (32 dígitos hex = MD5, 40 = SHA-1, 64 = SHA-256).",
+              "cep": "Não parece um CEP (8 dígitos, ex.: 70040-010).",
               "processo": "Não é um número de processo no padrão CNJ (20 dígitos).",
               "municipio": "Município não encontrado na lista do IBGE.",
               "rede": "Não é um domínio, IP, URL ou e-mail válido."}
@@ -94,6 +100,14 @@ def _classify_campo(q: str, campo: str) -> dict:
     raw = q.strip()
     if campo == "veiculo":
         return {"entrada": raw, "tipos": ["veiculo"], "normalizado": raw, "avisos": []}
+    if campo == "cep":
+        d = re.sub(r"\D", "", raw)
+        return ({"entrada": raw, "tipos": ["cep"], "normalizado": d, "avisos": []}
+                if len(d) == 8 else {"entrada": raw, "tipos": ["invalido"], "normalizado": raw, "avisos": [ERRO_CAMPO["cep"]]})
+    if campo == "hash":
+        from .connectors.ameacas import tipo_hash
+        return ({"entrada": raw, "tipos": ["hash"], "normalizado": raw.lower().strip(), "avisos": []}
+                if tipo_hash(raw) else {"entrada": raw, "tipos": ["invalido"], "normalizado": raw, "avisos": [ERRO_CAMPO["hash"]]})
     if campo == "username":
         from .connectors.perfis import limpar, parece_usuario
         v = raw.strip()
@@ -130,6 +144,12 @@ def _classify(q: str, forcar: str = "") -> dict:
             out.update(tipos=["username"], normalizado=raw.lstrip("@"),
                        avisos=["O mesmo nome de usuário em serviços diferentes não é, por si só, a mesma pessoa."])
             return out
+    if re.fullmatch(r"\d{5}-\d{3}", raw):
+        out.update(tipos=["cep"], normalizado=re.sub(r"\D", "", raw))
+        return out
+    if re.fullmatch(r"[0-9a-fA-F]{32}|[0-9a-fA-F]{40}|[0-9a-fA-F]{64}", raw) and not raw.isdigit():
+        out.update(tipos=["hash"], normalizado=raw.lower())
+        return out
     if len(digits) == 14 and cnpj_valid(digits):
         out.update(tipos=["cnpj", "identificador"], normalizado=format_cnpj(digits))
     elif _telefone(raw):

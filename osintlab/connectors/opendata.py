@@ -119,3 +119,27 @@ def querido_diario(value: str) -> dict:
                       "metadata": {"territorio": g.get("territory_name"), "uf": g.get("state_code")}})
     return {"dados": {"total": data.get("total_gazettes"), "retornados": len(items)}, "itens": items,
             "evidencia": res.evidence_sha256, "texto": f"{data.get('total_gazettes')} diários encontrados para '{value}'."}
+
+
+@connector("cep", "CEP (BrasilAPI)", "Endereço público de um CEP (logradouro, bairro, município, UF e coordenadas "
+           "quando disponíveis).", ["cep"], source_url="https://brasilapi.com.br/docs#tag/CEP-V2",
+           license_note="Dados públicos de CEP via BrasilAPI (projeto aberto)")
+def cep(value: str) -> dict:
+    d = re.sub(r"\D", "", value)
+    if len(d) != 8:
+        raise ValueError("CEP deve ter 8 dígitos.")
+    url = f"https://brasilapi.com.br/api/cep/v2/{d}"
+    try:
+        data, res = http.get_json(url, collector="conector:cep", retries=1)
+    except Exception as e:  # noqa: BLE001
+        if "404" in str(e):
+            return {"dados": {}, "url_consulta": url, "texto": f"CEP {d} não encontrado."}
+        raise
+    coord = (data or {}).get("location", {}).get("coordinates", {}) or {}
+    out = {"cep": data.get("cep"), "logradouro": data.get("street"), "bairro": data.get("neighborhood"),
+           "municipio": data.get("city"), "uf": data.get("state"),
+           "coordenadas": (f"{coord['latitude']},{coord['longitude']}" if coord.get("latitude") else None)}
+    txt = [f"CEP {out['cep']}: " + ", ".join(x for x in (out["logradouro"], out["bairro"], out["municipio"],
+                                                         out["uf"]) if x)]
+    return {"dados": {k: v for k, v in out.items() if v}, "texto": "\n".join(txt),
+            "evidencia": res.evidence_sha256 if res else None, "url_consulta": url}

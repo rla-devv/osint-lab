@@ -254,12 +254,18 @@ def elementos(res: dict, entidades: list[dict]) -> dict:
         elif c["conector"] == "dns":
             for ip in (d.get("A") or []) + (d.get("AAAA") or []):
                 ips.setdefault(ip, {"valor": ip, "rotulo": ip, "campo": "rede", "detalhe": "", "origem": "DNS"})
+        elif c["conector"] == "cep":
+            if d.get("coordenadas"):
+                ips.setdefault("coord:" + d["coordenadas"], {"valor": d["coordenadas"], "rotulo": d["coordenadas"],
+                               "campo": "", "detalhe": "coordenadas do CEP", "origem": "BrasilAPI"})
         elif c["conector"] in ("subdominios", "crtsh"):
             for n in (d.get("subdominios") or [])[:300]:
                 if n and n != q.get("normalizado") and "*" not in n:
                     subdom.setdefault(n, {"valor": n, "rotulo": n, "campo": "rede", "detalhe": "", "origem": c["nome"]})
     grupos = [("Empresas ligadas", list(empresas.values())), ("Pessoas ligadas", list(pessoas.values())),
-              ("Sites de perfis", list(sites.values())), ("Endereços IP", list(ips.values())),
+              ("Sites de perfis", list(sites.values())),
+              ("Endereços IP", [x for x in ips.values() if "," not in x["valor"]]),
+              ("Locais", [x for x in ips.values() if x["valor"].count(",") == 1 and x["campo"] == ""]),
               ("Subdomínios", sorted(subdom.values(), key=lambda x: x["valor"]))]
     return [{"titulo": t, "itens": i[:30], "total": len(i)} for t, i in grupos if i]
 

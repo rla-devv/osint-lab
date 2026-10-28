@@ -161,12 +161,16 @@ def wayback(value: str) -> dict:
 
 
 @connector("urlhaus", "URLhaus (abuse.ch)", "Reputação de URL/host em base pública de URLs maliciosas.",
-           ["url", "dominio", "ip"], requires_key="OSINTLAB_ABUSECH_KEY", source_url="https://urlhaus.abuse.ch/",
+           ["url", "dominio", "ip"], credencial="abusech", requires_key="OSINTLAB_ABUSECH_KEY", source_url="https://urlhaus.abuse.ch/",
            license_note="abuse.ch – exige Auth-Key gratuita; ver termos")
 def urlhaus(value: str) -> dict:
     key = os.environ.get("OSINTLAB_ABUSECH_KEY")
     if not key:
-        raise RuntimeError("Defina OSINTLAB_ABUSECH_KEY (chave gratuita em https://auth.abuse.ch/).")
+        from ..bases import credentials
+        key = credentials.get("abusech") or key
+    if not key:
+        raise RuntimeError("Defina a chave gratuita abuse.ch (Bases de dados) ou OSINTLAB_ABUSECH_KEY "
+                           "(https://auth.abuse.ch/).")
     v = value.strip()
     is_url = v.startswith("http")
     endpoint = "https://urlhaus-api.abuse.ch/v1/url/" if is_url else "https://urlhaus-api.abuse.ch/v1/host/"

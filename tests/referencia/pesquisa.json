@@ -26,7 +26,10 @@
   "plano": {
    "assistida": [],
    "conectores": [
-    "geocodificacao_reversa"
+    "firms",
+    "geocodificacao_reversa",
+    "opensky",
+    "satelite"
    ],
    "indisponivel": [],
    "local": [],
@@ -312,10 +315,15 @@
    "conectores": [
     "abuseipdb",
     "asn",
+    "censys",
+    "greynoise",
     "internetdb",
     "otx",
     "rdap",
-    "urlscan"
+    "shodan",
+    "threatfox",
+    "urlscan",
+    "virustotal"
    ],
    "indisponivel": [],
    "local": [],
@@ -432,6 +440,7 @@
  },
  "CONSTRUTORA HORIZONTE AZUL LTDA|organizacao|0": {
   "assistidas": [
+   "car_sicar",
    "dou_busca",
    "equasis",
    "escavador",
@@ -444,6 +453,7 @@
   "placa": false,
   "plano": {
    "assistida": [
+    "car_sicar",
     "dou_busca",
     "equasis",
     "escavador",
@@ -507,6 +517,7 @@
  },
  "Construtora Horizonte Azul||0": {
   "assistidas": [
+   "car_sicar",
    "dou_busca",
    "equasis",
    "escavador",
@@ -519,6 +530,7 @@
   "placa": false,
   "plano": {
    "assistida": [
+    "car_sicar",
     "dou_busca",
     "equasis",
     "escavador",
@@ -800,8 +812,11 @@
     "favicon",
     "otx",
     "rdap",
+    "shodan",
     "subdominios",
+    "threatfox",
     "urlscan",
+    "virustotal",
     "wayback"
    ],
    "indisponivel": [],
@@ -828,8 +843,11 @@
     "favicon",
     "otx",
     "rdap",
+    "shodan",
     "subdominios",
+    "threatfox",
     "urlscan",
+    "virustotal",
     "wayback"
    ],
    "indisponivel": [],
@@ -851,7 +869,9 @@
   "plano": {
    "assistida": [],
    "conectores": [
+    "threatfox",
     "urlscan",
+    "virustotal",
     "wayback"
    ],
    "indisponivel": [],

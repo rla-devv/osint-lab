@@ -463,6 +463,32 @@ def assistidas() -> list[Fonte]:
     return [f for f in fontes().values() if f.categoria == "C"]
 
 
+@registrar
+class CarSicar(Fonte):
+    id = "car_sicar"
+    nome = "CAR/SICAR — Cadastro Ambiental Rural"
+    organizacao = "Serviço Florestal Brasileiro (SFB) / SICAR"
+    pais = "Brasil"
+    descricao = ("Consulta pública de imóveis rurais no Cadastro Ambiental Rural por município (e demonstrativo por "
+                 "número de registro do CAR). Sem API pública estável; consulta no portal.")
+    tema = "imoveis"
+    categoria = "C"
+    url_oficial = "https://consultapublica.car.gov.br/publico/imoveis/index"
+    restricoes = ("Consulta por estado/município e por número do CAR; não há busca por CPF/CNPJ do proprietário no "
+                  "portal público. Dados declaratórios do proprietário, sujeitos a análise.")
+    licenca = "Dados públicos do SICAR (consulta pública)"
+    situacao = "limitada"
+    prioridade = 3
+    entradas = ["municipio", "organizacao"]
+    validade_consulta_horas = 24 * 30
+    aviso = "O CAR é autodeclaratório e o registro não equivale a regularidade ambiental ou fundiária."
+    instrucoes = ("Abra a consulta pública, selecione o estado e o município (ou informe o número do recibo do CAR) e "
+                  "salve o demonstrativo/mapa como comprovante.")
+
+    def consulta_url(self, query: str) -> str:
+        return self.url_oficial
+
+
 def link_busca(f: Fonte, query: str) -> str:
     if f.id == "us_most_wanted" or f.id == "eu_most_wanted":
         return f.url_oficial

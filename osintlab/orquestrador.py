@@ -190,10 +190,12 @@ class Execucao:
             if not c:
                 continue
             et = Etapa(f"conector:{nome}", "conector", nome, c.label)
+            tem_chave = (c.credencial and credentials.get(c.credencial)) or (c.requires_key and os.environ.get(c.requires_key))
             if c.sensitive:
                 et.estado, et.motivo = "nao_executada", "Conector de dados pessoais: só roda por ação explícita."
-            elif c.credencial and not c.chave_opcional and not credentials.get(c.credencial):
-                et.estado, et.motivo = "nao_executada", f"Falta cadastrar a chave “{c.credencial}” em Bases de dados."
+            elif (c.credencial or c.requires_key) and not c.chave_opcional and not tem_chave:
+                onde = f"a chave “{c.credencial}” em Bases de dados" if c.credencial else f"a variável {c.requires_key}"
+                et.estado, et.motivo = "nao_executada", f"Falta cadastrar {onde}."
             elif not self.conectores:
                 et.estado, et.motivo = "nao_executada", "Consultas complementares desligadas nesta pesquisa."
             elif self.timeout_online <= 0:
