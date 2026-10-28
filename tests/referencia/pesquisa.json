@@ -1,0 +1,868 @@
+{
+ "(61) 99999-0000||0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "(61) 99999-0000",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [],
+   "indisponivel": [],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": true,
+  "tipos": [
+   "telefone"
+  ]
+ },
+ "-15.79,-47.88||0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "-15.79,-47.88",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [
+    "geocodificacao_reversa"
+   ],
+   "indisponivel": [],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "coordenadas"
+  ]
+ },
+ "0000001-02.2024.8.26.0100||0": {
+  "assistidas": [
+   "consulta_processual"
+  ],
+  "nomes_cpf": null,
+  "normalizado": "00000010220248260100",
+  "placa": false,
+  "plano": {
+   "assistida": [
+    "consulta_processual"
+   ],
+   "conectores": [],
+   "indisponivel": [],
+   "local": [],
+   "online": [
+    "datajud"
+   ]
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "processo"
+  ]
+ },
+ "11.222.333/0001-80|cnpj|0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "11.222.333/0001-80",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [],
+   "indisponivel": [],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "invalido"
+  ]
+ },
+ "11.222.333/0001-81||0": {
+  "assistidas": [
+   "cenprot_protestos",
+   "dou_busca",
+   "escavador",
+   "juntas_comerciais",
+   "ri_digital"
+  ],
+  "nomes_cpf": null,
+  "normalizado": "11.222.333/0001-81",
+  "placa": false,
+  "plano": {
+   "assistida": [
+    "cenprot_protestos",
+    "dou_busca",
+    "escavador",
+    "juntas_comerciais",
+    "ri_digital"
+   ],
+   "conectores": [
+    "cnpj",
+    "querido_diario"
+   ],
+   "indisponivel": [
+    "anac_rab",
+    "anvisa_medicamentos",
+    "ca_sancoes",
+    "cgu_cepim",
+    "cgu_sancoes",
+    "ibama_fiscalizacao",
+    "mte_lista_suja",
+    "ofac_sdn",
+    "onu_sancoes",
+    "opensanctions",
+    "tcu_condenacoes",
+    "ue_sancoes",
+    "uk_sancoes"
+   ],
+   "local": [
+    "cnpj_receita"
+   ],
+   "online": [
+    "cnes",
+    "compras_fornecedores",
+    "pncp_contratacoes"
+   ]
+  },
+  "requer_confirmacao": false,
+  "resultados": [
+   [
+    "cnpj_receita",
+    "11222333",
+    "documental"
+   ]
+  ],
+  "telefone": false,
+  "tipos": [
+   "cnpj",
+   "identificador"
+  ]
+ },
+ "111.123.456-63|cpf|0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "11112345663",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [],
+   "indisponivel": [
+    "anac_rab",
+    "cgu_ceaf",
+    "cgu_pep",
+    "cgu_sancoes",
+    "ibama_fiscalizacao",
+    "mte_lista_suja",
+    "tcu_condenacoes"
+   ],
+   "local": [
+    "cnpj_receita"
+   ],
+   "online": []
+  },
+  "requer_confirmacao": true,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "cpf"
+  ]
+ },
+ "111.123.456-63||1": {
+  "assistidas": [],
+  "nomes_cpf": [
+   "FULANO SINTETICO DE TAL"
+  ],
+  "normalizado": "11112345663",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [],
+   "indisponivel": [
+    "anac_rab",
+    "cgu_ceaf",
+    "cgu_pep",
+    "cgu_sancoes",
+    "ibama_fiscalizacao",
+    "mte_lista_suja",
+    "tcu_condenacoes"
+   ],
+   "local": [
+    "cnpj_receita"
+   ],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [
+   [
+    "cnpj_receita",
+    "11222333",
+    "provavel"
+   ],
+   [
+    "cnpj_receita",
+    "44555666",
+    "provavel"
+   ],
+   [
+    "cnpj_receita",
+    "77888999",
+    "provavel"
+   ]
+  ],
+  "telefone": false,
+  "tipos": [
+   "cpf"
+  ]
+ },
+ "11222333000181|cnpj|0": {
+  "assistidas": [
+   "cenprot_protestos",
+   "dou_busca",
+   "escavador",
+   "juntas_comerciais",
+   "ri_digital"
+  ],
+  "nomes_cpf": null,
+  "normalizado": "11.222.333/0001-81",
+  "placa": false,
+  "plano": {
+   "assistida": [
+    "cenprot_protestos",
+    "dou_busca",
+    "escavador",
+    "juntas_comerciais",
+    "ri_digital"
+   ],
+   "conectores": [
+    "cnpj",
+    "querido_diario"
+   ],
+   "indisponivel": [
+    "anac_rab",
+    "anvisa_medicamentos",
+    "ca_sancoes",
+    "cgu_cepim",
+    "cgu_sancoes",
+    "ibama_fiscalizacao",
+    "mte_lista_suja",
+    "ofac_sdn",
+    "onu_sancoes",
+    "opensanctions",
+    "tcu_condenacoes",
+    "ue_sancoes",
+    "uk_sancoes"
+   ],
+   "local": [
+    "cnpj_receita"
+   ],
+   "online": [
+    "cnes",
+    "compras_fornecedores",
+    "pncp_contratacoes"
+   ]
+  },
+  "requer_confirmacao": false,
+  "resultados": [
+   [
+    "cnpj_receita",
+    "11222333",
+    "documental"
+   ]
+  ],
+  "telefone": false,
+  "tipos": [
+   "cnpj",
+   "identificador"
+  ]
+ },
+ "1234567||0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "1234567",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [],
+   "indisponivel": [],
+   "local": [],
+   "online": [
+    "cnes"
+   ]
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "cnes"
+  ]
+ },
+ "203.0.113.5||0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "203.0.113.5",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [
+    "abuseipdb",
+    "asn",
+    "internetdb",
+    "otx",
+    "rdap",
+    "urlscan"
+   ],
+   "indisponivel": [],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "ip"
+  ]
+ },
+ "5299000000000000AB12||0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "5299000000000000AB12",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [],
+   "indisponivel": [
+    "anac_rab",
+    "ca_sancoes",
+    "cgu_cepim",
+    "cgu_sancoes",
+    "ibama_fiscalizacao",
+    "mte_lista_suja",
+    "ofac_sdn",
+    "onu_sancoes",
+    "opensanctions",
+    "tcu_condenacoes",
+    "ue_sancoes",
+    "uk_sancoes"
+   ],
+   "local": [
+    "cnpj_receita"
+   ],
+   "online": [
+    "gleif"
+   ]
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "lei",
+   "identificador"
+  ]
+ },
+ "61999990000|telefone|0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "61999990000",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [],
+   "indisponivel": [],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": true,
+  "tipos": [
+   "telefone"
+  ]
+ },
+ "ABC-1234|placa|0": {
+  "assistidas": [
+   "sinesp_veiculos"
+  ],
+  "nomes_cpf": null,
+  "normalizado": "ABC1234",
+  "placa": true,
+  "plano": {
+   "assistida": [
+    "sinesp_veiculos"
+   ],
+   "conectores": [],
+   "indisponivel": [],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "placa"
+  ]
+ },
+ "ABC1D23||0": {
+  "assistidas": [
+   "sinesp_veiculos"
+  ],
+  "nomes_cpf": null,
+  "normalizado": "ABC1D23",
+  "placa": true,
+  "plano": {
+   "assistida": [
+    "sinesp_veiculos"
+   ],
+   "conectores": [],
+   "indisponivel": [],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "placa"
+  ]
+ },
+ "CONSTRUTORA HORIZONTE AZUL LTDA|organizacao|0": {
+  "assistidas": [
+   "dou_busca",
+   "equasis",
+   "escavador",
+   "juntas_comerciais",
+   "occrp_aleph",
+   "ri_digital"
+  ],
+  "nomes_cpf": null,
+  "normalizado": "CONSTRUTORA HORIZONTE AZUL LTDA",
+  "placa": false,
+  "plano": {
+   "assistida": [
+    "dou_busca",
+    "equasis",
+    "escavador",
+    "juntas_comerciais",
+    "occrp_aleph",
+    "ri_digital"
+   ],
+   "conectores": [
+    "companies_house",
+    "gdelt",
+    "querido_diario",
+    "sec_edgar",
+    "wikidata",
+    "wikipedia"
+   ],
+   "indisponivel": [
+    "anac_rab",
+    "anvisa_medicamentos",
+    "ca_sancoes",
+    "cgu_ceaf",
+    "cgu_cepim",
+    "cgu_pep",
+    "cgu_sancoes",
+    "cvm_sancionador",
+    "ibama_fiscalizacao",
+    "ibge_localidades",
+    "icij_offshore",
+    "mte_lista_suja",
+    "ofac_sdn",
+    "onu_sancoes",
+    "opencorporates",
+    "opensanctions",
+    "parlamentares_br",
+    "sinesp_vde",
+    "tcu_condenacoes",
+    "tse_candidatos",
+    "ue_sancoes",
+    "uk_sancoes"
+   ],
+   "local": [
+    "cnpj_receita"
+   ],
+   "online": [
+    "gleif"
+   ]
+  },
+  "requer_confirmacao": false,
+  "resultados": [
+   [
+    "cnpj_receita",
+    "11222333",
+    "hipotese"
+   ]
+  ],
+  "telefone": false,
+  "tipos": [
+   "organizacao",
+   "nome",
+   "texto"
+  ]
+ },
+ "Construtora Horizonte Azul||0": {
+  "assistidas": [
+   "dou_busca",
+   "equasis",
+   "escavador",
+   "juntas_comerciais",
+   "occrp_aleph",
+   "ri_digital"
+  ],
+  "nomes_cpf": null,
+  "normalizado": "Construtora Horizonte Azul",
+  "placa": false,
+  "plano": {
+   "assistida": [
+    "dou_busca",
+    "equasis",
+    "escavador",
+    "juntas_comerciais",
+    "occrp_aleph",
+    "ri_digital"
+   ],
+   "conectores": [
+    "companies_house",
+    "gdelt",
+    "querido_diario",
+    "sec_edgar",
+    "wikidata",
+    "wikipedia"
+   ],
+   "indisponivel": [
+    "anac_rab",
+    "anvisa_medicamentos",
+    "ca_sancoes",
+    "cgu_ceaf",
+    "cgu_cepim",
+    "cgu_pep",
+    "cgu_sancoes",
+    "cvm_sancionador",
+    "ibama_fiscalizacao",
+    "ibge_localidades",
+    "icij_offshore",
+    "mte_lista_suja",
+    "ofac_sdn",
+    "onu_sancoes",
+    "opencorporates",
+    "opensanctions",
+    "parlamentares_br",
+    "sinesp_vde",
+    "tcu_condenacoes",
+    "tse_candidatos",
+    "ue_sancoes",
+    "uk_sancoes"
+   ],
+   "local": [
+    "cnpj_receita"
+   ],
+   "online": [
+    "gleif"
+   ]
+  },
+  "requer_confirmacao": false,
+  "resultados": [
+   [
+    "cnpj_receita",
+    "11222333",
+    "hipotese"
+   ]
+  ],
+  "telefone": false,
+  "tipos": [
+   "organizacao",
+   "nome",
+   "texto"
+  ]
+ },
+ "Fiat Uno|veiculo|0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "Fiat Uno",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [],
+   "indisponivel": [
+    "frota_senatran"
+   ],
+   "local": [],
+   "online": [
+    "fipe"
+   ]
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "veiculo"
+  ]
+ },
+ "Fulano Sintetico de Tal|pessoa|0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "Fulano Sintetico de Tal",
+  "placa": false,
+  "plano": {
+   "assistida": [
+    "bnmp",
+    "cnpd",
+    "dou_busca",
+    "escavador",
+    "eu_most_wanted",
+    "interpol_red",
+    "mjsp_captura",
+    "occrp_aleph",
+    "ri_digital",
+    "sinesp_cidadao",
+    "us_most_wanted"
+   ],
+   "conectores": [],
+   "indisponivel": [
+    "anac_rab",
+    "ca_sancoes",
+    "cgu_ceaf",
+    "cgu_cepim",
+    "cgu_pep",
+    "cgu_sancoes",
+    "cvm_sancionador",
+    "fbi_wanted",
+    "ibama_fiscalizacao",
+    "icij_offshore",
+    "mte_lista_suja",
+    "ofac_sdn",
+    "onu_sancoes",
+    "opensanctions",
+    "parlamentares_br",
+    "tcu_condenacoes",
+    "tse_candidatos",
+    "ue_sancoes",
+    "uk_sancoes"
+   ],
+   "local": [
+    "cnpj_receita"
+   ],
+   "online": []
+  },
+  "requer_confirmacao": true,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "pessoa",
+   "nome"
+  ]
+ },
+ "Fulano Sintetico de Tal|pessoa|1": {
+  "assistidas": [
+   "bnmp",
+   "cnpd",
+   "dou_busca",
+   "escavador",
+   "eu_most_wanted",
+   "interpol_red",
+   "mjsp_captura",
+   "occrp_aleph",
+   "ri_digital",
+   "sinesp_cidadao",
+   "us_most_wanted"
+  ],
+  "nomes_cpf": null,
+  "normalizado": "Fulano Sintetico de Tal",
+  "placa": false,
+  "plano": {
+   "assistida": [
+    "bnmp",
+    "cnpd",
+    "dou_busca",
+    "escavador",
+    "eu_most_wanted",
+    "interpol_red",
+    "mjsp_captura",
+    "occrp_aleph",
+    "ri_digital",
+    "sinesp_cidadao",
+    "us_most_wanted"
+   ],
+   "conectores": [],
+   "indisponivel": [
+    "anac_rab",
+    "ca_sancoes",
+    "cgu_ceaf",
+    "cgu_cepim",
+    "cgu_pep",
+    "cgu_sancoes",
+    "cvm_sancionador",
+    "fbi_wanted",
+    "ibama_fiscalizacao",
+    "icij_offshore",
+    "mte_lista_suja",
+    "ofac_sdn",
+    "onu_sancoes",
+    "opensanctions",
+    "parlamentares_br",
+    "tcu_condenacoes",
+    "tse_candidatos",
+    "ue_sancoes",
+    "uk_sancoes"
+   ],
+   "local": [
+    "cnpj_receita"
+   ],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [
+   [
+    "cnpj_receita",
+    "11222333",
+    "hipotese"
+   ],
+   [
+    "cnpj_receita",
+    "12312312",
+    "hipotese"
+   ],
+   [
+    "cnpj_receita",
+    "44555666",
+    "hipotese"
+   ],
+   [
+    "cnpj_receita",
+    "77888999",
+    "hipotese"
+   ]
+  ],
+  "telefone": false,
+  "tipos": [
+   "pessoa",
+   "nome"
+  ]
+ },
+ "PR-ABC||0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "PRABC",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [],
+   "indisponivel": [
+    "anac_rab"
+   ],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "aeronave"
+  ]
+ },
+ "contato@exemplo.example||0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "contato@exemplo.example",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [
+    "dns",
+    "rdap"
+   ],
+   "indisponivel": [],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "email"
+  ]
+ },
+ "exemplo.example|rede|0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "exemplo.example",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [
+    "crtsh",
+    "dns",
+    "favicon",
+    "otx",
+    "rdap",
+    "subdominios",
+    "urlscan",
+    "wayback"
+   ],
+   "indisponivel": [],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "dominio"
+  ]
+ },
+ "exemplo.example||0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "exemplo.example",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [
+    "crtsh",
+    "dns",
+    "favicon",
+    "otx",
+    "rdap",
+    "subdominios",
+    "urlscan",
+    "wayback"
+   ],
+   "indisponivel": [],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "dominio"
+  ]
+ },
+ "https://exemplo.example/pagina||0": {
+  "assistidas": [],
+  "nomes_cpf": null,
+  "normalizado": "https://exemplo.example/pagina",
+  "placa": false,
+  "plano": {
+   "assistida": [],
+   "conectores": [
+    "urlscan",
+    "wayback"
+   ],
+   "indisponivel": [],
+   "local": [],
+   "online": []
+  },
+  "requer_confirmacao": false,
+  "resultados": [],
+  "telefone": false,
+  "tipos": [
+   "url"
+  ]
+ }
+}
