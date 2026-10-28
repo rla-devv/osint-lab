@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Lista · Pesquisa · OSINT Lab{% endblock %}
+{% block head %}{% if job.estado == 'rodando' %}<meta http-equiv="refresh" content="2">{% endif %}{% endblock %}
+{% block content %}
+{% set NV = {'documental':'Documental','corroborada':'Corroborada','provavel':'Provável','hipotese':'Hipótese','contraditorio':'Contraditório','nao_verificado':'Não verificado'} %}
+<div class="ps">
+<p class="ps-voltar"><a href="/pesquisar">Nova pesquisa</a></p>
+<header class="ps-cab"><h1>Lista com {{ job.total }} itens</h1>
+<p class="meta">{{ caso.name if caso else 'pesquisa avulsa' }} · {{ 'só bases instaladas' if job.so_locais else 'bases instaladas e fontes online' }}{% if job.finalidade %} · finalidade: {{ job.finalidade }}{% endif %}</p></header>
+<div class="ps-progresso" role="status">{% if job.estado == 'rodando' %}<div class="ps-barra"><span style="width:{{ (100 * job.feitos / job.total)|round|int if job.total else 0 }}%"></span></div>{% endif %}
+<p><b>{{ job.feitos }} de {{ job.total }}</b> pesquisados{% if job.estado == 'rodando' %} (a página atualiza sozinha){% elif job.estado == 'erro' %}: <span class="erro">{{ job.erro }}</span>{% endif %}.
+{% if job.linhas %}<a href="/pesquisar/lista/{{ token }}.csv">Baixar planilha (CSV)</a>{% endif %}</p></div>
+{% if job.linhas %}<div class="ps-rolar"><table class="ps-tabela"><thead><tr><th>Item</th><th>Tipo</th><th>Registros</th><th>Melhor correspondência</th><th>Destaques</th></tr></thead><tbody>
+{% for li in job.linhas|sort(attribute='fortes', reverse=True) %}<tr><td>{% if li.pesquisavel %}<a href="/pesquisar?q={{ li.termo|urlencode }}{% if caso %}&projeto={{ caso.id }}{% endif %}" title="Abrir a pesquisa completa">{{ li.termo }}</a>{% else %}{{ li.termo }}{% endif %}</td>
+<td class="meta">{{ rotulo_tipos(li.tipo.split(', ')) }}</td><td>{{ li.resultados }}{% if li.fortes %} <b>({{ li.fortes }} forte{{ 's' if li.fortes > 1 }})</b>{% endif %}</td>
+<td>{% if li.melhor %}<span class="tag nv-{{ li.melhor }}">{{ NV[li.melhor] }}</span>{% endif %}</td>
+<td><small>{{ li.destaques|join('; ') }}{% for a in li.avisos %} <span class="erro">{{ a }}</span>{% endfor %}</small></td></tr>{% endfor %}</tbody></table></div>{% endif %}
+<p class="meta">Cada linha resume a pesquisa do item nas bases; abra o item para ver a pesquisa completa. Nomes iguais não são a mesma pessoa, e CPFs aparecem só com a máscara pública.</p>
+</div>
+{% endblock %}

@@ -15,7 +15,18 @@ def ambiente(tmp_path, monkeypatch):
     set_settings(s)
     reset_db()
     yield s
+    _esperar_segundo_plano()
     reset_db()
+
+
+def _esperar_segundo_plano(prazo: float = 15) -> None:
+    """Pesquisas e listas rodam em threads: o banco só é reiniciado depois que elas terminam."""
+    import threading
+    import time
+    fim = time.monotonic() + prazo
+    for t in threading.enumerate():
+        if t.name.startswith("pesquisa:") or t.name == "lote":
+            t.join(max(0.0, fim - time.monotonic()))
 
 
 @pytest.fixture

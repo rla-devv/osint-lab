@@ -48,7 +48,7 @@
 {% for t in e.temas %}<h3>{{ t.titulo }} <span class="ps-n">{{ t.registros|length }}</span></h3>
 <ul class="ps-regs">{% for h in t.registros %}<li>
 {% if h.url %}<a href="{{ h.url }}" target="_blank" rel="noopener noreferrer nofollow">{{ h.titulo }}</a>{% else %}{{ h.titulo }}{% endif %}
-<span class="meta"> · {{ h.nome_fonte }}{% if h.origem == 'online' %} (online){% endif %}{% if h.versao_base %} · base de {{ h.versao_base }}{% elif h.data_referencia %} · {{ h.data_referencia }}{% endif %}{% if h.nivel != e.nivel %} · {{ NV[h.nivel] }}{% endif %}</span>
+<span class="meta"> · {{ h.nome_fonte }}{% if h.origem == 'online' %} (online){% endif %}{% if h.quando %} · {{ h.quando }}{% endif %}{% if h.nivel != e.nivel %} · {{ NV[h.nivel] }}{% endif %}</span>
 {% if h.resumo and h.resumo != e.resumo %}<br><small>{{ h.resumo }}</small>{% endif %}
 {% if h.campos %}<details class="ps-dados"><summary>Dados do registro</summary>{% for rot, v in h.campos %}
 {% if v is mapping and v.tipo == 'tabela' %}<p class="ps-dado-rot">{{ rot }}{% if v.total > v.linhas|length %} (primeiros {{ v.linhas|length }} de {{ v.total }}){% endif %}</p>
@@ -60,16 +60,46 @@
 {% else %}<p class="vazio">{% if s.estado == 'executando' %}Aguardando as respostas das fontes…{% else %}Nenhum registro nas fontes que responderam. Ausência de resultado não comprova inexistência{% if pe.get('nao_executada') %}: {{ pe.nao_executada }} fonte(s) compatível(is) não foram consultadas (veja abaixo){% endif %}.{% endif %}</p>{% endfor %}
 </section>
 
+
+{% set rd = vis.rede %}{% if rd and rd.socios is defined %}<section class="ps-secao" id="rede"><h2>Sócios e empresas ligadas</h2>
+{% if rd.socios %}<h3>Quadro societário</h3><div class="ps-rolar"><table class="ps-tabela"><thead><tr><th>Sócio</th><th>Qualificação</th><th>Desde</th></tr></thead><tbody>
+{% for x in rd.socios %}<tr><td>{{ x.nome }}{% if x.documento %} <span class="meta">{{ x.documento }}</span>{% endif %}{% if x.tipo == 'empresa' %} <span class="meta">(empresa)</span>{% endif %}</td><td>{{ x.qualificacao }}</td><td class="ps-nw">{{ x.desde }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+{% if rd.empresas %}<h3>Empresas ligadas <span class="ps-n">{{ rd.empresas|length }}</span></h3>
+<div class="ps-rolar"><table class="ps-tabela"><thead><tr><th>Empresa</th><th class="ps-nw">Situação</th><th>Ligada por</th><th>Listas de alerta</th></tr></thead><tbody>
+{% for x in rd.empresas %}<tr><td>{{ x.rotulo }}<br><span class="meta ps-nw">{{ x.cnpj }}{% if x.municipio %} · {{ x.municipio }}{% endif %}</span></td><td class="ps-nw">{{ x.situacao or '?' }}</td><td><small>{{ x.via|join(', ') }}</small></td>
+<td>{% if x.alertas %}{% for h in x.alertas %}<span class="tag nv-contraditorio">{{ h.titulo[:60] }}</span> <small class="meta">{{ fontes_nome(h.fonte) }}</small><br>{% endfor %}{% elif x.verificada %}<span class="meta">nenhum registro</span>{% else %}<span class="meta">não conferida</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+{% if rd.verificou %}<p class="meta">Conferência automática (1 nível, só empresas ligadas por vínculo documental) nas bases locais: {{ rd.bases|join(', ') }}. Pessoas não são pesquisadas automaticamente.</p>{% endif %}{% endif %}
+{% if rd.comuns %}<h3>Pessoas em mais de uma empresa</h3><ul class="ps-manuais">{% for c in rd.comuns %}<li>{{ c.nome }} <span class="meta">{{ c.documento }} · {{ c.empresas }} empresas (mesma pessoa provável, por nome e CPF parcial)</span></li>{% endfor %}</ul>{% endif %}
+<p class="meta">{{ rd.aviso }}{% if rd.truncada %} Rede limitada às primeiras empresas encontradas.{% endif %}</p>
+</section>{% elif rd and rd.aviso %}<p class="msg aviso">{{ rd.aviso }}</p>{% endif %}
+
+{% if vis.elementos %}<section class="ps-secao" id="aprofundar"><h2>Para aprofundar</h2>
+<p class="meta">Dados que apareceram nesta pesquisa e ainda não foram pesquisados por inteiro. Cada um abre uma nova pesquisa{% if caso %} no mesmo caso{% endif %}.</p>
+{% for g in vis.elementos %}<h3>{{ g.titulo }} <span class="ps-n">{{ g.total }}</span></h3><ul class="ps-pivos">
+{% for x in g.itens %}<li><form method="post" action="/pesquisar" class="inline"><input type="hidden" name="q" value="{{ x.valor }}"><input type="hidden" name="campo" value="{{ x.campo }}">{% if caso %}<input type="hidden" name="projeto" value="{{ caso.id }}">{% endif %}
+<button class="mini secundario" title="Pesquisar {{ x.valor }}">Pesquisar</button></form> {{ x.rotulo }}{% if x.rotulo != x.valor %} <span class="meta">{{ x.valor }}</span>{% endif %}
+<span class="meta">{% if x.detalhe %}· {{ x.detalhe }} {% endif %}· {{ x.origem }}{% if x.verificada is defined and x.verificada %} · conferida nas listas: {{ x.alertas ~ ' registro(s)' if x.alertas else 'nada encontrado' }}{% endif %}</span></li>{% endfor %}</ul>
+{% if g.total > g.itens|length %}<p class="meta">e mais {{ g.total - g.itens|length }}.</p>{% endif %}{% endfor %}
+</section>{% endif %}
 {% set tecs = etapas|selectattr('modo', 'equalto', 'conector')|rejectattr('estado', 'equalto', 'nao_executada')|list %}
 {% if tecs %}{% set textos = {} %}{% for c in vis.tecnicas %}{% set _ = textos.update({c.conector: c}) %}{% endfor %}
 <section class="ps-secao" id="tecnicas"><h2>Consultas técnicas <span class="ps-n">{{ tecs|length }}</span></h2>
 {% for e in tecs %}{% set c = textos.get(e.ref, {}) %}<details class="ps-tec" data-id="tec-{{ e.ref }}"><summary><span class="tag ps-st-{{ e.estado }}">{{ ESTADOS[e.estado] }}</span> {{ e.nome }}{% if e.de_cache %} <span class="meta">· resposta guardada</span>{% endif %}</summary>
-{% if c.texto %}<pre class="texto">{{ c.texto }}</pre>{% if c.url %}<p class="meta"><a href="{{ c.url }}" target="_blank" rel="noopener noreferrer">ver na fonte</a></p>{% endif %}{% elif e.motivo %}<p class="meta">{{ e.motivo }}</p>{% else %}<p class="meta">{{ 'Aguardando resposta.' if e.estado in ('pendente','executando') else 'Sem conteúdo.' }}</p>{% endif %}</details>{% endfor %}
+{% if e.ref == 'cnpj' and c.dados %}<p class="meta">Cadastro incorporado à empresa acima, ao lado da base da Receita.</p>{% elif c.dados is mapping and c.dados %}{% set cs = campos(c.dados) %}{% for rot, v in cs %}
+{% if v is mapping and v.tipo == 'tabela' %}<p class="ps-dado-rot">{{ rot }}</p><div class="ps-rolar"><table class="ps-tabela"><thead><tr>{% for col in v.colunas %}<th>{{ col }}</th>{% endfor %}</tr></thead><tbody>{% for l in v.linhas %}<tr>{% for x in l %}<td>{{ x }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+{% elif v is mapping %}<p class="ps-dado-rot">{{ rot }}</p><dl class="ps-dl">{% for r2, v2 in v.itens %}<dt>{{ r2 }}</dt><dd>{{ v2 if v2 is string else '…' }}</dd>{% endfor %}</dl>
+{% else %}<dl class="ps-dl"><dt>{{ rot }}</dt><dd>{{ v }}</dd></dl>{% endif %}{% endfor %}{% if c.url %}<p class="meta"><a href="{{ c.url }}" target="_blank" rel="noopener noreferrer">ver na fonte</a></p>{% endif %}
+{% elif c.texto %}<pre class="texto">{{ c.texto }}</pre>{% if c.url %}<p class="meta"><a href="{{ c.url }}" target="_blank" rel="noopener noreferrer">ver na fonte</a></p>{% endif %}{% elif e.motivo %}<p class="meta">{{ e.motivo }}</p>{% else %}<p class="meta">{{ 'Aguardando resposta.' if e.estado in ('pendente','executando') else 'Sem conteúdo.' }}</p>{% endif %}</details>{% endfor %}
 </section>{% endif %}
 
 {% if vis.manuais %}<section class="ps-secao" id="manuais"><h2>Consultas manuais <span class="ps-n">{{ vis.manuais|length }}</span></h2>
 <p class="meta">Portais oficiais sem automação permitida. O link já leva a consulta preenchida quando o portal aceita; o resultado não é lido pelo programa.</p>
-<ul class="ps-manuais">{% for m in vis.manuais %}<li><a href="{{ m.url }}" target="_blank" rel="noopener noreferrer">{{ m.nome }}</a>{% if m.instrucoes %} <span class="meta">{{ m.instrucoes }}</span>{% endif %}</li>{% endfor %}</ul></section>{% endif %}
+<ul class="ps-manuais">{% for m in vis.manuais %}{% set reg = registradas.get(m.fonte) %}<li><a href="{{ m.url }}" target="_blank" rel="noopener noreferrer">{{ m.nome }}</a>{% if reg %} <span class="tag ps-st-encontrado">registrada: {{ DESFECHOS[reg.outcome] }}</span> <span class="meta">{{ reg.consulted_at[:10] }}{% if reg.item_id and caso %} · <a href="/p/{{ caso.id }}/item/{{ reg.item_id }}">comprovante no caso</a>{% endif %}</span>{% endif %}{% if m.instrucoes %} <span class="meta">{{ m.instrucoes }}</span>{% endif %}
+{% if caso and s.estado != 'executando' %}<details class="ps-dados" data-id="man-{{ m.fonte }}"><summary>Registrar o resultado</summary>
+<form method="post" action="/pesquisar/{{ s.id }}/manual" enctype="multipart/form-data" class="ps-linha"><input type="hidden" name="fonte_id" value="{{ m.fonte }}">
+<select name="desfecho" aria-label="Desfecho">{% for k, v in DESFECHOS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select>
+<input name="resumo" placeholder="O que o portal mostrou" size="34" maxlength="1000"><input type="file" name="comprovante" aria-label="Comprovante"><button class="mini">Registrar</button></form></details>{% endif %}</li>{% endfor %}</ul>
+{% if not caso %}<p class="meta">Para registrar o resultado de um portal com comprovante, salve a pesquisa em um caso.</p>{% endif %}</section>{% endif %}
 {% endif %}
 
 <details class="ps-secao ps-fontes" id="fontes" data-id="fontes"><summary><h2>Fontes <span class="ps-n">{{ etapas|length }}</span></h2></summary>

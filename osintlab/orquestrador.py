@@ -29,6 +29,13 @@ from datetime import datetime, timedelta, timezone
 from . import audit
 from .db import dumps, get_db, loads, now_iso
 
+class NaoExecutada(Exception):
+    """A etapa não pôde rodar (pré-requisito ausente); o motivo vai para a tela."""
+
+
+MAX_LIGADAS = 15                # empresas ligadas verificadas automaticamente (1 nível, só bases locais)
+TEMAS_ALERTA = ("sancoes", "procurados_alertas", "justica_seguranca", "fiscalizacao", "pep")
+
 ESTADOS = {"pendente": "Aguardando", "executando": "Em andamento", "encontrado": "Encontrado",
            "sem_resultado": "Sem resultado", "falha": "Falha", "tempo_esgotado": "Tempo esgotado",
            "nao_executada": "Não executada", "manual": "Consulta manual", "analisado": "Análise feita"}
@@ -117,7 +124,8 @@ class Execucao:
     def __init__(self, entrada: str, *, campo: str = "", attrs: dict | None = None, project_id: int | None = None,
                  finalidade: str = "", confirmado: bool = False, selecionadas: list[str] | None = None,
                  limit: int = 20, timeout: float = 60, timeout_online: float | None = None, conectores: bool = False,
-                 usar_cache: bool = False, persistir: bool = False, finalidade_do_caso: bool = False):
+                 usar_cache: bool = False, persistir: bool = False, finalidade_do_caso: bool = False,
+                 derivadas: bool = False):
         from . import pesquisa
         self.entrada, self.campo, self.attrs = entrada, campo, attrs or {}
         self.project_id, self.limit, self.timeout = project_id, limit, timeout
@@ -128,6 +136,7 @@ class Execucao:
         if timeout_online is None:
             timeout_online = float(os.environ.get("OSINTLAB_TIMEOUT_ONLINE", "12"))
         self.timeout_online, self.conectores, self.usar_cache, self.persistir = timeout_online, conectores, usar_cache, persistir
+        self.derivadas = derivadas
         self.q = pesquisa.classify(entrada, campo)
         self.plano = pesquisa.plan(self.q)
         self.etapas: list[Etapa] = []
@@ -190,6 +199,10 @@ class Execucao:
             elif self.timeout_online <= 0:
                 et.estado, et.motivo = "nao_executada", "Pesquisa limitada às bases locais."
             e.append(et)
+        if self.derivadas and "cnpj" in self.q["tipos"]:  # 2ª fase: depende do que a 1ª trouxer
+            e.append(Etapa("analise:rede", "analise", "rede", "Rede societária (sócios e empresas ligadas)"))
+            e.append(Etapa("expansao:ligadas", "expansao", "ligadas",
+                           "Empresas ligadas em sanções, fiscalização, PEP e procurados (bases locais)"))
         from .bases.fontes.assistidas import link_busca
         for fid in p["assistida"]:
             if self.sel is not None and fid not in self.sel:
@@ -212,6 +225,8 @@ class Execucao:
         for et in self.etapas:
             if et.estado != "pendente":
                 continue
+            if et.modo == "expansao" or et.ref == "rede":
+                continue  # 2ª fase (derivar)
             if et.modo == "analise":
                 self._rodar(et)  # instantâneo e local
                 continue
@@ -230,7 +245,7 @@ class Execucao:
         with self._lock:
             self._fechada = not self.persistir
             for et in self.etapas:
-                if et.estado in ("pendente", "executando"):
+                if et.estado in ("pendente", "executando") and et.id in self._threads:
                     prazo = self.timeout_online if et.modo != "local" else self.timeout
                     et.estado = "tempo_esgotado"
                     et.motivo = (f"Tempo esgotado ({prazo:.0f} s): a fonte online não respondeu a tempo; resultados locais "
@@ -244,8 +259,11 @@ class Execucao:
         try:
             with _limite(f"{et.modo}:{et.ref}"):
                 dados, n, cache = self._consultar(et)
-            estado = ("analisado" if et.modo == "analise" else "encontrado" if n else "sem_resultado")
+            estado = ("analisado" if et.modo == "analise" and et.ref in ("placa", "telefone")
+                      else "encontrado" if n else "sem_resultado")
             motivo = ""
+        except NaoExecutada as e:
+            dados, n, cache, estado, motivo = {}, 0, False, "nao_executada", str(e)
         except Exception as e:  # noqa: BLE001 — a falha de uma fonte nunca derruba a pesquisa
             dados, n, cache, estado, motivo = {}, 0, False, "falha", f"{e.__class__.__name__}: {e}"[:300]
         with self._lock:
@@ -261,6 +279,10 @@ class Execucao:
         from .bases import store
         from .bases.catalog import fontes
         q = self.q
+        if et.ref == "rede":
+            return self._rede()
+        if et.modo == "expansao":
+            return self._ligadas()
         if et.modo == "analise":
             from . import telefone, veiculos
             r = veiculos.analisar(q["normalizado"]) if et.ref == "placa" else telefone.analisar(q["normalizado"])
@@ -274,7 +296,7 @@ class Execucao:
             r = load_all()[et.ref].func(q["normalizado"])
             texto = r.get("texto") or json.dumps(r.get("dados", {}), ensure_ascii=False, default=str)
             dados = {"texto": texto[:3000], "url": r.get("url_consulta"), "itens": len(r.get("itens") or []),
-                     "dados": r.get("dados")}
+                     "dados": r.get("dados"), "consultado_em": now_iso()}
             n = len(r.get("itens") or []) or (1 if ((r.get("texto") or "").strip() or r.get("dados")) else 0)
         else:
             f = fontes()[et.ref]
@@ -305,6 +327,65 @@ class Execucao:
         if chave:
             _cache_gravar(chave, et.id, {**dados, "_n": n}, CACHE_HORAS)
         return dados, n, False
+
+    # ---------------------------------------------------------------- 2ª fase: rede e empresas ligadas
+    def derivar(self) -> None:
+        """Etapas que dependem da 1ª fase. Só bases locais e vínculos documentais; pessoas não são pesquisadas."""
+        for et in self.etapas:
+            if et.estado == "pendente" and (et.modo == "expansao" or et.ref == "rede"):
+                self._rodar(et)
+
+    def _etapa(self, etapa_id: str) -> Etapa | None:
+        return next((et for et in self.etapas if et.id == etapa_id), None)
+
+    def _rede(self) -> tuple[dict, int, bool]:
+        from . import vinculos
+        if not vinculos.disponivel():
+            raise NaoExecutada("Base local do CNPJ não instalada (Bases de dados). O quadro societário da BrasilAPI, "
+                               "se consultada, aparece no cadastro.")
+        r = vinculos.rede(self.q["normalizado"], 2)
+        if not r.get("encontrada"):
+            return {"rede": r}, 0, False
+        return {"rede": r}, max(0, len(r["nos"]) - 1), False
+
+    def _ligadas(self) -> tuple[dict, int, bool]:
+        """Confere, nas bases locais de alerta, as empresas ligadas por vínculo documental (sócia PJ ou ligada pela
+        rede). Cada CNPJ é consultado uma vez; o próprio alvo fica de fora."""
+        from . import pesquisa
+        from .ai.ner import format_cnpj
+        from .bases import store
+        from .bases.catalog import fontes
+        alvo = re.sub(r"\D", "", self.q["normalizado"])
+        rede = (self._etapa("analise:rede").dados or {}).get("rede") or {}
+        candidatas: dict[str, str] = {}
+        for n in rede.get("nos", []):
+            d = re.sub(r"\D", "", n.get("cnpj") or "")
+            if n.get("tipo") == "empresa" and len(d) == 14 and d != alvo and not n.get("raiz"):
+                candidatas.setdefault(d, n.get("rotulo") or format_cnpj(d))
+        candidatas = dict(list(candidatas.items())[:MAX_LIGADAS])
+        if not candidatas:
+            raise NaoExecutada("Nenhuma empresa ligada por vínculo documental na base local." if rede.get("encontrada")
+                               else "Sem rede societária para expandir.")
+        alerta = [f for f in fontes().values() if f.tema in TEMAS_ALERTA and f.sincronizavel
+                  and ({"cnpj", "identificador"} & set(f.entradas)) and store.open_current(f.id) is not None]
+        if not alerta:
+            raise NaoExecutada("Nenhuma base local de sanções, fiscalização, PEP ou procurados instalada.")
+        achados, consultadas = [], []
+        for f in alerta:
+            conn = store.open_current(f.id)
+            try:
+                k = "identificador" if "identificador" in f.entradas else "cnpj"
+                consultadas.append(f.nome)
+                for d, nome in candidatas.items():
+                    q = {"tipos": ["cnpj", "identificador"], "normalizado": format_cnpj(d), "avisos": []}
+                    for h in f.search_local(conn, q["normalizado"], k, 5):
+                        h = pesquisa.grade(h, q, {})
+                        if h.nivel in ("documental", "corroborada", "provavel"):
+                            achados.append({**asdict(h), "ligado": nome, "ligado_cnpj": format_cnpj(d)})
+            finally:
+                conn.close()
+        return {"verificadas": [{"cnpj": format_cnpj(d), "nome": n} for d, n in candidatas.items()],
+                "bases": consultadas, "alertas": achados}, len(achados), False
 
     # ---------------------------------------------------------------- resultado (formato da pesquisa unificada)
     def resultado(self) -> dict:
@@ -353,11 +434,19 @@ class Execucao:
                 from .plugins import load_all
                 c["fonte"] = load_all()[et.ref].source_url
                 if et.estado in ("encontrado", "sem_resultado"):
-                    c.update(texto=et.dados.get("texto", ""), url=et.dados.get("url"), itens=et.dados.get("itens", 0))
+                    c.update(texto=et.dados.get("texto", ""), url=et.dados.get("url"), itens=et.dados.get("itens", 0),
+                             dados=et.dados.get("dados"), consultado_em=et.dados.get("consultado_em"))
                 else:
                     c["erro"] = et.motivo or "Tempo esgotado."
                 comp.append(c)
             res["complementares"] = sorted(comp, key=lambda i: ("erro" in i, i["nome"]))
+        rede_et, lig_et = self._etapa("analise:rede"), self._etapa("expansao:ligadas")
+        if rede_et and rede_et.estado in ("encontrado", "sem_resultado"):
+            res["rede"] = (rede_et.dados or {}).get("rede")
+        if lig_et and lig_et.estado in ("encontrado", "sem_resultado"):
+            res["alertas"] = lig_et.dados.get("alertas", [])
+            res["ligadas_verificadas"] = lig_et.dados.get("verificadas", [])
+            res["ligadas_bases"] = lig_et.dados.get("bases", [])
         res["assistidas"] = [{"fonte": et.ref, "nome": et.nome, **{k: et.dados.get(k) for k in (
             "url", "instrucoes", "restricoes", "aviso", "validade_horas")}} for et in etapas if et.modo == "manual"]
         res["conectores"] = p["conectores"]
@@ -428,7 +517,7 @@ def iniciar(entrada: str, *, campo: str = "", attrs: dict | None = None, project
     """Cria a pesquisa, grava o plano e executa em segundo plano. Devolve o id para acompanhar o andamento."""
     ex = Execucao(entrada, campo=campo, attrs=attrs, project_id=project_id, finalidade=finalidade,
                   conectores=conectores, timeout_online=timeout_online, usar_cache=True, persistir=True,
-                  finalidade_do_caso=True)
+                  finalidade_do_caso=True, derivadas=True)
     if ex.invalida:
         ex.estado = "invalida"
     elif ex.requer_finalidade:
@@ -448,6 +537,7 @@ def iniciar(entrada: str, *, campo: str = "", attrs: dict | None = None, project
         try:
             ex.iniciar()
             ex.aguardar()
+            ex.derivar()
             ex.estado = "concluida"
         except Exception as e:  # noqa: BLE001
             ex.estado = "falha"

@@ -88,16 +88,14 @@ def unlock(senha: str) -> bool:
     if k is None:
         return False
     _key = k
-    from .db import reset_db
-    reset_db()
+    _reiniciar_banco()
     return True
 
 
 def lock() -> None:
     global _key
     _key = None
-    from .db import reset_db
-    reset_db()
+    _reiniciar_banco()
 
 
 def key() -> bytes:
@@ -172,7 +170,6 @@ def activate(senha: str, cifrar_banco: bool = True) -> dict:
         raise ValueError("O cofre já está ativo.")
     if len(senha) < 8:
         raise ValueError("Use uma senha com pelo menos 8 caracteres.")
-    from .db import reset_db
     s = get_settings()
     salt = secrets.token_bytes(16)
     k = derive(senha, salt)
@@ -193,7 +190,7 @@ def activate(senha: str, cifrar_banco: bool = True) -> dict:
         n += 1
     banco = False
     if cifrar_banco and sqlcipher_available() and s.db_path.exists():
-        reset_db()
+        _reiniciar_banco()
         tmp = s.db_path.with_suffix(".cifrando")
         tmp.unlink(missing_ok=True)
         _db_recrypt(s.db_path, tmp, None, "x'" + k.hex() + "'")
@@ -203,7 +200,7 @@ def activate(senha: str, cifrar_banco: bool = True) -> dict:
         meta["banco_cifrado"] = True
         _meta_path().write_text(json.dumps(meta), encoding="utf-8")
         banco = True
-        reset_db()
+        _reiniciar_banco()
     from . import audit
     audit.log("cofre_ativado", details={"arquivos_cifrados": n, "banco_cifrado": banco})
     return {"arquivos_cifrados": n, "banco_cifrado": banco,
@@ -216,7 +213,6 @@ def deactivate() -> dict:
         raise ValueError("O cofre não está ativo.")
     k = key()
     from . import audit
-    from .db import reset_db
     audit.log("cofre_desativado")
     s = get_settings()
     meta = _meta()
@@ -229,7 +225,7 @@ def deactivate() -> dict:
             p.chmod(0o400)
             n += 1
     if meta.get("banco_cifrado"):
-        reset_db()
+        _reiniciar_banco()
         tmp = s.db_path.with_suffix(".decifrando")
         tmp.unlink(missing_ok=True)
         _db_recrypt(s.db_path, tmp, "x'" + k.hex() + "'", None)
@@ -238,7 +234,7 @@ def deactivate() -> dict:
         os.replace(tmp, s.db_path)
     _meta_path().unlink(missing_ok=True)
     _key = None
-    reset_db()
+    _reiniciar_banco()
     return {"arquivos_decifrados": n}
 
 
@@ -322,3 +318,16 @@ def status() -> dict:
     m = _meta()
     return {"ativo": bool(m.get("ativo")), "bloqueado": is_locked(), "banco_cifrado": bool(m.get("banco_cifrado")),
             "sqlcipher_disponivel": sqlcipher_available(), "kdf": m.get("kdf")}
+
+
+def _reiniciar_banco(prazo: float = 20) -> None:
+    """Fecha e reabre o banco. Antes, espera as pesquisas e listas em segundo plano terminarem: fechar a conexão
+    de uma thread no meio de uma consulta pode derrubar o programa."""
+    import threading
+    import time
+    from .db import reset_db
+    fim = time.monotonic() + prazo
+    for t in threading.enumerate():
+        if t is not threading.current_thread() and (t.name.startswith("pesquisa:") or t.name == "lote"):
+            t.join(max(0.0, fim - time.monotonic()))
+    reset_db()

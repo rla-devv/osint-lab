@@ -98,7 +98,7 @@ ul.riscos{list-style:none;padding:0;margin:.4rem 0}ul.riscos li{padding:.4rem 0;
 .ps{max-width:1040px;margin:0 auto}
 .ps-titulo{font-size:1.6rem;margin:1.2rem 0 .8rem}
 .ps-busca{margin-bottom:1.6rem}
-.ps-campo{display:flex;gap:.5rem}.ps-campo input{flex:1;min-width:0;padding:.75rem .9rem;font-size:1.1rem;border-radius:8px;background:var(--card)}
+.ps-campo{display:flex;gap:.5rem;align-items:flex-start}.ps-campo textarea{flex:1;min-width:0;padding:.75rem .9rem;font-size:1.1rem;border-radius:8px;background:var(--card);resize:none;overflow:hidden;line-height:1.4;max-height:40vh}
 .ps-campo button{padding:.7rem 1.3rem;font-size:1rem;border-radius:8px}
 .ps-linha{display:flex;flex-wrap:wrap;gap:.4rem 1rem;align-items:center;margin-top:.55rem;font-size:.9rem;color:var(--muted)}
 .ps-linha label{display:flex;gap:.35rem;align-items:center}.ps-linha select,.ps-linha input{max-width:100%}
@@ -132,7 +132,7 @@ ul.riscos{list-style:none;padding:0;margin:.4rem 0}ul.riscos li{padding:.4rem 0;
 .ps-dados{margin-top:.3rem;font-size:.85rem}.ps-dados summary{cursor:pointer;color:var(--muted)}
 .ps-dado-rot{margin:.5rem 0 .2rem;font-weight:600}.ps-dl{display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:.1rem .8rem;margin:.1rem 0}
 .ps-dl dt{color:var(--muted)}.ps-dl dd{margin:0;word-break:break-word}
-.ps-rolar{overflow-x:auto}.ps-tabela{font-size:.85rem}.ps-tabela td{word-break:break-word}
+.ps-rolar{overflow-x:auto}.ps-rolar>.ps-tabela{min-width:560px}.ps-rolar>.ps-tabela td{word-break:normal;overflow-wrap:break-word}.ps-tabela{font-size:.85rem}.ps-tabela td{word-break:break-word}
 .ps-dados .ps-tabela td,.ps-dados .ps-tabela th{white-space:nowrap;word-break:normal}.ps-nw{white-space:nowrap}
 .ps-tec{border-bottom:1px solid var(--line);padding:.35rem 0}.ps-tec summary{cursor:pointer}
 .ps-manuais{margin:.2rem 0;padding-left:1.1rem}.ps-manuais li{margin:.25rem 0}
@@ -146,3 +146,5 @@ ul.riscos{list-style:none;padding:0;margin:.4rem 0}ul.riscos li{padding:.4rem 0;
 .tag.ps-st-tempo_esgotado,.tag.ps-st-aguardando_finalidade{background:#ffe7bf;color:#6b4500}
 .tag.ps-st-executando,.tag.ps-st-manual{background:#d9e6ff;color:#1a3f80}.tag.ps-st-nao_executada{background:transparent;color:var(--muted);border:1px solid var(--line)}
 @media (max-width:700px){.ps-campo{flex-direction:column}.ps-campo button{width:100%}.ps-dl{grid-template-columns:1fr}.ps-novo-caso input{width:100%}}
+.ps-pivos{list-style:none;padding:0;margin:.2rem 0}.ps-pivos li{padding:.25rem 0;border-bottom:1px solid var(--line)}.ps-pivos li:last-child{border-bottom:0}
+.ps-pivos form.inline{margin:0 .3rem 0 0}

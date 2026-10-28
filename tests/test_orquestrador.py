@@ -204,3 +204,14 @@ def test_api_json(monkeypatch):
     assert c.get("/api/pesquisas/9999").status_code == 404
     r = c.post("/api/pesquisas", json={"q": "Fulano Sintetico de Tal", "campo": "pessoa"}).json()
     assert r["estado"] == "aguardando_finalidade"
+
+
+def test_trancar_o_cofre_espera_a_pesquisa(monkeypatch):
+    from osintlab import cofre
+    reg = plugins.load_all()
+    for n in ("rdap", "dns", "crtsh", "subdominios", "favicon", "wayback", "urlscan", "otx"):
+        monkeypatch.setattr(reg[n], "func", (lambda v: time.sleep(1) or {"texto": "ok"}) if n == "rdap"
+                            else (lambda v: {"texto": "ok"}))
+    sid = orq.iniciar("lento.example", timeout_online=5)
+    cofre.lock()  # fecha o banco: antes, espera a pesquisa em segundo plano terminar
+    assert orq.obter(sid)["estado"] == "concluida"

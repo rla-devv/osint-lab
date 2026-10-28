@@ -2,7 +2,7 @@
 acompanha o andamento; o resultado aparece organizado por entidade. Convive com a pesquisa antiga do projeto."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 
 from .. import consolidacao, core, orquestrador, pesquisa
@@ -19,7 +19,8 @@ CAMPOS = [("", "Identificar automaticamente"), ("cnpj", "CNPJ"), ("cpf", "CPF"),
           ("organizacao", "Nome de empresa ou órgão"), ("placa", "Placa"), ("telefone", "Telefone"),
           ("rede", "Domínio, IP, URL ou e-mail"), ("processo", "Processo (CNJ)"), ("municipio", "Município"),
           ("aeronave", "Aeronave"), ("veiculo", "Marca e modelo de veículo")]
-MODOS = {"local": "Base local", "online": "Online", "conector": "Online", "manual": "Manual", "analise": "Análise local"}
+MODOS = {"local": "Base local", "online": "Online", "conector": "Online", "manual": "Manual", "analise": "Análise local",
+         "expansao": "Expansão (local)"}
 ORDEM_ESTADO = ["falha", "tempo_esgotado", "executando", "pendente", "encontrado", "analisado", "sem_resultado",
                 "manual", "nao_executada"]
 
@@ -57,20 +58,44 @@ def pagina(request: Request, q: str = "", campo: str = "", projeto: int | None =
     return _formulario(request, q=q, campo=campo, projeto=projeto)
 
 
+def _lista_requer_finalidade(termos: list[str], projeto: int | None) -> bool:
+    if projeto and orquestrador.finalidade_efetiva(projeto):
+        return False
+    return any(orquestrador.TIPOS_PESSOAIS & set(pesquisa.classify(t)["tipos"]) for t in termos)
+
+
 @router.get("/api/classificar")
 def classificar(q: str = "", campo: str = "", projeto: int | None = None):
+    from .. import lote
     if not q.strip():
         return JSONResponse({"tipos": [], "rotulo": "", "avisos": [], "invalido": False, "requer_finalidade": False})
-    return JSONResponse(_classificar(q[:500], campo, projeto))
+    termos = lote.ler_termos(q)
+    if len(termos) > 1:
+        return JSONResponse({"tipos": [], "rotulo": "lista", "avisos": [], "invalido": False, "lista": len(termos),
+                             "requer_finalidade": _lista_requer_finalidade(termos[:200], projeto)})
+    return JSONResponse(_classificar(q.strip()[:500], campo, projeto))
 
 
 @router.post("/pesquisar")
-def iniciar(request: Request, q: str = Form(...), campo: str = Form(""), projeto: str = Form(""),
-            finalidade: str = Form(""), nascimento: str = Form(""), pais: str = Form(""), cpf: str = Form("")):
-    q = q.strip()[:500]
+async def iniciar(request: Request, q: str = Form(""), campo: str = Form(""), projeto: str = Form(""),
+                  finalidade: str = Form(""), nascimento: str = Form(""), pais: str = Form(""), cpf: str = Form(""),
+                  online: str = Form(""), arquivo: UploadFile | None = File(None)):
+    from .. import lote
     pid = int(projeto) if projeto.strip().isdigit() else None
     if pid and not core.get_project(pid):
         raise HTTPException(404, "Caso inexistente.")
+    csv_bytes = await arquivo.read() if arquivo is not None and arquivo.filename else None
+    termos = lote.ler_termos(q, csv_bytes)
+    if len(termos) > 1 or csv_bytes:  # lista: pesquisa em lote, uma linha por item
+        if not termos:
+            return _formulario(request, erro_form="A planilha não tem itens na primeira coluna.", projeto=pid)
+        if _lista_requer_finalidade(termos, pid) and len(finalidade.strip()) < 10:
+            return _formulario(request, q="\n".join(termos), projeto=pid, pedir_finalidade=True,
+                               erro_form="A lista tem nomes de pessoas ou CPFs: informe a finalidade.")
+        fin = finalidade.strip() or orquestrador.finalidade_efetiva(pid)
+        token = lote.iniciar(pid, termos, so_locais=not online, finalidade=fin)
+        return RedirectResponse(f"/pesquisar/lista/{token}", status_code=303)
+    q = q.strip()[:500]
     if not q:
         return _formulario(request, erro_form="Informe o dado a pesquisar.", campo=campo, projeto=pid)
     c = _classificar(q, campo, pid)
@@ -97,9 +122,39 @@ def _contexto(sid: int) -> dict:
     etapas = sorted(r["etapas"], key=lambda e: (ORDEM_ESTADO.index(e["estado"]) if e["estado"] in ORDEM_ESTADO else 99,
                                                 e["nome"]))
     vis = consolidacao.consolidar(res, r["etapas"]) if res else None
+    from ..bases.assistida import DESFECHOS
+    registradas = {}
+    if r["project_id"]:
+        from ..db import get_db
+        for x in get_db().query("SELECT * FROM assisted_lookups WHERE project_id=? AND query=? ORDER BY id",
+                                (r["project_id"], r["entrada"])):
+            registradas[x["source_id"]] = x
     return {"s": r, "res": res, "vis": vis, "etapas": etapas, "MODOS": MODOS, "NIVEIS": pesquisa.NIVEIS,
+            "campos": consolidacao.campos, "fontes_nome": lambda f: fontes()[f].nome if f in fontes() else f,
+            "DESFECHOS": DESFECHOS, "registradas": registradas,
             "ESTADOS": orquestrador.ESTADOS, "caso": core.get_project(r["project_id"]) if r["project_id"] else None,
             "rotulo": rotulo_tipos(r["tipos"])}
+
+
+@router.get("/pesquisar/lista/{token}.csv")
+def lista_csv(token: str):
+    from .. import lote
+    job = lote.obter(token)
+    if not job:
+        raise HTTPException(404)
+    return Response(lote.csv_resultado(job), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": "attachment; filename=lista.csv"})
+
+
+@router.get("/pesquisar/lista/{token}", response_class=HTMLResponse)
+def lista(request: Request, token: str):
+    from .. import lote
+    job = lote.obter(token)
+    if not job:
+        raise HTTPException(404, "Lista não encontrada ou expirada.")
+    caso = core.get_project(job["pid"]) if job.get("pid") else None
+    return _app().render(request, "pesquisa_lista.html", job=job, token=token, caso=caso, NIVEIS=pesquisa.NIVEIS,
+                         rotulo_tipos=rotulo_tipos)
 
 
 @router.get("/pesquisar/{sid}", response_class=HTMLResponse)
@@ -136,6 +191,28 @@ def salvar_em_caso(sid: int, projeto: str = Form(""), nome: str = Form(""), fina
         d = dossie.de_pesquisa(r["resultado"], r["entrada"], r["finalidade"])
         dossie.salvar_no_projeto(pid, d)
     return w.back(f"/pesquisar/{sid}", f"Pesquisa salva no caso “{core.get_project(pid)['name']}”.")
+
+
+@router.post("/pesquisar/{sid}/manual")
+async def registrar_manual(request: Request, sid: int):
+    """Resultado de um portal de consulta manual, com comprovante, registrado no caso da pesquisa."""
+    from ..bases import assistida
+    w = _app()
+    r = orquestrador.obter(sid)
+    if not r:
+        raise HTTPException(404)
+    if not r["project_id"]:
+        return w.back(f"/pesquisar/{sid}#manuais", erro="Salve a pesquisa em um caso antes de registrar.")
+    form = await request.form()
+    arq = form.get("comprovante")
+    dados = await arq.read() if arq is not None and getattr(arq, "filename", "") else None
+    try:
+        assistida.register(r["project_id"], str(form.get("fonte_id", "")), r["entrada"], str(form.get("desfecho", "")),
+                           str(form.get("resumo", ""))[:1000], r["finalidade"] or orquestrador.finalidade_efetiva(r["project_id"]),
+                           dados, getattr(arq, "filename", None) if dados else None)
+    except (ValueError, KeyError) as e:
+        return w.back(f"/pesquisar/{sid}#manuais", erro=str(e))
+    return w.back(f"/pesquisar/{sid}#manuais", "Consulta manual registrada no caso.")
 
 
 @router.get("/pesquisar/{sid}/exportar.{ext}")

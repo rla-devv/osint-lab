@@ -16,13 +16,24 @@
                   (projeto.value ? `&projeto=${projeto.value}` : "");
       fetch(url).then((r) => r.json()).then((c) => {
         if (q.value.trim() !== v) return;
-        tipo.textContent = c.invalido ? (c.avisos[0] || "Entrada inválida para este tipo.") : (c.rotulo ? "Identificado: " + c.rotulo : "");
+        tipo.textContent = c.lista ? `Lista com ${c.lista} itens: cada um será pesquisado nas bases instaladas.` :
+          c.invalido ? (c.avisos[0] || "Entrada inválida para este tipo.") : (c.rotulo ? "Identificado: " + c.rotulo : "");
         tipo.classList.toggle("erro", !!c.invalido);
         fin.hidden = !c.requer_finalidade;
         finInput.required = !!c.requer_finalidade;
       }).catch(() => {});
     }
     const agendar = () => { clearTimeout(timer); timer = setTimeout(classificar, 250); };
+    const ajustarAltura = () => { q.style.height = "auto"; q.style.height = Math.min(q.scrollHeight + 2, innerHeight * 0.4) + "px";
+                                  q.style.overflowY = q.scrollHeight > innerHeight * 0.4 ? "auto" : "hidden"; };
+    q.addEventListener("input", ajustarAltura);
+    q.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && !ev.shiftKey && !ev.isComposing) {
+        ev.preventDefault();
+        if (q.value.trim()) q.form.requestSubmit();
+      }
+    });
+    ajustarAltura();
     q.addEventListener("input", agendar);
     campo.addEventListener("change", classificar);
     projeto.addEventListener("change", classificar);

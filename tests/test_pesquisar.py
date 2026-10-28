@@ -111,14 +111,16 @@ def test_consolidacao_junta_por_identificador_e_mostra_divergencia():
         hit("cnpj_receita", "11222333", "CONSTRUTORA AZUL LTDA", ["11.222.333/0001-81"]),
         hit("cgu_sancoes", "9", "CONSTRUTORA AZUL", ["11222333000181"], tipo="sancao"),
         hit("opensanctions", "Q1", "Construtora Azul S.A.", ["11.222.333/0001-81"], tipo="Company"),
+        {**hit("conector:cnpj", "x", "CONSTRUTORA AZUL EIRELI", ["11.222.333/0001-81"]), "tema": "empresas"},
         hit("pncp_contratacoes", "c1", "Contrato 1/2024", ["11222333000181"], tipo="contrato"),
         hit("tse_candidatos", "p1", "FULANO", ["***.123.456-**"], tipo="pessoa", nivel="hipotese"),
         hit("cgu_pep", "p2", "FULANO", ["***.123.456-**"], tipo="pessoa", nivel="hipotese")]}
     v = consolidacao.consolidar(res, [])
     alvo = v["alvo"]
-    assert alvo and alvo["registros"] == 4 and len(alvo["fontes"]) == 4
+    assert alvo and alvo["registros"] == 5 and len(alvo["fontes"]) == 5
     assert {t["tema"] for t in alvo["temas"]} >= {"empresas", "sancoes"}
-    assert alvo["divergencias"] and "CONSTRUTORA AZUL LTDA" in alvo["divergencias"][0]
+    assert alvo["divergencias"] and "CONSTRUTORA AZUL EIRELI" in alvo["divergencias"][0]
+    assert "S.A." not in alvo["divergencias"][0]  # nome numa lista de sanções não entra na comparação de cadastro
     assert len(v["entidades"]) == 3  # o CPF mascarado não junta as duas pessoas
 
 

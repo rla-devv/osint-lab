@@ -1,8 +1,8 @@
 {# Formulário de pesquisa. Variáveis: q, campo, projeto, casos, CAMPOS, erro_form, pedir_finalidade, nascimento, pais #}
-<form method="post" action="/pesquisar" class="ps-busca" id="ps-form" autocomplete="off">
+<form method="post" action="/pesquisar" class="ps-busca" id="ps-form" autocomplete="off" enctype="multipart/form-data">
 <div class="ps-campo">
-<input name="q" id="ps-q" value="{{ q }}" maxlength="500" required {{ 'autofocus' if not q }} aria-label="Dado a pesquisar"
- placeholder="CPF, CNPJ, placa, nome, telefone, e-mail, domínio, IP, processo…">
+<textarea name="q" id="ps-q" rows="1" maxlength="50000" {{ 'autofocus' if not q }} aria-label="Dado a pesquisar"
+ placeholder="CPF, CNPJ, placa, nome, telefone, e-mail, domínio, IP, processo… (ou uma lista, um por linha)">{{ q }}</textarea>
 <button>Pesquisar</button></div>
 <div class="ps-linha">
 <span id="ps-tipo" class="ps-detectado" aria-live="polite"></span>
@@ -20,6 +20,11 @@
 <label>País <input name="pais" value="{{ pais or '' }}" placeholder="br" size="4"></label>
 <label>CPF para conferir <input name="cpf" placeholder="000.000.000-00" size="15" inputmode="numeric"></label></div>
 <small class="meta">Usados só para comparar com os registros encontrados; o CPF é guardado apenas com a máscara pública.</small>
+</details>
+<details class="ps-opcoes"><summary>Pesquisar uma planilha</summary>
+<div class="ps-linha"><label>CSV (primeira coluna) <input type="file" name="arquivo" accept=".csv,text/csv,.txt"></label>
+<label><input type="checkbox" name="online" value="1"> em listas, consultar também as fontes online (mais lento)</label></div>
+<small class="meta">Listas coladas no campo, uma por linha, também funcionam. Cada item é pesquisado nas bases instaladas.</small>
 </details>
 {% if erro_form %}<p class="msg erro">{{ erro_form }}</p>{% endif %}
 </form>

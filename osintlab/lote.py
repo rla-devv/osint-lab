@@ -50,6 +50,11 @@ def _exibir(termo: str, tipos: list[str]) -> str:
     return cpf_publico(termo) if "cpf" in tipos else termo
 
 
+def _nome_fonte(fid: str) -> str:
+    from .bases.catalog import fontes
+    return fontes()[fid].nome if fid in fontes() else fid
+
+
 def _linha(termo: str, res: dict) -> dict:
     tipos = res["consulta"]["tipos"]
     hits = res.get("resultados") or []
@@ -57,7 +62,7 @@ def _linha(termo: str, res: dict) -> dict:
     fortes = [h for h in hits if h["nivel"] in ("documental", "corroborada", "provavel")]
     return {"termo": _exibir(termo, tipos), "tipo": ", ".join(t for t in tipos if t not in ("nome", "texto")) or "texto",
             "resultados": len(hits), "fortes": len(fortes), "melhor": melhor,
-            "fontes": sorted({h["fonte"] for h in hits}), "destaques": [f"{h['titulo']} ({h['fonte']})" for h in fortes[:3]],
+            "fontes": sorted({h["fonte"] for h in hits}), "destaques": [f"{h['titulo']} ({_nome_fonte(h['fonte'])})" for h in fortes[:3]],
             "pesquisavel": "cpf" not in tipos, "avisos": [a for a in res["consulta"].get("avisos", []) if "CPF" not in a][:1]}
 
 
