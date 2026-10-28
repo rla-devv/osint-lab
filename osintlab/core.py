@@ -160,6 +160,10 @@ def index_item(iid: int) -> None:
 def _add_mention(pid, iid, etype, value, normalized, pos, ctx, sensitive):
     db = get_db()
     with db.write_lock:
+        alias = db.one("SELECT a_norm FROM entity_decisions WHERE project_id=? AND type=? AND b_norm=? AND decision='mesma'",
+                       (pid, etype, normalized[:300]))
+        if alias:  # nome já fundido pelo analista em outra entidade
+            normalized = alias["a_norm"]
         db.execute("INSERT OR IGNORE INTO entities(project_id, type, value, normalized, sensitive, first_seen) "
                    "VALUES (?,?,?,?,?,?)", (pid, etype, value[:300], normalized[:300], int(sensitive), now_iso()))
         ent = db.one("SELECT id FROM entities WHERE project_id=? AND type=? AND normalized=?",

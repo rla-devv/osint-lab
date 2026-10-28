@@ -105,11 +105,15 @@ def correlate(project_id: int, max_items_per_entity: int = 200) -> dict:
                         rationale=f"Coocorrem em {len(its)} item(ns) de {len(sources)} fonte(s) independente(s).")
         created[level] += 1
     # 3) hipóteses de mesma entidade (nunca fundidas automaticamente)
+    from .deduplicacao import _decisoes
+    decididos = _decisoes(project_id)
     for t in ("organizacao", "pessoa"):
         names = [(eid, _fold(e["value"])) for eid, e in ents.items() if e["type"] == t]
         for (ea, na), (eb, nb) in combinations(names, 2):
             if not na or not nb or na == nb and ents[ea]["normalized"] == ents[eb]["normalized"]:
                 continue
+            if (t, *sorted((ents[ea]["normalized"], ents[eb]["normalized"]))) in decididos:
+                continue  # o analista já decidiu este par
             ratio = difflib.SequenceMatcher(None, na, nb).ratio()
             if ratio >= 0.88:
                 upsert_relation(project_id, ea, eb, "possivel_mesma_entidade", "hipotese", round(ratio, 2),

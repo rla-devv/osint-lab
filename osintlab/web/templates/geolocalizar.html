@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block head %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>{% endblock %}
+{% block content %}
+<h1>Descobrir onde foi</h1>
+<p class="nota">Duas ajudas para geolocalizar uma foto ou vídeo com dados abertos. O resultado é uma lista de candidatos para
+conferir em imagens de satélite e de rua, nunca uma localização confirmada. <a href="/p/{{ p.id }}/mapa">Voltar ao mapa</a></p>
+{% if erro_geo %}<p class="msg erro">{{ erro_geo }}</p>{% endif %}
+<div class="grade2">
+<section class="cartao"><h2>Feições que aparecem juntas</h2>
+<form method="get"><input type="hidden" name="modo" value="combinacao">
+<label>O que aparece na imagem (separe por vírgula)<br><input name="feicoes" value="{{ feicoes }}" list="lista-feicoes" placeholder="igreja, posto, ponte" required></label>
+<datalist id="lista-feicoes">{% for f in lista %}<option value="{{ f }}">{% endfor %}</datalist>
+<label>Área: cidade, bairro ou “latitude,longitude”<br><input name="local" value="{{ local }}" placeholder="Pirenópolis, GO" required></label>
+<label>Raio da área (km) <input type="number" name="raio_km" value="{{ raio_km }}" min="0.2" max="25" step="0.1"></label>
+<label>Distância máxima entre as feições (m) <input type="number" name="distancia_m" value="{{ distancia_m }}" min="10" max="2000"></label>
+<button>Procurar</button></form>
+<small class="meta">Também aceita etiquetas do OpenStreetMap (ex.: <code>amenity=fuel</code>, <code>man_made~tower|mast</code>). Dados © OpenStreetMap (Overpass).</small>
+</section>
+<section class="cartao"><h2>Sombra e posição do Sol</h2>
+<form method="get"><input type="hidden" name="modo" value="sombra">
+<label>Altura do objeto (qualquer unidade) <input type="number" name="altura" value="{{ altura }}" step="any" min="0" required></label>
+<label>Comprimento da sombra (mesma unidade) <input type="number" name="sombra_m" value="{{ sombra_m }}" step="any" min="0" required></label>
+<label>Data e hora da imagem <input type="datetime-local" name="quando" value="{{ quando }}" required></label>
+<label>Fuso da hora informada <select name="fuso">{% for f in range(-12, 15) %}<option value="{{ f }}" {{ 'selected' if f==fuso }}>UTC{{ '%+d'|format(f) }}</option>{% endfor %}</select></label>
+<label>Direção da sombra em graus a partir do norte (opcional) <input type="number" name="direcao" value="{{ direcao }}" min="0" max="360" step="any"></label>
+<label>Tolerância da elevação (graus) <input type="number" name="tolerancia" value="{{ tolerancia }}" min="0.1" max="5" step="0.1"></label>
+<button>Calcular</button></form>
+<small class="meta">Meça altura e sombra na própria imagem, de preferência de um poste ou pessoa em chão plano. Brasília é UTC−3.</small>
+</section></div>
+
+{% if res %}
+<section class="cartao"><h2>Resultado</h2>
+{% if modo == 'combinacao' %}
+<p>Encontradas na área: {% for t, n in res.contagem.items() %}{{ t }} ({{ n }}){{ ', ' if not loop.last }}{% endfor %}.
+{{ res.candidatos|length }} ponto(s) reúnem todas a até {{ distancia_m }} m.{% if res.aviso %} {{ res.aviso }}{% endif %}</p>
+{% elif modo == 'sombra' %}
+<p>Elevação do Sol: <b>{{ res.elevacao_sol }}°</b> em {{ res.utc }}. {{ res.total }} célula(s) de {{ res.passo }}° compatíveis,
+{{ res.no_brasil }} no Brasil.{% if res.faixa_lat %} Faixa: latitude {{ res.faixa_lat[0] }} a {{ res.faixa_lat[1] }}, longitude {{ res.faixa_lon[0] }} a {{ res.faixa_lon[1] }}.{% endif %}</p>
+<p class="nota">{{ res.limites }}</p>
+{% endif %}
+<div id="mapa-geo" class="mapa" data-res="{{ res_json }}"></div>
+{% if modo == 'combinacao' and res.candidatos %}<table><tr><th>Ponto</th><th>Feições próximas</th><th></th></tr>
+{% for c in res.candidatos[:50] %}<tr><td><a href="{{ c.osm }}" target="_blank" rel="noopener noreferrer">{{ c.lat }}, {{ c.lon }}</a> ·
+<a href="{{ c.satelite }}" target="_blank" rel="noopener noreferrer">satélite</a></td>
+<td>{{ c.ancora.termo }}{% if c.ancora.nome %} “{{ c.ancora.nome }}”{% endif %}; {% for t, x in c.perto.items() %}{{ t }}{% if x.nome %} “{{ x.nome }}”{% endif %} a {{ x.distancia_m }} m{{ '; ' if not loop.last }}{% endfor %}</td>
+<td><form method="post" action="/p/{{ p.id }}/geolocalizar/guardar"><input type="hidden" name="lat" value="{{ c.lat }}"><input type="hidden" name="lon" value="{{ c.lon }}">
+<input type="hidden" name="descricao" value="Feições: {{ feicoes }} (até {{ distancia_m }} m), área {{ local }}"><button class="secundario">Guardar</button></form></td></tr>{% endfor %}</table>{% endif %}
+</section>{% endif %}
+<p class="nota">Mapa base © colaboradores do OpenStreetMap (ODbL).</p>
+{% endblock %}
+{% block scripts %}<script src="/static/geolocalizar.js"></script>{% endblock %}

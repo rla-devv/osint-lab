@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import urlparse
@@ -353,6 +354,26 @@ def entidade(request: Request, pid: int, eid: int):
                   aba="entidades")
 
 
+@app.get("/p/{pid}/duplicadas", response_class=HTMLResponse)
+def duplicadas(request: Request, pid: int, rever: int = 0):
+    from ..analysis import deduplicacao
+    p = project_or_404(pid)
+    return render(request, "duplicadas.html", p=p, cands=deduplicacao.candidatos(pid, incluir_nao_sei=bool(rever)),
+                  rever=rever, DECISOES=deduplicacao.DECISOES, aba="entidades")
+
+
+@app.post("/p/{pid}/duplicadas")
+def duplicadas_decidir(pid: int, a: int = Form(...), b: int = Form(...), decisao: str = Form(...),
+                       fica: int = Form(0), nota: str = Form("")):
+    from ..analysis import deduplicacao
+    project_or_404(pid)
+    try:
+        r = deduplicacao.decidir(pid, a, b, decisao, fica or None, nota)
+    except ValueError as e:
+        return back(f"/p/{pid}/duplicadas", erro=str(e))
+    return back(f"/p/{pid}/duplicadas", r["texto"])
+
+
 @app.post("/p/{pid}/correlacionar")
 def correlacionar(pid: int):
     r = correlation.correlate(pid)
@@ -397,6 +418,53 @@ def mapa(request: Request, pid: int):
     fc = geo.features(pid)
     return render(request, "mapa.html", p=project_or_404(pid), n=len(fc["features"]), dist=geo.distance_matrix(fc)[:20],
                   aba="mapa")
+
+
+@app.get("/p/{pid}/geolocalizar", response_class=HTMLResponse)
+def geolocalizar(request: Request, pid: int, modo: str = "", feicoes: str = "", local: str = "", raio_km: float = 5,
+                 distancia_m: int = 150, altura: float = 0, sombra_m: float = 0, quando: str = "", fuso: int = -3,
+                 direcao: str = "", tolerancia: float = 1.0):
+    from ..analysis import geolocalizar as gl
+    from ..connectors.geo import geocode
+    p = project_or_404(pid)
+    ctx = dict(modo=modo, feicoes=feicoes, local=local, raio_km=raio_km, distancia_m=distancia_m, altura=altura or "",
+               sombra_m=sombra_m or "", quando=quando, fuso=fuso, direcao=direcao, tolerancia=tolerancia,
+               lista=sorted(gl.FEICOES), res=None, erro_geo="")
+    try:
+        if modo == "combinacao" and feicoes:
+            m = re.match(r"\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$", local)
+            if m:
+                lat, lon = float(m.group(1)), float(m.group(2))
+            else:
+                pts = geocode(local).get("pontos") or []
+                if not pts:
+                    raise ValueError(f"Não encontrei “{local}” no OpenStreetMap; informe 'latitude,longitude'.")
+                lat, lon = pts[0]["lat"], pts[0]["lon"]
+            ctx["res"] = {**gl.combinacao(re.split(r"[,;\n]+", feicoes), lat, lon, raio_km, distancia_m),
+                          "centro": [lat, lon]}
+            audit.log("geolocalizar_combinacao", project_id=pid, details={"feicoes": feicoes[:200], "raio_km": raio_km,
+                                                                          "candidatos": len(ctx["res"]["candidatos"])})
+        elif modo == "sombra" and altura and sombra_m and quando:
+            from datetime import datetime, timedelta, timezone
+            local_dt = datetime.fromisoformat(quando).replace(tzinfo=timezone(timedelta(hours=fuso)))
+            ctx["res"] = gl.sombra(altura, sombra_m, local_dt, float(direcao) if direcao.strip() else None, tolerancia)
+            ctx["res"]["utc"] = local_dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+            audit.log("geolocalizar_sombra", project_id=pid, details={"elevacao": ctx["res"]["elevacao_sol"]})
+    except (ValueError, RuntimeError) as e:
+        ctx["erro_geo"] = str(e)
+    except Exception as e:  # noqa: BLE001 — falha de rede ou do Overpass
+        ctx["erro_geo"] = f"Falha na consulta: {e.__class__.__name__}: {e}"[:300]
+    ctx["res_json"] = json.dumps({"modo": modo, **(ctx["res"] or {})}, ensure_ascii=False)
+    return render(request, "geolocalizar.html", p=p, aba="mapa", **ctx)
+
+
+@app.post("/p/{pid}/geolocalizar/guardar")
+def geolocalizar_guardar(pid: int, lat: float = Form(...), lon: float = Form(...), descricao: str = Form("")):
+    project_or_404(pid)
+    texto = (f"Candidato de geolocalização: {lat:.6f}, {lon:.6f}\n{descricao}\n"
+             "Hipótese gerada por busca de feições/sombra; precisa de confirmação visual.")
+    iid = core.add_item(pid, kind="nota", title=f"Candidato de local {lat:.5f}, {lon:.5f}", text=texto)
+    return back(f"/p/{pid}/item/{iid}" if iid else f"/p/{pid}/mapa", "Candidato guardado como nota (aparece no mapa).")
 
 
 @app.get("/api/p/{pid}/geo")

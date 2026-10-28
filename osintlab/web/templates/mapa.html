@@ -3,6 +3,7 @@
 {% block content %}
 <h1>Mapa (GEOINT)</h1>
 <p class="nota">{{ n }} ponto(s): coordenadas EXIF de imagens, coordenadas citadas em textos e geocodificações (Nominatim/OSM). A origem de cada coordenada é indicada — coordenadas EXIF podem ser alteradas e geocodificações são aproximadas.</p>
+<p><a class="botao secundario" href="/p/{{ p.id }}/geolocalizar">Descobrir onde foi: feições do OSM ou sombra</a></p>
 <div class="form-inline"><label>Filtrar por data até <input type="date" id="ate"></label></div>
 <div id="mapa" data-pid="{{ p.id }}" class="mapa"></div>
 {% if dist %}<section class="cartao"><h2>Pontos mais próximos entre si</h2><table><tr><th>Item A</th><th>Item B</th><th>Distância</th></tr>

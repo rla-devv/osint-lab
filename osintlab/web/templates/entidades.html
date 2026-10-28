@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Entidades e vínculos</h1>
-<form method="post" action="/p/{{ p.id }}/correlacionar" class="form-inline"><button>Executar correlação</button>
+<form method="post" action="/p/{{ p.id }}/correlacionar" class="form-inline"><button>Executar correlação</button> <a class="botao secundario" href="/p/{{ p.id }}/duplicadas">Revisar possíveis duplicadas</a>
 <span class="nota">Níveis: <span class="tag confirmado">confirmado</span> regra determinística · <span class="tag possivel">possível</span> ≥2 fontes independentes ·
 <span class="tag coincidencia">coincidência</span> 1 fonte · <span class="tag hipotese">hipótese</span> semelhança de nomes</span></form>
 <div class="grade2">

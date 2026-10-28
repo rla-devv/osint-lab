@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Possíveis duplicadas</h1>
+<p class="nota">Pares de pessoas ou organizações que podem ser a mesma. Nada é fundido sem a sua decisão. “É a mesma” junta
+menções e vínculos na entidade escolhida, e o outro nome passa a ser reconhecido como apelido dela.
+{% if rever %}<a href="/p/{{ p.id }}/duplicadas">Ocultar os marcados “não sei”</a>{% else %}<a href="/p/{{ p.id }}/duplicadas?rever=1">Rever também os marcados “não sei”</a>{% endif %}</p>
+{% for c in cands %}<section class="cartao">
+<h3>{{ c.tipo }} · {{ (c.similaridade*100)|round(0)|int }}% parecidos{% if c.decisao == 'nao_sei' %} <span class="tag hipotese">não sei</span>{% endif %}</h3>
+<form method="post" action="/p/{{ p.id }}/duplicadas">
+<input type="hidden" name="a" value="{{ c.a.id }}"><input type="hidden" name="b" value="{{ c.b.id }}">
+<p><label><input type="radio" name="fica" value="{{ c.a.id }}" checked> <a href="/p/{{ p.id }}/entidade/{{ c.a.id }}">{{ c.a.value }}</a></label> ({{ c.itens_a }} item(ns))<br>
+<label><input type="radio" name="fica" value="{{ c.b.id }}"> <a href="/p/{{ p.id }}/entidade/{{ c.b.id }}">{{ c.b.value }}</a></label> ({{ c.itens_b }} item(ns))
+<small class="meta"> · o nome marcado é o que fica se forem a mesma</small></p>
+<p><b>A favor:</b> {{ c.favor|join('; ') }}{% if c.contra %}<br><b>Contra:</b> {{ c.contra|join('; ') }}{% endif %}</p>
+<input name="nota" placeholder="Justificativa (opcional, vai para a auditoria)" maxlength="500">
+{% for k, v in DECISOES.items() %}<button name="decisao" value="{{ k }}" class="{{ '' if k=='mesma' else 'secundario' }}">{{ v }}</button> {% endfor %}
+</form></section>
+{% else %}<p class="vazio">Nenhum par parecido pendente de decisão.</p>{% endfor %}
+{% endblock %}

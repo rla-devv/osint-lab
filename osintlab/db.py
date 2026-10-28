@@ -121,6 +121,18 @@ CREATE TABLE IF NOT EXISTS relations (
   UNIQUE(project_id, src_entity, dst_entity, rel_type)
 );
 
+CREATE TABLE IF NOT EXISTS entity_decisions (  -- deduplicação assistida: decisão humana sobre um par de nomes
+  id INTEGER PRIMARY KEY,
+  project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  a_norm TEXT NOT NULL,
+  b_norm TEXT NOT NULL,                -- com 'mesma', b_norm passa a ser apelido de a_norm
+  decision TEXT NOT NULL,              -- mesma, diferente, nao_sei
+  note TEXT DEFAULT '',
+  created_at TEXT NOT NULL,
+  UNIQUE(project_id, type, a_norm, b_norm)
+);
+
 CREATE TABLE IF NOT EXISTS claims (
   id INTEGER PRIMARY KEY,
   project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,

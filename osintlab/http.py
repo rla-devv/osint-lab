@@ -112,7 +112,7 @@ def robots_allows(url: str) -> bool:
 
 def fetch(url: str, *, method: str = "GET", params: dict | None = None, headers: dict | None = None,
           check_robots: bool = True, preserve: bool = True, collector: str = "http",
-          json_body: dict | None = None) -> FetchResult:
+          json_body: dict | None = None, timeout: float | None = None) -> FetchResult:
     """Busca uma URL respeitando as salvaguardas. APIs públicas podem passar check_robots=False."""
     s = get_settings()
     check_url_allowed(url)
@@ -124,7 +124,7 @@ def fetch(url: str, *, method: str = "GET", params: dict | None = None, headers:
     h.update(headers or {})
     limit = s.max_download_mb * 1024 * 1024
     t0 = time.monotonic()
-    with httpx.Client(timeout=s.http_timeout, follow_redirects=True, headers=h) as client:
+    with httpx.Client(timeout=timeout or s.http_timeout, follow_redirects=True, headers=h) as client:
         with client.stream(method, url, params=params, json=json_body) as r:
             # revalida destino final após redirecionamentos
             if str(r.url) != url:
