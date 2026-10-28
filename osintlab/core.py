@@ -270,6 +270,9 @@ def stats(project_id: int) -> dict:
 # ---------------------------------------------------------------- ingestão de arquivos
 def ingest_file(project_id: int, data: bytes, filename: str, mime: str | None = None,
                 source_url: str | None = None, note: str = "") -> int | None:
+    from .ingest import whatsapp
+    if (filename or "").lower().endswith((".zip", ".txt")) and whatsapp.eh_exportacao(data, filename):
+        return whatsapp.importar(project_id, data, filename, source_url)  # conversa exportada do WhatsApp
     from .ingest.documents import extract
     sha = evidence.store(data, original_name=filename, source_url=source_url, mime=mime, collector="upload",
                          notes=note)
