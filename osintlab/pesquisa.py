@@ -49,6 +49,7 @@ CONECTORES_POR_TIPO = {
     "coordenadas": ["geocodificacao_reversa"],
     "organizacao": ["wikidata", "gdelt", "querido_diario", "sec_edgar", "companies_house"],
     "texto": ["gdelt", "wikipedia", "querido_diario"],
+    "username": ["github", "bluesky", "mastodon"],
 }
 
 
@@ -66,14 +67,16 @@ CAMPOS = {
     "rede": ("Domínio, IP ou URL", "exemplo.com.br, 200.160.2.3 ou https://…"),
     "processo": ("Processo", "Número CNJ: 0000000-00.0000.0.00.0000"),
     "municipio": ("Município", "Nome do município"),
+    "username": ("Nome de usuário", "@usuario, usuario, nome.bsky.social ou usuario@mastodon.social"),
 }
 ESPERADO = {"telefone": {"telefone"}, "cpf": {"cpf"}, "cnpj": {"cnpj"}, "placa": {"placa"}, "aeronave": {"aeronave"}, "processo": {"processo"}, "municipio": {"municipio"},
-            "rede": {"dominio", "ip", "url", "email"}}
+            "rede": {"dominio", "ip", "url", "email"}, "username": {"username"}}
 ERRO_CAMPO = {"telefone": "Não parece um número de telefone (informe com DDD).",
               "cpf": "Não é um CPF válido (confira os 11 dígitos e os dígitos verificadores).",
               "cnpj": "Não é um CNPJ válido (confira os 14 dígitos e os dígitos verificadores).",
               "placa": "Não é uma placa válida (formatos ABC1234 ou ABC1D23).",
               "aeronave": "Não é uma matrícula brasileira de aeronave (PP, PR, PS, PT ou PU seguido de 3 letras).",
+              "username": "Não parece um nome de usuário (letras, números, ponto, hífen ou _; até 40 caracteres).",
               "processo": "Não é um número de processo no padrão CNJ (20 dígitos).",
               "municipio": "Município não encontrado na lista do IBGE.",
               "rede": "Não é um domínio, IP, URL ou e-mail válido."}
@@ -91,6 +94,14 @@ def _classify_campo(q: str, campo: str) -> dict:
     raw = q.strip()
     if campo == "veiculo":
         return {"entrada": raw, "tipos": ["veiculo"], "normalizado": raw, "avisos": []}
+    if campo == "username":
+        from .connectors.perfis import limpar, parece_usuario
+        v = raw.strip()
+        base = v.split("@")[0] if v.count("@") == 1 and "." in v.split("@")[-1] else limpar(v)
+        if parece_usuario(base):
+            return {"entrada": raw, "tipos": ["username"], "normalizado": v.lstrip("@"), "avisos": [
+                "O mesmo nome de usuário em serviços diferentes não é, por si só, a mesma pessoa."]}
+        return {"entrada": raw, "tipos": ["invalido"], "normalizado": raw, "avisos": [ERRO_CAMPO["username"]]}
     out = _classify(raw, "organizacao")
     if campo == "telefone":
         from . import telefone
@@ -113,6 +124,12 @@ def _classify(q: str, forcar: str = "") -> dict:
     raw = q.strip()
     digits = re.sub(r"\D", "", raw)
     out = {"entrada": raw, "tipos": [], "normalizado": raw, "avisos": []}
+    if raw.startswith("@") and len(raw) > 1:
+        from .connectors.perfis import parece_usuario
+        if parece_usuario(raw):
+            out.update(tipos=["username"], normalizado=raw.lstrip("@"),
+                       avisos=["O mesmo nome de usuário em serviços diferentes não é, por si só, a mesma pessoa."])
+            return out
     if len(digits) == 14 and cnpj_valid(digits):
         out.update(tipos=["cnpj", "identificador"], normalizado=format_cnpj(digits))
     elif _telefone(raw):

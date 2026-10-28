@@ -58,7 +58,7 @@
 {% else %}<dl class="ps-dl"><dt>{{ rot }}</dt><dd>{{ v }}</dd></dl>{% endif %}{% endfor %}</details>{% endif %}
 </li>{% endfor %}</ul>{% endfor %}
 </div></details>
-{% else %}<p class="vazio">{% if s.estado == 'executando' %}Aguardando as respostas das fontes…{% else %}Nenhum registro nas fontes que responderam. Ausência de resultado não comprova inexistência{% if pe.get('nao_executada') %}: {{ pe.nao_executada }} fonte(s) compatível(is) não foram consultadas (veja abaixo){% endif %}.{% endif %}</p>{% endfor %}
+{% else %}<p class="vazio">{% if s.estado == 'executando' %}Aguardando as respostas das fontes…{% elif vis.so_tecnicas %}Este tipo de pesquisa não usa bases de registro: os achados estão nas consultas técnicas abaixo.{% else %}Nenhum registro nas fontes que responderam. Ausência de resultado não comprova inexistência{% if pe.get('nao_executada') %}: {{ pe.nao_executada }} fonte(s) compatível(is) não foram consultadas (veja abaixo){% endif %}.{% endif %}</p>{% endfor %}
 </section>
 
 

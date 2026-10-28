@@ -218,7 +218,7 @@ def elementos(res: dict, entidades: list[dict]) -> dict:
     for h in res.get("alertas") or []:
         k = chave_identificador(h.get("ligado_cnpj", ""))
         alertas[k] = alertas.get(k, 0) + 1
-    empresas, pessoas, ips, subdom = {}, {}, {}, {}
+    empresas, pessoas, ips, subdom, sites = {}, {}, {}, {}, {}
     for n in (res.get("rede") or {}).get("nos", []):
         if n.get("raiz"):
             continue
@@ -241,6 +241,11 @@ def elementos(res: dict, entidades: list[dict]) -> dict:
         d = c.get("dados") or {}
         if c.get("erro") or not isinstance(d, dict):
             continue
+        if c["conector"] in ("github", "bluesky", "mastodon") and d.get("site"):
+            dom = re.sub(r"^https?://", "", str(d["site"])).strip("/").split("/")[0]
+            if dom and "." in dom and "*" not in dom:
+                sites.setdefault(dom, {"valor": dom, "rotulo": dom, "campo": "rede",
+                                       "detalhe": "site no perfil", "origem": c["nome"].split(" (")[0]})
         if c["conector"] == "cnpj":
             for s in d.get("quadro_societario") or []:
                 if s.get("nome"):
@@ -254,7 +259,8 @@ def elementos(res: dict, entidades: list[dict]) -> dict:
                 if n and n != q.get("normalizado") and "*" not in n:
                     subdom.setdefault(n, {"valor": n, "rotulo": n, "campo": "rede", "detalhe": "", "origem": c["nome"]})
     grupos = [("Empresas ligadas", list(empresas.values())), ("Pessoas ligadas", list(pessoas.values())),
-              ("Endereços IP", list(ips.values())), ("Subdomínios", sorted(subdom.values(), key=lambda x: x["valor"]))]
+              ("Sites de perfis", list(sites.values())), ("Endereços IP", list(ips.values())),
+              ("Subdomínios", sorted(subdom.values(), key=lambda x: x["valor"]))]
     return [{"titulo": t, "itens": i[:30], "total": len(i)} for t, i in grupos if i]
 
 
@@ -322,4 +328,5 @@ def consolidar(res: dict, etapas: list[dict] | None = None) -> dict:
         "avisos": list(q.get("avisos") or []) + list(res.get("avisos_fontes") or []),
         "nomes_cpf": res.get("nomes_cpf"), "placa": res.get("placa"), "telefone": res.get("telefone"),
         "por_estado": por_estado, "sintese": res.get("sintese") or "", "sugestoes": res.get("sugestoes") or [],
+        "so_tecnicas": not (q.get("tipos") and (res.get("plano") or {}).get("local")) and not (res.get("plano") or {}).get("online"),
     }

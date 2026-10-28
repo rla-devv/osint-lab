@@ -11,14 +11,15 @@ from ..bases.catalog import fontes
 router = APIRouter()
 
 ROTULO_TIPO = {"cnpj": "CNPJ", "cpf": "CPF", "pessoa": "nome de pessoa", "organizacao": "nome de empresa ou órgão",
+               "username": "nome de usuário",
                "placa": "placa de veículo", "telefone": "telefone", "email": "e-mail", "dominio": "domínio",
                "ip": "endereço IP", "url": "endereço web", "processo": "processo judicial (número CNJ)",
                "municipio": "município", "coordenadas": "coordenadas", "aeronave": "matrícula de aeronave",
                "veiculo": "marca e modelo de veículo", "lei": "código LEI", "cnes": "código CNES"}
 CAMPOS = [("", "Identificar automaticamente"), ("cnpj", "CNPJ"), ("cpf", "CPF"), ("pessoa", "Nome de pessoa"),
           ("organizacao", "Nome de empresa ou órgão"), ("placa", "Placa"), ("telefone", "Telefone"),
-          ("rede", "Domínio, IP, URL ou e-mail"), ("processo", "Processo (CNJ)"), ("municipio", "Município"),
-          ("aeronave", "Aeronave"), ("veiculo", "Marca e modelo de veículo")]
+          ("rede", "Domínio, IP, URL ou e-mail"), ("username", "Nome de usuário"), ("processo", "Processo (CNJ)"),
+          ("municipio", "Município"), ("aeronave", "Aeronave"), ("veiculo", "Marca e modelo de veículo")]
 MODOS = {"local": "Base local", "online": "Online", "conector": "Online", "manual": "Manual", "analise": "Análise local",
          "expansao": "Expansão (local)"}
 ORDEM_ESTADO = ["falha", "tempo_esgotado", "executando", "pendente", "encontrado", "analisado", "sem_resultado",
