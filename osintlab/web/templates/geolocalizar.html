@@ -7,7 +7,7 @@ conferir em imagens de satélite e de rua, nunca uma localização confirmada. <
 {% if erro_geo %}<p class="msg erro">{{ erro_geo }}</p>{% endif %}
 <div class="grade2">
 <section class="cartao"><h2>Feições que aparecem juntas</h2>
-<form method="get"><input type="hidden" name="modo" value="combinacao">
+<form method="get" class="empilhado"><input type="hidden" name="modo" value="combinacao">
 <label>O que aparece na imagem (separe por vírgula)<br><input name="feicoes" value="{{ feicoes }}" list="lista-feicoes" placeholder="igreja, posto, ponte" required></label>
 <datalist id="lista-feicoes">{% for f in lista %}<option value="{{ f }}">{% endfor %}</datalist>
 <label>Área: cidade, bairro ou “latitude,longitude”<br><input name="local" value="{{ local }}" placeholder="Pirenópolis, GO" required></label>
@@ -17,7 +17,7 @@ conferir em imagens de satélite e de rua, nunca uma localização confirmada. <
 <small class="meta">Também aceita etiquetas do OpenStreetMap (ex.: <code>amenity=fuel</code>, <code>man_made~tower|mast</code>). Dados © OpenStreetMap (Overpass).</small>
 </section>
 <section class="cartao"><h2>Sombra e posição do Sol</h2>
-<form method="get"><input type="hidden" name="modo" value="sombra">
+<form method="get" class="empilhado"><input type="hidden" name="modo" value="sombra">
 <label>Altura do objeto (qualquer unidade) <input type="number" name="altura" value="{{ altura }}" step="any" min="0" required></label>
 <label>Comprimento da sombra (mesma unidade) <input type="number" name="sombra_m" value="{{ sombra_m }}" step="any" min="0" required></label>
 <label>Data e hora da imagem <input type="datetime-local" name="quando" value="{{ quando }}" required></label>

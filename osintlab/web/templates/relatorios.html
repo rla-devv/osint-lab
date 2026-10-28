@@ -5,6 +5,14 @@
 <select name="tipo">{% for k, v in tipos.items() %}<option value="{{ k }}" {{ 'selected' if k=='completo' }}>{{ v }}</option>{% endfor %}</select>
 <select name="fmt">{% for f in ["html","pdf","docx","md","json"] %}<option>{{ f }}</option>{% endfor %}</select><button>Gerar</button></form>
 <p class="nota">Todos os relatórios incluem finalidade declarada, aviso metodológico, distinção entre fatos, documentos, inferências e hipóteses e (no técnico/completo) o manifesto de evidências com hash raiz.</p></section>
+<section class="cartao" id="resumo"><h2>Resumo executivo pela IA</h2>
+<form method="post" action="/p/{{ p.id }}/resumo-ia" class="form-inline"><button>{{ 'Refazer' if resumo else 'Escrever' }} o resumo</button>
+<span class="nota">Usa só as fontes do projeto, com cada afirmação citada; citações inexistentes são removidas. Entra nos relatórios executivo e completo.</span></form>
+{% if resumo %}<p class="meta">Gerado em {{ resumo.gerado_em }} · modo {{ resumo.modo }}{% if resumo.problemas %} · {{ resumo.problemas|length }} ajuste(s) na validação{% endif %}</p>
+{{ resumo_html }}
+<details><summary>Fontes citadas ({{ resumo.fontes|length }})</summary><ol>{% for f in resumo.fontes %}<li><a href="/p/{{ p.id }}/item/{{ f.item }}">{{ f.titulo or f.url or ('item #' ~ f.item) }}</a> <small class="meta">{{ f.fonte }}{% if f.data %}, {{ f.data[:10] }}{% endif %}</small></li>{% endfor %}</ol></details>
+{% if resumo.problemas %}<details><summary>Ajustes feitos na validação</summary><ul>{% for x in resumo.problemas %}<li>{{ x }}</li>{% endfor %}</ul></details>{% endif %}{% endif %}
+</section>
 <section class="cartao"><h2>Interoperabilidade</h2>
 <p><a class="botao secundario" href="/p/{{ p.id }}/exportar/stix">Exportar STIX 2.1</a> <a class="botao secundario" href="/p/{{ p.id }}/exportar/misp">Exportar evento MISP</a> <a class="botao secundario" href="/p/{{ p.id }}/exportar/ftm">Exportar FollowTheMoney (Aleph)</a></p>
 <p class="nota">Para OpenCTI, MISP e outras ferramentas. Dados pessoais (e-mails, telefones, CPF, pessoas) são excluídos por padrão; o nível de cada vínculo é mantido como <code>confidence</code> e rótulo.</p></section>

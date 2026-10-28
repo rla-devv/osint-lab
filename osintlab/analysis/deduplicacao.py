@@ -28,6 +28,16 @@ def _iniciais_compativeis(a: str, b: str) -> bool:
     return curtas > 0 and all(x[0] == y[0] and (len(x) == 1 or len(y) == 1 or x == y) for x, y in zip(ta[:-1], tb[:-1]))
 
 
+FORMAS = [("S.A.", r"\bs\.?\s?a\.?(?=\s|$)|\bs/a\b"), ("Ltda", r"\bltda\b"), ("EIRELI", r"\beireli\b"),
+          ("ME", r"\bme\b"), ("EPP", r"\bepp\b"), ("MEI", r"\bmei\b")]
+ROTULOS = {"pessoa": "Pessoa", "organizacao": "Organização"}
+
+
+def _forma_juridica(nome: str) -> str | None:
+    n = nome.lower()
+    return next((f for f, rx in FORMAS if re.search(rx, n)), None)
+
+
 def _decisoes(pid: int) -> dict[tuple, dict]:
     return {(d["type"], *sorted((d["a_norm"], d["b_norm"]))): d
             for d in get_db().query("SELECT * FROM entity_decisions WHERE project_id=?", (pid,))}
@@ -64,6 +74,9 @@ def candidatos(pid: int, limite: int = 100, incluir_nao_sei: bool = False) -> li
                 contra.append("nunca aparecem no mesmo item")
             if t == "pessoa":
                 contra.append("homonímia é comum entre pessoas: confirme por documento, foto ou contexto")
+            fa, fb = _forma_juridica(a["value"]), _forma_juridica(b["value"])
+            if t == "organizacao" and fa and fb and fa != fb:
+                contra.append(f"naturezas jurídicas diferentes ({fa} x {fb}): podem ser empresas distintas do mesmo grupo")
             num_a, num_b = set(re.findall(r"\d+", a["value"])), set(re.findall(r"\d+", b["value"]))
             if num_a != num_b:
                 contra.append("números diferentes nos nomes (filial, unidade ou geração)")

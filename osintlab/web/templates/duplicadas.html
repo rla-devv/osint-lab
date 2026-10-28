@@ -5,7 +5,7 @@
 menções e vínculos na entidade escolhida, e o outro nome passa a ser reconhecido como apelido dela.
 {% if rever %}<a href="/p/{{ p.id }}/duplicadas">Ocultar os marcados “não sei”</a>{% else %}<a href="/p/{{ p.id }}/duplicadas?rever=1">Rever também os marcados “não sei”</a>{% endif %}</p>
 {% for c in cands %}<section class="cartao">
-<h3>{{ c.tipo }} · {{ (c.similaridade*100)|round(0)|int }}% parecidos{% if c.decisao == 'nao_sei' %} <span class="tag hipotese">não sei</span>{% endif %}</h3>
+<h3>{{ ROTULOS.get(c.tipo, c.tipo) }} · {{ (c.similaridade*100)|round(0)|int }}% parecidos{% if c.decisao == 'nao_sei' %} <span class="tag hipotese">não sei</span>{% endif %}</h3>
 <form method="post" action="/p/{{ p.id }}/duplicadas">
 <input type="hidden" name="a" value="{{ c.a.id }}"><input type="hidden" name="b" value="{{ c.b.id }}">
 <p><label><input type="radio" name="fica" value="{{ c.a.id }}" checked> <a href="/p/{{ p.id }}/entidade/{{ c.a.id }}">{{ c.a.value }}</a></label> ({{ c.itens_a }} item(ns))<br>

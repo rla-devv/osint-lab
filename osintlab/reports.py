@@ -43,6 +43,9 @@ def collect(project_id: int, tipo: str = "completo") -> dict:
         cl = claims.list_(project_id)
         data["afirmacoes"] = {k: [c for c in cl if c["kind"] == k] for k in claims.KINDS}
         data["naturezas"] = claims.KINDS
+    if tipo in ("executivo", "completo"):
+        from .ai.assistant import resumo_guardado
+        data["resumo_ia"] = resumo_guardado(project_id)
     if "itens" in sec:
         data["itens"] = list_items(project_id, limit=60 if tipo != "executivo" else 15)
     if "entidades" in sec:
@@ -95,6 +98,10 @@ code{font-size:.8rem;word-break:break-all}.kpi{display:inline-block;margin:.3rem
 <h2>Resumo</h2>
 {% for k, v in d.estatisticas.items() %}<span class="kpi"><b>{{ v }}</b> {{ k }}</span>{% endfor %}
 {% if d.projeto.description %}<p>{{ d.projeto.description }}</p>{% endif %}
+{% if d.resumo_ia %}<h2>Resumo executivo</h2><p class="meta">Redigido por IA ({{ d.resumo_ia.modo }}) em {{ d.resumo_ia.gerado_em }}
+a partir das fontes do projeto; os números entre colchetes remetem às fontes listadas abaixo. Revise antes de usar.</p>
+<div style="white-space:pre-wrap">{{ d.resumo_ia.texto }}</div>
+<ol style="font-size:.85rem">{% for f in d.resumo_ia.fontes %}<li>{% if f.url %}<a href="{{ f.url }}">{{ f.titulo or f.url }}</a>{% else %}{{ f.titulo }}{% endif %} (#{{ f.item }}, {{ f.fonte }}{% if f.data %}, {{ f.data[:10] }}{% endif %})</li>{% endfor %}</ol>{% endif %}
 {% if d.afirmacoes is defined %}<h2>Afirmações e hipóteses</h2>
 {% for k, lst in d.afirmacoes.items() if lst %}<h3>{{ d.naturezas[k] }}</h3><ul>
 {% for c in lst %}<li>{{ c.statement }} {% if c.supporting %}<span class="tag">apoio: {% for s in c.supporting %}#{{ s }} {% endfor %}</span>{% endif %}
@@ -138,6 +145,12 @@ def render_markdown(data: dict) -> str:
     out = [f"# {data['titulo']}: {p['name']}", "", f"_Gerado em {data['gerado_em']}. Finalidade: {p['purpose']}_", "",
            f"> {data['aviso']}", "", "## Resumo", ""]
     out += [f"- **{k}**: {v}" for k, v in data["estatisticas"].items()]
+    if data.get("resumo_ia"):
+        r = data["resumo_ia"]
+        out += ["", "## Resumo executivo", "", f"_Redigido por IA ({r['modo']}) em {r['gerado_em']}; revise antes de usar._",
+                "", *[ln.replace("## ", "### ", 1) if ln.startswith("## ") else ln for ln in r["texto"].splitlines()],
+                "", "Fontes do resumo:", ""]
+        out += [f"{f['n']}. {f['titulo'] or f['url'] or ''} (#{f['item']}, {f['fonte']})" for f in r["fontes"]]
     if "afirmacoes" in data:
         out += ["", "## Afirmações e hipóteses"]
         for k, lst in data["afirmacoes"].items():
@@ -171,6 +184,17 @@ def render_docx(data: dict, path: Path) -> None:
     d.add_heading("Resumo", 1)
     for k, v in data["estatisticas"].items():
         d.add_paragraph(f"{k}: {v}", style="List Bullet")
+    if data.get("resumo_ia"):
+        r = data["resumo_ia"]
+        d.add_heading("Resumo executivo", 1)
+        d.add_paragraph(f"Redigido por IA ({r['modo']}) em {r['gerado_em']}; revise antes de usar.").italic = True
+        for ln in r["texto"].splitlines():
+            if ln.startswith("## "):
+                d.add_heading(ln[3:], 2)
+            elif ln.strip():
+                d.add_paragraph(ln.lstrip("- "))
+        for f in r["fontes"]:
+            d.add_paragraph(f"[{f['n']}] {f['titulo'] or f['url'] or ''} (#{f['item']}, {f['fonte']})", style="List Number")
     if "afirmacoes" in data:
         d.add_heading("Afirmações e hipóteses", 1)
         for k, lst in data["afirmacoes"].items():

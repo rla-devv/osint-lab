@@ -359,7 +359,7 @@ def duplicadas(request: Request, pid: int, rever: int = 0):
     from ..analysis import deduplicacao
     p = project_or_404(pid)
     return render(request, "duplicadas.html", p=p, cands=deduplicacao.candidatos(pid, incluir_nao_sei=bool(rever)),
-                  rever=rever, DECISOES=deduplicacao.DECISOES, aba="entidades")
+                  rever=rever, DECISOES=deduplicacao.DECISOES, ROTULOS=deduplicacao.ROTULOS, aba="entidades")
 
 
 @app.post("/p/{pid}/duplicadas")
@@ -592,13 +592,34 @@ def api_hipoteses(pid: int):
 
 
 # ------------------------------------------------------------------ relatórios e evidências
+@app.post("/p/{pid}/resumo-ia")
+def resumo_ia(pid: int):
+    project_or_404(pid)
+    r = assistant.resumo_executivo(pid)
+    if r["modo"] == "vazio":
+        return back(f"/p/{pid}/relatorios", erro=r["texto"])
+    return back(f"/p/{pid}/relatorios#resumo", "Resumo executivo atualizado" + (" (modo extrativo, sem IA local)."
+                                                                             if r["modo"] == "extrativo" else "."))
+
+
 @app.get("/p/{pid}/relatorios", response_class=HTMLResponse)
 def relatorios(request: Request, pid: int):
     p = project_or_404(pid)
     d = get_settings().reports_dir / f"projeto-{pid}"
     arquivos = sorted(d.glob("*"), key=lambda f: f.stat().st_mtime, reverse=True) if d.exists() else []
+    resumo, resumo_html = assistant.resumo_guardado(pid), ""
+    if resumo:
+        from markupsafe import Markup, escape
+        item_de = {f["n"]: f["item"] for f in resumo["fontes"]}
+        linhas = []
+        for ln in str(escape(resumo["texto"])).splitlines():
+            ln = re.sub(r"\[(\d+(?:,\s*\d+)*)\]", lambda m: "".join(
+                f'<a href="/p/{pid}/item/{item_de[int(n)]}" title="fonte {n}">[{n}]</a>' if int(n) in item_de else f"[{n}]"
+                for n in re.findall(r"\d+", m.group(1))), ln)
+            linhas.append(f"<h3>{ln[3:]}</h3>" if ln.startswith("## ") else f"<p>{ln}</p>" if ln.strip() else "")
+        resumo_html = Markup("\n".join(linhas))
     return render(request, "relatorios.html", p=p, tipos=reports.TIPOS, arquivos=[f.name for f in arquivos][:50],
-                  aba="relatorios")
+                  resumo=resumo, resumo_html=resumo_html, aba="relatorios")
 
 
 @app.post("/p/{pid}/relatorio")

@@ -193,3 +193,93 @@ def summarize_item(item_id: int) -> str:
                           "Não acrescente informações externas."}, {"role": "user", "content": text}])
     except (LLMUnavailable, Exception):
         return " ".join(re.split(r"(?<=[.!?])\s+", text)[:4])[:800]
+
+
+# ------------------------------------------------------------------ resumo executivo
+RESUMO_SECOES = ("Situação", "Principais achados", "Vínculos relevantes", "Contradições e lacunas", "Próximos passos")
+
+
+def _fontes_resumo(project_id: int, max_itens: int = 14) -> tuple[list[dict], list[str]]:
+    """Fontes numeradas (itens do projeto) e notas de contexto (afirmações e vínculos fortes) que citam essas fontes."""
+    from .. import claims
+    from ..analysis import correlation
+    from ..core import list_items
+    db = get_db()
+    afirmacoes = claims.list_(project_id)
+    rels = [r for r in correlation.relations(project_id, None) if r["level"] in ("confirmado", "possivel")][:25]
+    sens = {e["id"] for e in db.query("SELECT id FROM entities WHERE project_id=? AND sensitive=1", (project_id,))}
+    rels = [r for r in rels if r["src_entity"] not in sens and r["dst_entity"] not in sens]
+    ordem = [i for c in afirmacoes for i in c["supporting"] + c["contradicting"]]
+    ordem += [i for r in rels for i in r["evidence_items"][:2]]
+    ordem += [i["id"] for i in list_items(project_id, limit=max_itens)]
+    fontes, num = [], {}
+    for iid in dict.fromkeys(ordem):
+        it = db.one("SELECT id, title, url, source_domain, source_reliability, published_at, content_text, status "
+                    "FROM items WHERE id=? AND project_id=?", (iid, project_id))
+        if not it or it["status"] == "descartado":
+            continue
+        num[iid] = len(fontes) + 1
+        fontes.append({"n": num[iid], "item": iid, "titulo": it["title"], "url": it["url"],
+                       "fonte": it["source_domain"] or "arquivo local", "confiabilidade": it["source_reliability"],
+                       "data": it["published_at"], "trecho": _flat(it["content_text"] or "", 700)})
+        if len(fontes) >= max_itens:
+            break
+
+    def cita(ids):
+        return "".join(f"[{num[i]}]" for i in ids if i in num)
+
+    notas = [f"Afirmação registrada pelo analista ({c['kind_label']}): {c['statement']} {cita(c['supporting'])}"
+             + (f" — contrariada por {cita(c['contradicting'])}" if c["contradicting"] else "") for c in afirmacoes[:20]]
+    notas += [f"Vínculo {correlation.LEVELS[r['level']].lower()}: {r['src_value']} —{r['rel_type']}→ {r['dst_value']} "
+              f"{cita(r['evidence_items'][:3])}".strip() for r in rels]
+    return fontes, notas
+
+
+def resumo_executivo(project_id: int) -> dict:
+    """Resumo executivo com cada afirmação citando as fontes do projeto. Sem LLM, monta um resumo extrativo."""
+    from ..db import dumps, now_iso
+    p = get_project(project_id)
+    fontes, notas = _fontes_resumo(project_id)
+    base = {"fontes": fontes, "gerado_em": now_iso(), "problemas": []}
+    if not fontes:
+        return {**base, "texto": "Ainda não há itens no projeto para resumir.", "modo": "vazio"}
+    llm = get_llm()
+    texto, modo = None, "extrativo"
+    if llm.available:
+        src = "\n\n".join(f"[{f['n']}] ({f['fonte']}, confiabilidade {f['confiabilidade']}, data {f['data'] or 'n/d'}) "
+                          f"{f['titulo']}\n{f['trecho']}" for f in fontes)
+        pedido = ("Escreva um RESUMO EXECUTIVO do projeto para quem não leu o material, com as seções em Markdown "
+                  + ", ".join(f"'## {s}'" for s in RESUMO_SECOES) + ". Em cada seção, uma afirmação por linha, com "
+                  "rótulo e citação [n]. Seja conciso (no máximo 25 linhas no total). Em 'Próximos passos', diga o que "
+                  "verificar e em qual tipo de fonte, sem citação obrigatória.")
+        try:
+            raw = llm.chat([{"role": "system", "content": SYSTEM},
+                            {"role": "user", "content": f"Projeto: {p['name']} — finalidade: {p['purpose']}\n"
+                             f"{p['description'] or ''}\n\nNOTAS DO ANALISTA (já citam as fontes):\n"
+                             + "\n".join(notas or ["(nenhuma)"]) + f"\n\nFONTES:\n{src}\n\n{pedido}"}])
+            texto, base["problemas"] = validate_answer(raw, len(fontes))
+            modo = llm.name
+        except Exception as e:  # noqa: BLE001 — cai no resumo extrativo
+            base["problemas"] = [f"Falha no LLM ({e.__class__.__name__}); resumo extrativo."]
+    if texto is None:
+        linhas = [f"## {RESUMO_SECOES[0]}", f"[FATO_OBSERVADO] O projeto reúne {len(fontes)} fonte(s) principais; "
+                  f"finalidade declarada: {p['purpose'].rstrip('.')}."]
+        if notas:
+            linhas += [f"## {RESUMO_SECOES[1]}"] + [f"- {n}" for n in notas if n.startswith("Afirmação")][:10]
+            linhas += [f"## {RESUMO_SECOES[2]}"] + [f"- {n}" for n in notas if n.startswith("Vínculo")][:10]
+        linhas += ["## Fontes mais relevantes"] + [f"- [DOCUMENTAL] {f['titulo'] or f['fonte']}: {_flat(f['trecho'], 200)} "
+                                                   f"[{f['n']}]" for f in fontes[:6]]
+        linhas += [f"## {RESUMO_SECOES[4]}", "- Instale um modelo de IA local (Configurações) para um resumo redigido; "
+                   "este foi montado só com trechos e registros do projeto."]
+        texto = "\n".join(linhas)
+    r = {**base, "texto": texto, "modo": modo}
+    get_db().execute("INSERT OR REPLACE INTO settings_kv(key, value) VALUES (?,?)", (f"resumo_ia:{project_id}", dumps(r)))
+    audit.log("resumo_executivo", project_id=project_id, details={"modo": modo, "fontes": len(fontes),
+                                                                  "problemas": len(base["problemas"])})
+    return r
+
+
+def resumo_guardado(project_id: int) -> dict | None:
+    from ..db import loads
+    row = get_db().one("SELECT value FROM settings_kv WHERE key=?", (f"resumo_ia:{project_id}",))
+    return loads(row["value"]) if row else None
