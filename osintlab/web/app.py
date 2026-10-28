@@ -45,6 +45,8 @@ app = FastAPI(title="OSINT Lab", version=__version__, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=str(HERE / "static")), name="static")
 from .central import router as central_router  # noqa: E402
 app.include_router(central_router)
+from .pesquisas_api import router as pesquisas_router  # noqa: E402
+app.include_router(pesquisas_router)
 
 CSP = ("default-src 'self'; img-src 'self' data: https://*.tile.openstreetmap.org; "
        "script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; "

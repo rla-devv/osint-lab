@@ -18,12 +18,9 @@ from __future__ import annotations
 import ipaddress
 import json
 import re
-import threading
-from dataclasses import asdict
 
 from . import audit, core, evidence
 from .ai.ner import cnpj_valid, format_cnpj
-from .bases import store
 from .bases.catalog import Fonte, SearchHit, fontes
 from .bases.fontes._util import fold
 from .bases.sync import permission_problem, state
@@ -404,159 +401,18 @@ def corroborate(hits: list[SearchHit]) -> None:
 def run(query: str, *, project_id: int | None = None, attrs: dict | None = None, selected: list[str] | None = None,
         confirmado: bool = False, limit: int = 20, timeout: float = 60, forcar: str = "",
         timeout_online: float | None = None, buscar_complementares: bool = False) -> dict:
-    attrs = attrs or {}
-    q = classify(query, forcar)
-    p = plan(q)
-    res = {"consulta": q, "plano": p, "resultados": [], "erros": [], "assistidas": [], "conectores": [],
-           "sugestoes": [], "requer_confirmacao": False}
-    if "invalido" in q["tipos"]:
-        return res
-    if "placa" in q["tipos"]:
-        from . import veiculos
-        res["placa"] = veiculos.analisar(q["normalizado"])
-    if "telefone" in q["tipos"]:
-        from . import telefone
-        res["telefone"] = telefone.analisar(q["normalizado"])
-    if ("pessoa" in q["tipos"] or "cpf" in q["tipos"]) and not confirmado:
-        res["requer_confirmacao"] = True
-        res["motivo"] = ("A entrada parece ser o nome de uma pessoa física. Declare a finalidade legítima para "
-                         "consultar listas de sanções, procurados e registros oficiais.")
-        return res
-    sel = set(selected) if selected else None
-    hits: list[SearchHit] = []
-    threads, lock = [], threading.Lock()
-    closed = threading.Event()  # após o prazo, resultados tardios de fontes online são descartados
-    if timeout_online is None:
-        import os
-        timeout_online = float(os.environ.get("OSINTLAB_TIMEOUT_ONLINE", "12"))
-    kind = next((t for t in q["tipos"] if t != "texto"), "texto")
-    variantes = expand(q)
-
-    def local(fid):
-        f = fontes()[fid]
-        conn = store.open_current(fid)
-        if conn is None:
-            return
-        try:
-            k = "identificador" if "identificador" in q["tipos"] and "identificador" in f.entradas else kind
-            if k not in f.entradas and "nome" in f.entradas and kind in ("pessoa", "organizacao"):
-                k = "nome"
-            found, seen = [], set()
-            for variant in (variantes if k in ("nome", "pessoa", "organizacao", "texto") else [q["normalizado"]]):
-                for h in f.search_local(conn, variant, k, limit):
-                    if h.registro_id not in seen:
-                        seen.add(h.registro_id)
-                        found.append(h)
-            with lock:
-                hits.extend(found[:limit])  # limite por fonte (o índice textual devolve candidatos extras)
-        except Exception as e:
-            with lock:
-                res["erros"].append({"fonte": fid, "erro": f"{e.__class__.__name__}: {e}"})
-        finally:
-            conn.close()
-
-    def online(fid):
-        f = fontes()[fid]
-        try:
-            k = next((t for t in q["tipos"] if t in f.entradas), kind)
-            found = f.search_online(None, q["normalizado"], k, limit)
-            for h in found:
-                h.origem = "online"
-            with lock:
-                if not closed.is_set():
-                    hits.extend(found)
-        except Exception as e:
-            with lock:
-                if not closed.is_set():
-                    res["erros"].append({"fonte": fid, "erro": f"{e.__class__.__name__}: {e}"})
-
-    import time as _time
-    local_threads = [threading.Thread(target=local, args=(fid,), daemon=True)
-                     for fid in p["local"] if sel is None or fid in sel]
-    online_threads = {fid: threading.Thread(target=online, args=(fid,), daemon=True)
-                      for fid in p["online"] if (sel is None or fid in sel) and timeout_online > 0}  # 0 = só bases locais
-    for t in [*local_threads, *online_threads.values()]:
-        t.start()
-    for t in local_threads:
-        t.join(timeout)
-    deadline = _time.monotonic() + timeout_online
-    for fid, t in online_threads.items():
-        t.join(max(0.0, deadline - _time.monotonic()))
-    with lock:
-        closed.set()
-        for fid, t in online_threads.items():
-            if t.is_alive():
-                res["erros"].append({"fonte": fid, "erro": f"Tempo esgotado ({timeout_online:.0f} s): a fonte online "
-                                                           "não respondeu a tempo; resultados locais exibidos."})
-        hits = list(hits)
-    graded = [grade(h, q, attrs) for h in hits]
-    graded = [h for h in graded if not (h.correspondencia == "relacionado" and h.pontuacao < 60)]
-    corroborate(graded)
-    graded.sort(key=lambda h: (NIVEL_ORDEM.index(h.nivel), -h.pontuacao))
-    res["resultados"] = [asdict(h) for h in graded]
-    if "cpf" in q["tipos"]:
-        confirmados, res["nomes_cpf"] = _confirmar_nomes(graded, q["normalizado"], project_id)
-        vistos = {(h["fonte"], h["registro_id"]) for h in confirmados}
-        res["resultados"] = confirmados + [h for h in res["resultados"] if (h["fonte"], h["registro_id"]) not in vistos]
-    if buscar_complementares:
-        res["complementares"] = complementares(q, p["conectores"], timeout_online)
-    for fid in p["assistida"]:
-        if sel is None or fid in sel:
-            f = fontes()[fid]
-            from .bases.fontes.assistidas import link_busca
-            res["assistidas"].append({"fonte": fid, "nome": f.nome, "url": link_busca(f, q["normalizado"]),
-                                      "instrucoes": f.instrucoes, "restricoes": f.restricoes, "aviso": f.aviso,
-                                      "validade_horas": f.validade_consulta_horas})
-    res["conectores"] = p["conectores"]
-    res["sugestoes"] = suggestions(q, graded)
-    res["variantes"] = variantes
-    res["sintese"] = summarize(res["resultados"], q)
-    res["avisos_fontes"] = sorted({fontes()[h.fonte].aviso for h in graded if fontes()[h.fonte].aviso})
-    audit.log("pesquisa_unificada", project_id=project_id,
-              details={"tipos": q["tipos"], "fontes": [*p["local"], *p["online"]], "resultados": len(graded),
-                       "confirmada": confirmado})
+    """Pesquisa síncrona (telas atuais, dossiê, lote e linha de comando). O trabalho é feito pelo orquestrador,
+    que também informa o estado de cada etapa em res["etapas"]."""
+    from . import orquestrador
+    res = orquestrador.executar(query, attrs=attrs, project_id=project_id, selecionadas=selected, confirmado=confirmado,
+                                limit=limit, timeout=timeout, campo=forcar, timeout_online=timeout_online,
+                                conectores=buscar_complementares)
+    if res["resultados"] or not (res.get("requer_confirmacao") or "invalido" in res["consulta"]["tipos"]):
+        p = res["plano"]
+        audit.log("pesquisa_unificada", project_id=project_id,
+                  details={"tipos": res["consulta"]["tipos"], "fontes": [*p["local"], *p["online"]],
+                           "resultados": len(res["resultados"]), "confirmada": confirmado})
     return res
-
-
-def complementares(q: dict, nomes: list[str], timeout: float) -> list[dict]:
-    """Executa os conectores passivos pertinentes (sem gravar no projeto) e devolve um resumo de cada um."""
-    from .plugins import load_all
-    reg = load_all()
-    alvo = q["normalizado"]
-    out, threads, lock = [], [], threading.Lock()
-
-    def um(nome):
-        c = reg[nome]
-        item = {"conector": nome, "nome": c.label, "fonte": c.source_url}
-        try:
-            r = c.func(alvo)
-            texto = r.get("texto") or json.dumps(r.get("dados", {}), ensure_ascii=False, default=str)
-            item.update(texto=texto[:3000], url=r.get("url_consulta"), itens=len(r.get("itens") or []))
-        except Exception as e:  # noqa: BLE001
-            item["erro"] = f"{e.__class__.__name__}: {e}"[:300]
-        with lock:
-            out.append(item)
-
-    from .bases import credentials
-
-    def usavel(n):  # conectores que exigem chave não cadastrada ficam de fora (sem ruído na tela)
-        c = reg.get(n)
-        return c and not c.sensitive and (not c.credencial or c.chave_opcional or credentials.get(c.credencial))
-    nomes = [n for n in nomes if usavel(n)]
-    for nome in nomes:
-        if nome in reg and not reg[nome].sensitive:
-            t = threading.Thread(target=um, args=(nome,), daemon=True)
-            t.start()
-            threads.append(t)
-    import time as _time
-    fim = _time.monotonic() + max(timeout, 1)
-    for t in threads:
-        t.join(max(0.0, fim - _time.monotonic()))
-    with lock:
-        feitos = {i["conector"] for i in out}
-        res = list(out) + [{"conector": n, "nome": reg[n].label, "erro": "Tempo esgotado."}
-                           for n in nomes if n in reg and not reg[n].sensitive and n not in feitos]
-    return sorted(res, key=lambda i: ("erro" in i, i["nome"]))
 
 
 def suggestions(q: dict, hits: list[SearchHit]) -> list[str]:

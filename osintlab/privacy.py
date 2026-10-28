@@ -170,4 +170,6 @@ def purge_expired() -> int:
             removed += cur.rowcount
             audit.log("retencao_expurgo", project_id=p["id"], details={"removidos": cur.rowcount, "corte": cutoff},
                       actor="sistema")
+    from . import orquestrador
+    removed += orquestrador.expurgar()["pesquisas"]  # pesquisas avulsas antigas e cache vencido
     return removed

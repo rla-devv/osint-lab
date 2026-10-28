@@ -276,6 +276,48 @@ CREATE TABLE IF NOT EXISTS assisted_lookups (
   justification TEXT
 );
 
+CREATE TABLE IF NOT EXISTS pesquisas (       -- pesquisas do orquestrador (avulsas ou ligadas a um caso)
+  id INTEGER PRIMARY KEY,
+  project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+  entrada TEXT NOT NULL,               -- CPF: só a máscara pública
+  campo TEXT DEFAULT '',
+  tipos TEXT DEFAULT '[]',
+  normalizado TEXT DEFAULT '',
+  finalidade TEXT DEFAULT '',
+  atributos TEXT DEFAULT '{}',
+  estado TEXT NOT NULL,                -- executando, concluida, aguardando_finalidade, invalida, falha
+  criada_em TEXT NOT NULL,
+  concluida_em TEXT,
+  resultado TEXT
+);
+
+CREATE TABLE IF NOT EXISTS pesquisa_etapas (
+  id INTEGER PRIMARY KEY,
+  pesquisa_id INTEGER NOT NULL REFERENCES pesquisas(id) ON DELETE CASCADE,
+  etapa TEXT NOT NULL,                 -- local:<fonte>, online:<fonte>, conector:<nome>, manual:<fonte>, analise:<nome>
+  modo TEXT NOT NULL,
+  ref TEXT NOT NULL,
+  nome TEXT NOT NULL,
+  estado TEXT NOT NULL,
+  motivo TEXT DEFAULT '',
+  resultados INTEGER DEFAULT 0,
+  dados TEXT,
+  de_cache INTEGER DEFAULT 0,
+  tardia INTEGER DEFAULT 0,
+  iniciada_em TEXT,
+  concluida_em TEXT,
+  duracao_ms INTEGER,
+  UNIQUE(pesquisa_id, etapa)
+);
+
+CREATE TABLE IF NOT EXISTS cache_consultas (  -- respostas de fontes online e conectores, por prazo curto
+  chave TEXT PRIMARY KEY,
+  capacidade TEXT NOT NULL,
+  criado_em TEXT NOT NULL,
+  expira_em REAL NOT NULL,
+  dados TEXT
+);
+
 CREATE TABLE IF NOT EXISTS settings_kv (
   key TEXT PRIMARY KEY,
   value TEXT
