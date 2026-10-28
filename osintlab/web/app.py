@@ -116,7 +116,7 @@ def render(request: Request, name: str, **ctx):
 def project_or_404(pid: int) -> dict:
     p = core.get_project(pid)
     if not p:
-        raise HTTPException(404, "Projeto não encontrado")
+        raise HTTPException(404, "Caso não encontrado")
     return p
 
 
@@ -143,7 +143,7 @@ def home(request: Request):
 def criar_exemplo():
     from .. import examples
     pid = examples.load_demo()
-    return back(f"/p/{pid}", "Projeto de demonstração criado com dados sintéticos.")
+    return back(f"/p/{pid}", "Caso de demonstração criado com dados sintéticos.")
 
 
 @app.post("/projetos")
@@ -153,22 +153,24 @@ def criar_projeto(name: str = Form(...), purpose: str = Form(...), description: 
         pid = core.create_project(name, purpose, description, retention_days)
     except core.ValidationError as e:
         return back("/", erro=str(e))
-    return back(f"/p/{pid}", "Projeto criado.")
+    return back(f"/p/{pid}", "Caso criado.")
 
 
 @app.post("/p/{pid}/excluir")
 def excluir_projeto(pid: int, confirmar: str = Form("")):
     p = project_or_404(pid)
     if confirmar.strip() != p["name"]:
-        return back(f"/p/{pid}", erro="Digite o nome exato do projeto para confirmar a exclusão.")
+        return back(f"/p/{pid}", erro="Digite o nome exato do caso para confirmar a exclusão.")
     core.delete_project(pid)
-    return back("/", "Projeto excluído.")
+    return back("/", "Caso excluído.")
 
 
 @app.get("/p/{pid}", response_class=HTMLResponse)
 def painel(request: Request, pid: int):
     p = project_or_404(pid)
+    from .. import orquestrador
     return render(request, "painel.html", p=p, itens=core.list_items(pid, limit=12),
+                  pesquisas=orquestrador.listar(project_id=pid, limite=5),
                   alertas=monitor.events(pid, only_unseen=True, limit=20), jobs=workflows.list_jobs(pid)[:8],
                   aba="painel")
 
@@ -1084,10 +1086,10 @@ def compartilhar(projeto: int = Form(...), acao: str = Form("nota"), titulo: str
         if iid and texto.strip():
             core.add_item(projeto, kind="nota", title=f"Observação: {titulo or url}"[:200], text=texto, url=None)
         return back(f"/p/{projeto}/item/{iid}" if iid else f"/p/{projeto}", "Página coletada com evidência."
-                    if iid else "Esta página já estava no projeto.")
+                    if iid else "Esta página já estava no caso.")
     iid = core.add_item(projeto, kind="nota", title=(titulo or texto[:80] or url or "Compartilhado")[:200],
                         text="\n".join(x for x in (texto, url) if x), url=url or None)
-    return back(f"/p/{projeto}/item/{iid}" if iid else f"/p/{projeto}", "Salvo no projeto." if iid else "Já estava no projeto.")
+    return back(f"/p/{projeto}/item/{iid}" if iid else f"/p/{projeto}", "Salvo no caso." if iid else "Já estava no caso.")
 
 
 @app.get("/favicon.ico")

@@ -37,9 +37,9 @@
 <label>Opções (JSON){% if f.id == 'opensanctions' %} — ex.: {"dataset": "un_sc_sanctions"} ou "sanctions"{% endif %}<textarea name="opcoes" rows="2">{{ opcoes }}</textarea></label><button>Salvar</button></form>
 {% if f.id.startswith('usr_') %}<form method="post" action="/central/personalizada/{{ f.id }}/excluir"><button class="mini perigo">Excluir fonte personalizada</button></form>{% endif %}
 {% if st.installed %}<details class="perigo"><summary>Remover base local</summary><form method="post" action="/central/fonte/{{ f.id }}/remover" class="form-inline"><input name="confirmar" placeholder="{{ f.id }}"><button class="perigo">Remover</button></form></details>{% endif %}
-{% elif f.online %}<h2>Consulta online</h2><p>Esta fonte é consultada por demanda na <b>Pesquisa unificada</b> de cada projeto (resultados ficam em cache como evidência).</p>
+{% elif f.online %}<h2>Consulta online</h2><p>Esta fonte é consultada por demanda na <b>pesquisa</b> (resultados ficam em cache como evidência).</p>
 <form method="post" action="/central/fonte/{{ f.id }}/testar"><button class="secundario">Testar conectividade</button></form>
-{% elif f.categoria == 'C' %}<h2>Consulta assistida</h2><p>Abra o portal oficial, faça a consulta e registre o resultado na Pesquisa unificada do projeto, anexando o comprovante. Validade do registro: {{ f.validade_consulta_horas or '—' }} h.</p>
+{% elif f.categoria == 'C' %}<h2>Consulta assistida</h2><p>Abra o portal oficial, faça a consulta e registre o resultado na pesquisa (guardada em um caso), anexando o comprovante. Validade do registro: {{ f.validade_consulta_horas or '—' }} h.</p>
 <p><a class="botao" href="{{ f.url_oficial }}" target="_blank" rel="noopener noreferrer">Abrir portal oficial</a></p>
 {% else %}<h2>Integração indisponível</h2><p>{{ f.restricoes }}</p>{% endif %}
 </section></div>

@@ -49,6 +49,16 @@
     ajustar();
   }
 
+  // ---- grafo da rede: carregado só quando o analista abre (o contêiner precisa estar visível)
+  document.addEventListener("toggle", (ev) => {
+    const d = ev.target;
+    if (d.id !== "ps-grafo" || !d.open || d.dataset.carregado) return;
+    d.dataset.carregado = "1";
+    const s = document.createElement("script");
+    s.src = "/static/rede.js";
+    document.body.appendChild(s);
+  }, true);
+
   // ---- resultado: filtros e atualização durante a execução
   const corpo = document.getElementById("ps-corpo");
   if (!corpo) return;

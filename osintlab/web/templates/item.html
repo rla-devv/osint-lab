@@ -47,14 +47,14 @@ coletado em {{ it.collected_at }}{% if it.published_at %} · publicado em {{ it.
 <tr><th>Content Credentials (C2PA)</th><td>{{ it.metadata.c2pa.nota or ('manifesto presente' if it.metadata.c2pa.manifesto else 'ausente') }}</td></tr></table>
 {% if it.metadata.alerta_edicao %}<p class="msg erro">{{ it.metadata.alerta_edicao }}. Isso não prova manipulação, mas exige cautela.</p>{% endif %}
 {% if it.metadata.observacao %}<p class="nota">{{ it.metadata.observacao }}</p>{% endif %}
-{% if semelhantes %}<h3>Imagens visualmente semelhantes nos seus projetos</h3><table><tr><th>Imagem</th><th>Projeto</th><th>Semelhança</th></tr>
-{% for s in semelhantes %}<tr><td><a href="/p/{{ s.pid }}/item/{{ s.id }}">#{{ s.id }} {{ s.title }}</a></td><td>{{ 'este projeto' if s.mesmo_projeto else s.projeto }}</td><td>{{ (s.sim*100)|round(0)|int }}%</td></tr>{% endfor %}</table>
-{% else %}<p class="nota">Nenhuma imagem parecida nos seus projetos (comparação por hash perceptual, feita no computador).</p>{% endif %}
+{% if semelhantes %}<h3>Imagens visualmente semelhantes nos seus casos</h3><table><tr><th>Imagem</th><th>Caso</th><th>Semelhança</th></tr>
+{% for s in semelhantes %}<tr><td><a href="/p/{{ s.pid }}/item/{{ s.id }}">#{{ s.id }} {{ s.title }}</a></td><td>{{ 'este caso' if s.mesmo_projeto else s.projeto }}</td><td>{{ (s.sim*100)|round(0)|int }}%</td></tr>{% endfor %}</table>
+{% else %}<p class="nota">Nenhuma imagem parecida nos seus casos (comparação por hash perceptual, feita no computador).</p>{% endif %}
 <h3>Busca reversa na internet (assistida)</h3>
 {% if reversa.url_publica %}<p class="nota">O serviço recebe só o endereço público de origem da imagem (<code>{{ reversa.url_publica[:80] }}</code>), não o arquivo.</p>
 {% else %}<p class="nota">Esta imagem não tem endereço público: o botão abre o site de envio. <a href="/evidencia/{{ it.evidence_sha256 }}">Baixe a imagem</a> e envie-a lá manualmente. <b>Ao enviar, a imagem sai do seu computador</b> e passa a ser tratada pelos termos do serviço; não envie imagens com dados pessoais sem necessidade.</p>{% endif %}
 <div class="form-inline">{% for k, sv in reversa.servicos.items() %}<form method="post" action="/p/{{ p.id }}/item/{{ it.id }}/busca-reversa" target="_blank" class="inline"><input type="hidden" name="servico" value="{{ k }}"><button class="mini secundario">{{ sv.nome }}</button></form>{% endfor %}</div>
-<p class="nota">Cada busca fica registrada na auditoria. Sem reconhecimento facial ou biométrico (decisão de projeto). Resultados de busca reversa indicam onde imagens parecidas aparecem, não quem está nelas nem a origem certa.</p></section>{% endif %}
+<p class="nota">Cada busca fica registrada na auditoria. Sem reconhecimento facial ou biométrico (escolha deliberada da ferramenta). Resultados de busca reversa indicam onde imagens parecidas aparecem, não quem está nelas nem a origem certa.</p></section>{% endif %}
 <section class="cartao"><h2>Conteúdo</h2><pre class="texto">{{ it.content_text[:60000] }}</pre></section>
 <details class="cartao"><summary>Metadados</summary><pre class="texto">{{ it.metadata|tojson_pretty }}</pre></details>
 {% endblock %}

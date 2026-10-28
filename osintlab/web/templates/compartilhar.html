@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Recebido pelo Compartilhar</h1>
-{% if not projetos %}<p class="msg aviso">Crie um projeto primeiro, na página inicial.</p>{% else %}
+{% if not projetos %}<p class="msg aviso">Crie um caso primeiro, na página inicial.</p>{% else %}
 <form method="post" action="/compartilhar" class="form">
 {% if url %}<p>Link: <a href="{{ url }}" target="_blank" rel="noopener noreferrer nofollow">{{ url }}</a></p>{% endif %}
-<label>Projeto <select name="projeto">{% for pr in projetos %}<option value="{{ pr.id }}" {{ 'selected' if loop.first }}>{{ pr.name }}</option>{% endfor %}</select></label>
+<label>Caso <select name="projeto">{% for pr in projetos %}<option value="{{ pr.id }}" {{ 'selected' if loop.first }}>{{ pr.name }}</option>{% endfor %}</select></label>
 <label>Título <input name="titulo" value="{{ titulo }}" size="40"></label>
 <label>Texto ou observação <textarea name="texto" rows="4">{{ texto }}</textarea></label>
 <input type="hidden" name="url" value="{{ url }}">
 <div class="form-inline">{% if url %}<button name="acao" value="coletar">Coletar a página (com evidência)</button>{% endif %}
 <button name="acao" value="nota" class="{{ 'secundario' if url }}">Salvar como nota</button></div>
 </form>{% endif %}
-<p class="nota">Para mandar fotos, áudios e documentos do celular, use Coleta e fluxos → Enviar arquivos dentro do projeto.</p>
+<p class="nota">Para mandar fotos, áudios e documentos do celular, use Material coletado → Coletar, dentro do caso.</p>
 {% endblock %}

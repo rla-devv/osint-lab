@@ -139,3 +139,45 @@ def test_pivo_de_pessoa_pede_finalidade_sem_caso(monkeypatch):
     c = TestClient(app)
     r = c.post("/pesquisar", data={"q": "BELTRANA SINTETICA", "campo": "pessoa"}, follow_redirects=False)
     assert r.status_code == 200 and 'id="ps-fin"' in r.text and orq.listar() == []
+
+
+def test_vigiar_salvar_marcados_e_conferir_pessoas(monkeypatch):
+    from osintlab import monitor
+    test_vinculos._instalar(monkeypatch)
+    _lista_suja_com_a_holding(monkeypatch)
+    _conectores(monkeypatch)
+    c = TestClient(app)
+    sid = int(c.post("/pesquisar", data={"q": CNPJ}, follow_redirects=False).headers["location"].rsplit("/", 1)[1])
+    _esperar(sid)
+    t = c.get(f"/pesquisar/{sid}").text
+    assert 'form="ps-salvar-form"' in t and "Ver a rede como grafo" in t and "Conferir as pessoas ligadas" in t
+    import re as _re
+    ids = _re.findall(r'\sid="([^"]+)"', t)
+    assert len(ids) == len(set(ids)), "ids repetidos na página"  # o grafo procura o elemento pelo id
+    assert "Guarde a pesquisa em um caso" in c.post(f"/pesquisar/{sid}/vigiar", data={"tipo": "rede"}, follow_redirects=True).text
+    # conferir pessoas exige finalidade numa pesquisa avulsa de CNPJ
+    assert "Informe a finalidade" in c.post(f"/pesquisar/{sid}/conferir-pessoas", follow_redirects=True).text
+    r = c.post(f"/pesquisar/{sid}/conferir-pessoas", data={"finalidade": "Due diligence de fornecedor sintético"},
+               follow_redirects=True)
+    assert "pessoa(s) conferida(s)" in r.text and "Pessoas ligadas conferidas" in r.text
+    conf = orq.obter(sid, com_resultado=True)["resultado"]["pessoas_conferidas"]
+    assert set(conf["pessoas"]) == {"FULANO SINTETICO DE TAL", "BELTRANA SINTETICA"}
+    # a lista suja sintética tem "FULANO SINTETICO DOS SANTOS", nome diferente: não é correspondência
+    assert not any(h["ligado"] == "FULANO SINTETICO DE TAL" and "DOS SANTOS" in h["titulo"] for h in conf["achados"])
+    r = c.post(f"/pesquisar/{sid}/caso", data={"nome": "Fornecedor", "finalidade": "Apuração de contrato público sintético",
+                                              "reg": ["cnpj_receita|11222333"]}, follow_redirects=True)
+    assert "1 registro(s) salvos um a um" in r.text
+    pid = orq.obter(sid)["project_id"]
+    for tipo in ("pesquisa", "rede", "diario"):
+        r = c.post(f"/pesquisar/{sid}/vigiar", data={"tipo": tipo}, follow_redirects=True)
+        assert "Vigilância criada" in r.text, tipo
+    assert {m["kind"] for m in get_db().query("SELECT kind FROM monitors WHERE project_id=?", (pid,))} >= {"pesquisa", "rede", "diario"}
+    assert monitor.KINDS
+
+
+def test_mascaras_compativeis():
+    from osintlab.privacy import moldes_compativeis
+    assert moldes_compativeis("***123456**", "***123456**") is True
+    assert moldes_compativeis("***123456**", "***123***-**"[:11].replace("-", "*")) in (True, None)
+    assert moldes_compativeis("***123456**", "***999456**") is False
+    assert moldes_compativeis("***123456**", "52*********") is None  # nenhum dígito em comum para comparar

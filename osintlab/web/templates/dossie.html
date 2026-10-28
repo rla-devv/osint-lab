@@ -10,7 +10,7 @@
 <label>Rede <select name="prof"><option value="1" {{ 'selected' if prof == 1 }}>só sócios</option><option value="2" {{ 'selected' if prof == 2 }}>+ outras empresas dos sócios</option></select></label></div></form>
 {% if erro_local %}<p class="msg erro">{{ erro_local }}</p>{% endif %}
 {% if d %}{% if d.pesquisa.consulta.tipos and ('cpf' in d.pesquisa.consulta.tipos or 'invalido' in d.pesquisa.consulta.tipos) %}{% for a in d.pesquisa.consulta.avisos %}<p class="msg erro">{{ a }}</p>{% endfor %}{% else %}
-<div class="form-inline"><form method="post" action="/p/{{ p.id }}/dossie/{{ token }}/salvar" class="inline"><button>Salvar no projeto</button></form>
+<div class="form-inline"><form method="post" action="/p/{{ p.id }}/dossie/{{ token }}/salvar" class="inline"><button>Salvar no caso</button></form>
 {% for ext, rot in [('pdf','PDF'),('docx','Word'),('html','HTML'),('md','Markdown')] %}<a class="botao secundario" href="/p/{{ p.id }}/dossie/{{ token }}.{{ ext }}">Baixar {{ rot }}</a> {% endfor %}
 <span class="nota">Disponível por 1 hora; depois, gere de novo.</span></div>
 {% set grafo = True %}{% include "_dossie_corpo.html" %}{% endif %}{% endif %}

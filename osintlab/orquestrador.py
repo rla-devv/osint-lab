@@ -614,6 +614,71 @@ def vincular(pesquisa_id: int, project_id: int) -> None:
     audit.log("pesquisa_vinculada", project_id=project_id, target=str(pesquisa_id))
 
 
+def conferir_pessoas(pesquisa_id: int, finalidade: str = "") -> dict:
+    """Ação explícita (nunca automática): confere as pessoas da rede societária nas bases locais de sanções,
+    fiscalização, PEP e procurados. Nome igual e CPF parcial compatível = provável; dígitos diferentes = outra
+    pessoa (fica de fora); lista sem CPF = só o nome coincide (hipótese)."""
+    from . import pesquisa
+    from .bases import store
+    from .bases.catalog import fontes
+    from .privacy import moldes_compativeis, moldes_cpf
+    db = get_db()
+    p = db.one("SELECT * FROM pesquisas WHERE id=?", (pesquisa_id,))
+    if not p or not p["resultado"]:
+        raise ValueError("Pesquisa inexistente ou ainda em andamento.")
+    fin = (finalidade or "").strip() or p["finalidade"] or finalidade_efetiva(p["project_id"])
+    if len(fin) < 10:
+        raise ValueError("Informe a finalidade para conferir pessoas.")
+    res = loads(p["resultado"], {})
+    pessoas = [n for n in (res.get("rede") or {}).get("nos", []) if n.get("tipo") == "pessoa"][:MAX_LIGADAS]
+    if not pessoas:
+        raise ValueError("Não há pessoas na rede societária desta pesquisa.")
+    bases = [f for f in fontes().values() if f.tema in TEMAS_ALERTA and f.sincronizavel
+             and ({"nome", "pessoa"} & set(f.entradas)) and store.open_current(f.id) is not None]
+    if not bases:
+        raise ValueError("Nenhuma base local de sanções, fiscalização, PEP ou procurados instalada.")
+    achados, descartados = [], 0
+    for f in bases:
+        conn = store.open_current(f.id)
+        try:
+            k = "pessoa" if "pessoa" in f.entradas else "nome"
+            for n in pessoas:
+                molde = (moldes_cpf(n.get("documento") or "") or [""])[0]
+                for h in f.search_local(conn, n["rotulo"], k, 10):
+                    if pesquisa._score(n["rotulo"], h.nomes or [h.titulo]) < 92:
+                        continue
+                    texto = " ".join(h.identificadores) + " " + json.dumps(h.atributos or {}, ensure_ascii=False, default=str)
+                    comp = [moldes_compativeis(molde, m) for m in moldes_cpf(texto)] if molde else []
+                    if comp and all(c is False for c in comp):
+                        descartados += 1  # mesmo nome, outro CPF
+                        continue
+                    if any(c is True for c in comp):
+                        nivel, just = "provavel", "Nome igual e CPF parcial compatível com o do quadro societário."
+                    else:
+                        nivel, just = "hipotese", "Só o nome coincide; a lista não publica dígitos comparáveis do CPF."
+                    achados.append({**asdict(h), "nivel": nivel, "justificativa": just, "ligado": n["rotulo"],
+                                    "ligado_documento": n.get("documento") or "", "nome_fonte": f.nome})
+        finally:
+            conn.close()
+    vistos, unicos = set(), []
+    for h in sorted(achados, key=lambda h: h["nivel"] != "provavel"):
+        if (h["fonte"], h["registro_id"], h["ligado"]) not in vistos:
+            vistos.add((h["fonte"], h["registro_id"], h["ligado"]))
+            unicos.append(h)
+    conf = {"pessoas": [n["rotulo"] for n in pessoas], "bases": [f.nome for f in bases], "achados": unicos,
+            "descartados": descartados, "finalidade": fin, "em": now_iso()}
+    res["pessoas_conferidas"] = conf
+    db.execute("UPDATE pesquisas SET resultado=? WHERE id=?", (dumps(res), pesquisa_id))
+    estado = "encontrado" if unicos else "sem_resultado"
+    db.execute("INSERT OR REPLACE INTO pesquisa_etapas(pesquisa_id, etapa, modo, ref, nome, estado, motivo, resultados, "
+               "dados, iniciada_em, concluida_em) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+               (pesquisa_id, "expansao:pessoas", "expansao", "pessoas", "Pessoas ligadas nas listas de alerta (pedido "
+                "do analista)", estado, "", len(unicos), "{}", conf["em"], conf["em"]))
+    audit.log("pessoas_ligadas_conferidas", project_id=p["project_id"], target=str(pesquisa_id),
+              details={"pessoas": len(pessoas), "achados": len(unicos), "finalidade": fin[:300]})
+    return conf
+
+
 def expurgar(dias: int | None = None) -> dict:
     """Apaga pesquisas avulsas antigas (não ligadas a um caso) e o cache vencido."""
     dias = RETENCAO_AVULSAS_DIAS if dias is None else dias

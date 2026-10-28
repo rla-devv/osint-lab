@@ -8,14 +8,15 @@
 {% endfor %}
 </div>
 <form class="busca-central" method="get" action="/p/{{ p.id }}/itens">
-  <input name="q" placeholder="Pesquisar no projeto (busca híbrida: texto + semântica)…" autofocus><button>Pesquisar</button>
+  <input name="q" placeholder="Buscar no material do caso (texto e sentido)…" aria-label="Buscar no material do caso"><button>Buscar</button>
 </form>
+<p class="meta"><a href="/p/{{ p.id }}/pesquisas">Nova pesquisa neste caso</a>{% if pesquisas %} · recentes: {% for h in pesquisas %}<a href="/pesquisar/{{ h.id }}">{{ h.entrada }}</a>{{ ', ' if not loop.last }}{% endfor %}{% endif %}</p>
 <div class="grade2">
 <section class="cartao"><h2>Itens prioritários (triagem)</h2>
   <table><tr><th>Título</th><th>Fonte</th><th>Pont.</th><th>Status</th></tr>
   {% for i in itens %}<tr><td><a href="/p/{{ p.id }}/item/{{ i.id }}">{{ i.title[:80] or '(sem título)' }}</a></td><td>{{ i.source_domain or 'local' }}</td>
   <td>{{ i.triage_score }}</td><td><span class="tag st-{{ i.status }}">{{ i.status }}</span></td></tr>{% endfor %}</table>
-  {% if not itens %}<p class="vazio">Sem itens. Vá em <a href="/p/{{ p.id }}/coleta">Coleta e fluxos</a>.</p>{% endif %}
+  {% if not itens %}<p class="vazio">Sem itens. Faça uma <a href="/p/{{ p.id }}/pesquisas">pesquisa</a> ou <a href="/p/{{ p.id }}/coleta">colete</a> páginas e arquivos.</p>{% endif %}
 </section>
 <section class="cartao"><h2>Alertas de monitoramento</h2>
   {% for e in alertas %}<p><span class="tag alerta">{{ e.change_type }}</span> {{ e.target }}: {{ e.summary }} <small class="meta">{{ e.ts }}</small></p>{% endfor %}
@@ -25,7 +26,7 @@
   {% if not jobs %}<p class="vazio">Nenhum fluxo executado.</p>{% endif %}
 </section>
 </div>
-<details class="perigo"><summary>Excluir projeto</summary>
-<form method="post" action="/p/{{ p.id }}/excluir" class="form-inline"><input name="confirmar" placeholder="Digite o nome do projeto"><button class="perigo">Excluir definitivamente</button></form>
+<details class="perigo"><summary>Excluir caso</summary>
+<form method="post" action="/p/{{ p.id }}/excluir" class="form-inline"><input name="confirmar" placeholder="Digite o nome do caso"><button class="perigo">Excluir definitivamente</button></form>
 <p class="nota">As evidências (arquivos originais) permanecem no armazenamento imutável e no manifesto; os itens e análises são removidos.</p></details>
 {% endblock %}

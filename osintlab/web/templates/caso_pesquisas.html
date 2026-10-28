@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="ps">
+<h1 class="ps-titulo">Pesquisas do caso</h1>
+<p class="meta">As pesquisas daqui usam a finalidade do caso: {{ p.purpose }}</p>
+{% set q, campo, projeto, erro_form = '', '', p.id, '' %}{% include "_pesquisar_form.html" %}
+{% if historico %}<section class="ps-secao"><h2>Feitas neste caso <span class="ps-n">{{ historico|length }}</span></h2>
+<div class="ps-rolar"><table class="ps-tabela"><thead><tr><th>Quando</th><th>Consulta</th><th>Tipo</th><th>Situação</th></tr></thead><tbody>
+{% for h in historico %}<tr><td class="meta">{{ h.criada_em[:16]|replace('T', ' ') }}</td><td><a href="/pesquisar/{{ h.id }}">{{ h.entrada }}</a></td>
+<td>{{ rotulo_tipos(h.tipos) }}</td><td><span class="tag ps-st-{{ h.estado }}">{{ {'concluida':'concluída','executando':'em andamento','interrompida':'interrompida','aguardando_finalidade':'sem finalidade','invalida':'inválida','falha':'falha'}.get(h.estado, h.estado) }}</span></td></tr>{% endfor %}
+</tbody></table></div></section>{% else %}<p class="vazio">Nenhuma pesquisa neste caso ainda. Pesquisas avulsas podem ser guardadas aqui a partir do resultado.</p>{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/pesquisar.js"></script>{% endblock %}

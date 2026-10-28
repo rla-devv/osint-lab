@@ -99,7 +99,7 @@ code{font-size:.8rem;word-break:break-all}.kpi{display:inline-block;margin:.3rem
 {% for k, v in d.estatisticas.items() %}<span class="kpi"><b>{{ v }}</b> {{ k }}</span>{% endfor %}
 {% if d.projeto.description %}<p>{{ d.projeto.description }}</p>{% endif %}
 {% if d.resumo_ia %}<h2>Resumo executivo</h2><p class="meta">Redigido por IA ({{ d.resumo_ia.modo }}) em {{ d.resumo_ia.gerado_em }}
-a partir das fontes do projeto; os números entre colchetes remetem às fontes listadas abaixo. Revise antes de usar.</p>
+a partir das fontes do caso; os números entre colchetes remetem às fontes listadas abaixo. Revise antes de usar.</p>
 <div style="white-space:pre-wrap">{{ d.resumo_ia.texto }}</div>
 <ol style="font-size:.85rem">{% for f in d.resumo_ia.fontes %}<li>{% if f.url %}<a href="{{ f.url }}">{{ f.titulo or f.url }}</a>{% else %}{{ f.titulo }}{% endif %} (#{{ f.item }}, {{ f.fonte }}{% if f.data %}, {{ f.data[:10] }}{% endif %})</li>{% endfor %}</ol>{% endif %}
 {% if d.afirmacoes is defined %}<h2>Afirmações e hipóteses</h2>

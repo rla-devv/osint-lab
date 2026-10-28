@@ -13,24 +13,31 @@
 <header class="topo">
   <a class="marca" href="/"><img src="/static/icone.png" alt="" class="logo"> OSINT Lab <small>v{{ version }}</small></a>
   {% if p %}<span class="projeto-atual">{{ p.name }}</span>{% endif %}
-  <nav class="topo-links"><a href="/pesquisar">Pesquisar</a><a href="/">Projetos</a><a href="/central">Central de Bases</a><a href="/auditoria{% if p %}?projeto={{ p.id }}{% endif %}">Auditoria</a><a href="/configuracoes">Configurações</a></nav>
+  <nav class="topo-links"><a href="/pesquisar">Pesquisar</a><a href="/">Casos</a><a href="/central">Bases de dados</a><a href="/auditoria{% if p %}?projeto={{ p.id }}{% endif %}">Auditoria</a><a href="/configuracoes">Configurações</a></nav>
 </header>
 <div class="layout">
 {% if p %}
 <aside class="lateral">
-  {% set abas = [("painel","Painel",""),("pesquisa","Pesquisa","/pesquisa"),("rede","Rede societária","/rede"),("itens","Itens do projeto","/itens"),("coleta","Coleta e fluxos","/coleta"),
-     ("entidades","Entidades e vínculos","/entidades"),("grafo","Grafo","/grafo"),("mapa","Mapa (GEOINT)","/mapa"),
-     ("tempo","Linha do tempo","/linha-do-tempo"),("verificacao","Verificação","/verificacao"),("comparar","Comparação","/comparar"),
-     ("monitor","Monitoramento","/monitoramento"),("assistente","Assistente de IA","/assistente"),
-     ("relatorios","Relatórios","/relatorios"),("evidencias","Evidências","/evidencias")] %}
-  {% for key, label, path in abas %}
-  <a class="{{ 'ativo' if aba == key }}" href="/p/{{ p.id }}{{ path }}">{{ label }}
-    {% if key == 'itens' and st and st.revisar %}<span class="badge">{{ st.revisar }}</span>{% endif %}
+  {% set grupos = [("painel","Resumo","",[("painel","Resumo","")]),
+     ("pesquisas","Pesquisas","/pesquisas",[("pesquisas","Pesquisas do caso","/pesquisas"),("pesquisa","Versão anterior","/pesquisa")]),
+     ("material","Material coletado","/itens",[("itens","Itens","/itens"),("coleta","Coletar","/coleta"),("evidencias","Evidências","/evidencias")]),
+     ("analise","Análise","/entidades",[("entidades","Entidades e vínculos","/entidades"),("grafo","Grafo","/grafo"),("mapa","Mapa","/mapa"),("tempo","Linha do tempo","/linha-do-tempo"),("comparar","Comparar","/comparar")]),
+     ("verificacao","Verificação","/verificacao",[("verificacao","Verificação","/verificacao")]),
+     ("monitor","Vigilância","/monitoramento",[("monitor","Vigilância","/monitoramento")]),
+     ("assistente","Assistente","/assistente",[("assistente","Assistente","/assistente")]),
+     ("relatorios","Relatórios","/relatorios",[("relatorios","Relatórios","/relatorios")])] %}
+  {% set antigas = {"rede": "pesquisa", "dossie": "pesquisa", "lote": "pesquisa"} %}
+  {% set aba_atual = antigas.get(aba, aba) %}
+  {% for key, label, path, sub in grupos %}{% set ativo = aba_atual in sub|map(attribute=0)|list %}
+  <a class="{{ 'ativo' if ativo }}" href="/p/{{ p.id }}{{ path }}">{{ label }}
+    {% if key == 'material' and st and st.revisar %}<span class="badge">{{ st.revisar }}</span>{% endif %}
     {% if key == 'monitor' and st and st.alertas %}<span class="badge alerta">{{ st.alertas }}</span>{% endif %}</a>
   {% endfor %}
 </aside>
 {% endif %}
 <main class="conteudo">
+  {% if p and aba %}{% for key, label, path, sub in grupos if (antigas.get(aba, aba)) in sub|map(attribute=0)|list and sub|length > 1 %}
+  <nav class="abas" aria-label="{{ label }}">{% for k, l, pth in sub %}<a class="{{ 'ativo' if k == antigas.get(aba, aba) }}" href="/p/{{ p.id }}{{ pth }}">{{ l }}</a>{% endfor %}</nav>{% endfor %}{% endif %}
   {% if nova_versao %}<div class="msg aviso">Versão {{ nova_versao.versao }} disponível (você usa a {{ nova_versao.atual }}). <a href="{{ nova_versao.url }}" target="_blank" rel="noopener">Ver no GitHub</a>.</div>{% endif %}
   {% if request.query_params.get('msg') %}<div class="msg ok">{{ request.query_params.get('msg') }}</div>{% endif %}
   {% if request.query_params.get('erro') %}<div class="msg erro">{{ request.query_params.get('erro') }}</div>{% endif %}

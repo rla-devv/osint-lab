@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>{{ e.type }}: {{ e.value }}</h1>
-{% if e.sensitive %}<p class="msg erro">Dado pessoal: trate conforme a finalidade declarada do projeto. Não é exibido no grafo por padrão nem exportado em relatórios de entidades.</p>{% endif %}
+{% if e.sensitive %}<p class="msg erro">Dado pessoal: trate conforme a finalidade declarada do caso. Não é exibido no grafo por padrão nem exportado em relatórios de entidades.</p>{% endif %}
 <div class="grade2">
 <section class="cartao"><h2>Aprofundar (conectores compatíveis)</h2>
 {% for c in conectores %}<form method="post" action="/p/{{ p.id }}/coleta/conector" class="form-inline"><input type="hidden" name="conector" value="{{ c.name }}"><input type="hidden" name="valor" value="{{ e.value }}"><button class="secundario">{{ c.label }}</button></form>{% endfor %}

@@ -64,6 +64,14 @@ def _lista_requer_finalidade(termos: list[str], projeto: int | None) -> bool:
     return any(orquestrador.TIPOS_PESSOAIS & set(pesquisa.classify(t)["tipos"]) for t in termos)
 
 
+@router.get("/p/{pid}/pesquisas", response_class=HTMLResponse)
+def pesquisas_do_caso(request: Request, pid: int):
+    w = _app()
+    p = w.project_or_404(pid)
+    return w.render(request, "caso_pesquisas.html", p=p, aba="pesquisas", CAMPOS=CAMPOS, casos=core.list_projects(),
+                    historico=orquestrador.listar(project_id=pid, limite=100), rotulo_tipos=rotulo_tipos)
+
+
 @router.get("/api/classificar")
 def classificar(q: str = "", campo: str = "", projeto: int | None = None):
     from .. import lote
@@ -169,10 +177,13 @@ def parcial(request: Request, sid: int):
 
 
 @router.post("/pesquisar/{sid}/caso")
-def salvar_em_caso(sid: int, projeto: str = Form(""), nome: str = Form(""), finalidade: str = Form("")):
+async def salvar_em_caso(request: Request, sid: int):
     """Liga a pesquisa a um caso (existente ou novo) e guarda o resultado no caso, com os registros relevantes."""
     from .. import dossie
     w = _app()
+    form = await request.form()
+    projeto, nome, finalidade = (str(form.get(k, "")) for k in ("projeto", "nome", "finalidade"))
+    marcados = set(form.getlist("reg"))
     r = orquestrador.obter(sid, com_resultado=True)
     if not r:
         raise HTTPException(404)
@@ -187,10 +198,53 @@ def salvar_em_caso(sid: int, projeto: str = Form(""), nome: str = Form(""), fina
                                                             "ou mais).")
         pid = core.create_project(nome.strip()[:200], finalidade.strip()[:1000])
     orquestrador.vincular(sid, pid)
+    n = 0
     if r.get("resultado") and r["resultado"].get("resultados") is not None:
-        d = dossie.de_pesquisa(r["resultado"], r["entrada"], r["finalidade"])
-        dossie.salvar_no_projeto(pid, d)
-    return w.back(f"/pesquisar/{sid}", f"Pesquisa salva no caso “{core.get_project(pid)['name']}”.")
+        res = r["resultado"]
+        d = dossie.de_pesquisa(res, r["entrada"], r["finalidade"])
+        d["alertas"] = res.get("alertas") or []
+        escolhidos = None
+        if marcados:
+            todos = res["resultados"] + d["alertas"] + ((res.get("pessoas_conferidas") or {}).get("achados") or [])
+            escolhidos = [h for h in todos if f"{h['fonte']}|{h['registro_id']}" in marcados and h["fonte"] in fontes()]
+        n = dossie.salvar_no_projeto(pid, d, escolhidos)["registros"]
+    return w.back(f"/pesquisar/{sid}", f"Pesquisa guardada no caso “{core.get_project(pid)['name']}”"
+                  + (f", com {n} registro(s) salvos um a um." if n else "."))
+
+
+@router.post("/pesquisar/{sid}/vigiar")
+def vigiar(sid: int, tipo: str = Form(...)):
+    """Vigilância a partir da pesquisa: novas correspondências nas bases, rede societária ou diários oficiais."""
+    from .. import monitor
+    w = _app()
+    r = orquestrador.obter(sid)
+    if not r:
+        raise HTTPException(404)
+    if not r["project_id"]:
+        return w.back(f"/pesquisar/{sid}#salvar", erro="Guarde a pesquisa em um caso para vigiar.")
+    if "cpf" in r["tipos"]:
+        return w.back(f"/pesquisar/{sid}#salvar", erro="Pesquisas por CPF não são vigiadas: o número não é guardado.")
+    alvo = r["normalizado"] if tipo in ("rede", "diario") else r["entrada"]
+    rotulo = (r["finalidade"] or orquestrador.finalidade_efetiva(r["project_id"]))[:300]
+    try:
+        mid = monitor.create(r["project_id"], tipo, alvo, 1440, rotulo)
+    except ValueError as e:
+        return w.back(f"/pesquisar/{sid}#salvar", erro=str(e))
+    monitor.run(mid)  # linha de base
+    return w.back(f"/pesquisar/{sid}#salvar", f"Vigilância criada: {monitor.KINDS[tipo].lower()}. Os avisos aparecem na "
+                                                "vigilância do caso.")
+
+
+@router.post("/pesquisar/{sid}/conferir-pessoas")
+def conferir_pessoas(sid: int, finalidade: str = Form("")):
+    w = _app()
+    try:
+        c = orquestrador.conferir_pessoas(sid, finalidade)
+    except ValueError as e:
+        return w.back(f"/pesquisar/{sid}#ps-rede", erro=str(e))
+    prov = sum(1 for h in c["achados"] if h["nivel"] == "provavel")
+    return w.back(f"/pesquisar/{sid}#ps-rede", f"{len(c['pessoas'])} pessoa(s) conferida(s): {prov} correspondência(s) "
+                                            f"provável(is), {len(c['achados']) - prov} só pelo nome.")
 
 
 @router.post("/pesquisar/{sid}/manual")

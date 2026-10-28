@@ -148,3 +148,14 @@ ul.riscos{list-style:none;padding:0;margin:.4rem 0}ul.riscos li{padding:.4rem 0;
 @media (max-width:700px){.ps-campo{flex-direction:column}.ps-campo button{width:100%}.ps-dl{grid-template-columns:1fr}.ps-novo-caso input{width:100%}}
 .ps-pivos{list-style:none;padding:0;margin:.2rem 0}.ps-pivos li{padding:.25rem 0;border-bottom:1px solid var(--line)}.ps-pivos li:last-child{border-bottom:0}
 .ps-pivos form.inline{margin:0 .3rem 0 0}
+.ps-marca{margin:0 .4rem 0 0;vertical-align:-1px}.ps-vigiar{margin:.5rem 0}.ps-vigiar form.inline{margin:0}
+#ps-grafo .grafo{height:480px;margin-top:.4rem}
+@media (max-width:700px){
+.topo{flex-wrap:wrap;gap:.3rem .8rem;padding:.5rem .8rem}.topo-links{margin-left:0;flex-wrap:wrap;gap:.2rem .9rem}
+.lateral{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+.conteudo{padding:1rem .9rem}
+.ps-campo textarea{width:100%;flex:none}
+.ps-linha label{flex-wrap:wrap;max-width:100%}.ps-linha select{min-width:0;flex:1}
+.abas{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap}
+.ps-tabela .tag{white-space:nowrap}
+}

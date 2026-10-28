@@ -86,7 +86,7 @@ def verificar() -> int:
     projetos = sorted({r["projeto"] for r in rows})
     msg = f"{n} alerta(s) novo(s) no monitoramento."
     if c.get("com_projeto"):
-        msg += " Projeto(s): " + ", ".join(projetos[:5]) + "."
+        msg += " Caso(s): " + ", ".join(projetos[:5]) + "."
     _enviar(c, "OSINT Lab", msg)
     c["ultimo_evento"] = rows[-1]["id"]
     _salvar(c)

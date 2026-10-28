@@ -97,5 +97,5 @@ def test_paginas_rede_e_dossie(monkeypatch):
     h = c.get(f"/p/{pid}/dossie/{token}.html")
     assert h.headers["content-disposition"].endswith("dossie.html") and "<script" not in h.text
     r = c.post(f"/p/{pid}/dossie/{token}/salvar", follow_redirects=True)
-    assert "Dossiê salvo no projeto" in r.text
+    assert "Dossiê salvo no caso" in r.text
     assert c.get(f"/p/{pid}/dossie/inexistente.md").status_code == 404

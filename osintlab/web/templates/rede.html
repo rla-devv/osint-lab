@@ -8,7 +8,7 @@
 {% if erro_local %}<p class="msg erro">{{ erro_local }}</p>{% endif %}
 {% if rede %}{% if rede.encontrada %}<section class="cartao">
 <form method="post" action="/p/{{ p.id }}/rede/salvar" class="form-inline"><input type="hidden" name="q" value="{{ q }}"><input type="hidden" name="prof" value="{{ prof }}">
-<button class="secundario">Salvar a rede no projeto (entidades e vínculos no grafo)</button>
+<button class="secundario">Salvar a rede no caso (entidades e vínculos no grafo)</button>
 <a class="botao secundario" href="/p/{{ p.id }}/dossie?q={{ q|urlencode }}">Gerar dossiê desta empresa</a></form>
 <form method="post" action="/p/{{ p.id }}/monitor" class="form-inline"><input type="hidden" name="kind" value="rede"><input type="hidden" name="target" value="{{ q }}">
 <input type="hidden" name="interval_minutes" value="10080"><input type="hidden" name="label" value="Rede societária de {{ q }}">

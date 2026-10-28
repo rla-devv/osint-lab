@@ -1,18 +1,24 @@
 {% extends "base.html" %}
 {% block title %}{{ s.entrada }} · Pesquisa · OSINT Lab{% endblock %}
+{% block head %}<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js" defer></script>{% endblock %}
 {% block content %}
 <div class="ps">
 <p class="ps-voltar"><a href="/pesquisar">Nova pesquisa</a></p>
 <div id="ps-corpo" data-sid="{{ s.id }}">{% include "_pesquisa_corpo.html" %}</div>
 {% if s.estado not in ('executando',) and res %}
-<section class="ps-secao ps-acoes" id="salvar"><h2>Guardar e exportar</h2>
-{% if caso %}<p>Esta pesquisa está no caso <a href="/p/{{ caso.id }}">{{ caso.name }}</a>.</p>{% else %}
-<form method="post" action="/pesquisar/{{ s.id }}/caso" class="ps-linha">
-<label>Salvar no caso <select name="projeto" id="ps-salvar-caso"><option value="">Novo caso…</option>{% for c in casos %}<option value="{{ c.id }}">{{ c.name[:60] }}</option>{% endfor %}</select></label>
+<section class="ps-secao ps-acoes" id="salvar"><h2>Guardar, vigiar e exportar</h2>
+<form method="post" action="/pesquisar/{{ s.id }}/caso" class="ps-linha" id="ps-salvar-form">
+{% if caso %}<input type="hidden" name="projeto" value="{{ caso.id }}"><span>Caso: <a href="/p/{{ caso.id }}">{{ caso.name }}</a></span>
+<button>Guardar no caso</button>{% else %}
+<label>Guardar no caso <select name="projeto" id="ps-salvar-caso"><option value="">Novo caso…</option>{% for c in casos %}<option value="{{ c.id }}">{{ c.name[:60] }}</option>{% endfor %}</select></label>
 <span class="ps-novo-caso"><input name="nome" placeholder="Nome do novo caso" maxlength="200">
 <input name="finalidade" placeholder="Finalidade do caso" maxlength="1000" size="34" value="{{ s.finalidade }}"></span>
-<button>Salvar</button></form>
-<small class="meta">O caso recebe o resultado completo e os registros documentais e prováveis, com o registro de cada fonte preservado.</small>{% endif %}
+<button>Guardar</button>{% endif %}</form>
+<small class="meta">O caso recebe o resultado completo. Os registros marcados acima são salvos um a um, com a evidência; sem marcação, são salvos os documentais e prováveis.</small>
+{% if caso and 'cpf' not in s.tipos %}<div class="ps-linha ps-vigiar"><span>Vigiar:</span>
+{% for t, rot in [('pesquisa', 'novas correspondências nas bases')] + ([('rede', 'a rede societária')] if 'cnpj' in s.tipos else []) + ([('diario', 'os diários oficiais')] if s.tipos|select('in', ['cnpj','organizacao','pessoa'])|list else []) %}
+<form method="post" action="/pesquisar/{{ s.id }}/vigiar" class="inline"><input type="hidden" name="tipo" value="{{ t }}"><button class="mini secundario">{{ rot }}</button></form>{% endfor %}
+<a class="meta" href="/p/{{ caso.id }}/monitoramento">ver vigilâncias do caso</a></div>{% elif not caso %}<p class="meta">Guarde a pesquisa em um caso para vigiar mudanças.</p>{% endif %}
 <p class="ps-export">Exportar: {% for ext, rot in [('pdf','PDF'),('docx','Word'),('html','HTML'),('md','Markdown')] %}<a href="/pesquisar/{{ s.id }}/exportar.{{ ext }}">{{ rot }}</a>{{ ' · ' if not loop.last }}{% endfor %}</p>
 </section>{% endif %}
 </div>

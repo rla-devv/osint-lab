@@ -279,7 +279,7 @@ async def salvar(pid: int, request: Request):
     raw = form.getlist("hit")
     hits = [json.loads(h) for h in raw]
     ids = pesquisa.save_hits(pid, hits, form.get("q", ""))
-    return _app().back(f"/p/{pid}/itens", f"{len(ids)} registro(s) salvos no projeto com evidência.")
+    return _app().back(f"/p/{pid}/itens", f"{len(ids)} registro(s) salvos no caso com evidência.")
 
 
 @router.post("/p/{pid}/assistida")
@@ -331,7 +331,7 @@ def salvar_rede(pid: int, q: str = Form(...), prof: int = Form(2)):
         return w.back(f"/p/{pid}/rede?q={quote(q)}", erro=r.get("aviso") or "Rede não encontrada.")
     iid = vinculos.salvar_no_projeto(pid, r)
     if not iid:
-        return w.back(f"/p/{pid}/rede?q={quote(q)}&prof={prof}", erro="Esta rede já está salva no projeto.")
+        return w.back(f"/p/{pid}/rede?q={quote(q)}&prof={prof}", erro="Esta rede já está salva no caso.")
     return w.back(f"/p/{pid}/item/{iid}", "Rede salva no projeto: entidades e vínculos aparecem no grafo.")
 
 
@@ -410,8 +410,8 @@ def dossie_salvar(pid: int, token: str):
     w.project_or_404(pid)
     r = dossie.salvar_no_projeto(pid, _dossie_ou_404(token))
     if not r["item"]:
-        return w.back(f"/p/{pid}/itens", "Este dossiê já estava salvo no projeto.")
-    return w.back(f"/p/{pid}/item/{r['item']}", f"Dossiê salvo no projeto com {r['registros']} registro(s) com evidência.")
+        return w.back(f"/p/{pid}/itens", "Este dossiê já estava salvo no caso.")
+    return w.back(f"/p/{pid}/item/{r['item']}", f"Dossiê salvo no caso com {r['registros']} registro(s) com evidência.")
 
 
 # ------------------------------------------------------------------ pesquisa em lote

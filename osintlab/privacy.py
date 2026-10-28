@@ -101,6 +101,17 @@ def cpf_confere_molde(cpf: str, molde: str) -> bool:
     return len(d) == 11 and len(molde) == 11 and all(m in ("*", c) for c, m in zip(d, molde))
 
 
+def moldes_compativeis(a: str, b: str, minimo: int = 3) -> bool | None:
+    """Duas máscaras publicadas (11 posições, '*' oculto) podem ser do mesmo CPF? None quando os dígitos visíveis
+    em comum são poucos para dizer."""
+    if len(a) != 11 or len(b) != 11:
+        return None
+    comuns = [(x, y) for x, y in zip(a, b) if x != "*" and y != "*"]
+    if any(x != y for x, y in comuns):
+        return False
+    return True if len(comuns) >= minimo else None
+
+
 def mask_text(text: str) -> tuple[str, int]:
     """Mascara CPFs válidos e números de cartão (Luhn). Retorna (texto, nº de ocorrências)."""
     count = 0

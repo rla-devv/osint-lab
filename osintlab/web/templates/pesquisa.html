@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Pesquisa</h1>
+<h1>Pesquisa (versão anterior)</h1>
+<p class="msg aviso">Esta tela continua disponível durante a transição. A <a href="/p/{{ p.id }}/pesquisas">nova pesquisa</a> reúne, num só resultado, as bases, as consultas online e técnicas, a rede societária, as empresas ligadas e as consultas manuais.</p>
 <form method="post" action="/p/{{ p.id }}/pesquisa" class="form" id="form-pesquisa">
 <div class="campos" role="radiogroup" aria-label="Tipo de pesquisa">{% for k, (rotulo, dica) in CAMPOS.items() %}
 <label class="campo"><input type="radio" name="tipo" value="{{ k }}" data-dica="{{ dica }}" {{ 'checked' if tipo == k }}><span>{{ rotulo }}</span></label>{% endfor %}</div>
@@ -40,12 +41,12 @@
 <small class="meta"> · {{ fontes[h.fonte].nome }}{% if h.versao_base %} · versão {{ h.versao_base }}{% endif %}</small><br>
 <small>{{ h.resumo }}</small>{% if h.justificativa %}<br><small class="meta">{{ h.justificativa }}</small>{% endif %}</td></tr>{% endfor %}</table></section>
 {% else %}<section class="cartao"><p class="vazio">Nenhum registro nas bases e fontes consultadas. Ausência de resultado não comprova inexistência.</p></section>{% endfor %}
-<div class="form-inline">{% if total %}<button>Salvar selecionados no projeto</button>{% endif %}
+<div class="form-inline">{% if total %}<button>Salvar selecionados no caso</button>{% endif %}
 {% if 'cnpj' in res.consulta.tipos %}<a class="botao secundario" href="/p/{{ p.id }}/dossie?q={{ res.consulta.normalizado|urlencode }}&tipo=cnpj&finalidade={{ justificativa|urlencode }}">Dossiê completo (rede e sócios)</a> <a class="botao secundario" href="/p/{{ p.id }}/rede?q={{ res.consulta.normalizado|urlencode }}">Rede societária</a>{% endif %}
 </div></form>
 {% if token %}<div class="form-inline exportar"><span class="meta">Exportar esta pesquisa:</span>
 {% for ext, rot in [('pdf','PDF'),('docx','Word'),('html','HTML'),('md','Markdown')] %}<a class="botao mini secundario" href="/p/{{ p.id }}/dossie/{{ token }}.{{ ext }}">{{ rot }}</a>{% endfor %}
-<form method="post" action="/p/{{ p.id }}/dossie/{{ token }}/salvar" class="inline"><button class="mini secundario">Salvar a pesquisa inteira no projeto</button></form></div>{% endif %}
+<form method="post" action="/p/{{ p.id }}/dossie/{{ token }}/salvar" class="inline"><button class="mini secundario">Salvar a pesquisa inteira no caso</button></form></div>{% endif %}
 {% if res.plano.local and 'cpf' not in res.consulta.tipos %}<form method="post" action="/p/{{ p.id }}/monitor" class="form-inline"><input type="hidden" name="kind" value="pesquisa"><input type="hidden" name="target" value="{{ q }}">
 <input type="hidden" name="interval_minutes" value="1440"><input name="label" value="{{ justificativa }}" placeholder="Rótulo / finalidade" size="30">
 <button class="mini secundario">Vigiar esta pesquisa</button><span class="nota">avisa quando surgir uma correspondência nova nas bases locais.</span></form>{% endif %}
@@ -56,7 +57,7 @@
 {% if res.complementares %}<section class="cartao"><h2>Fontes online complementares <span class="contador">{{ res.complementares|length }}</span></h2>
 {% for c in res.complementares %}<details class="complementar"><summary><b>{{ c.nome }}</b> {% if c.erro %}<span class="tag alerta">sem resposta</span>{% else %}<span class="tag confirmado">ok</span>{% if c.itens %} <small class="meta">{{ c.itens }} item(ns)</small>{% endif %}{% endif %}</summary>
 {% if c.erro %}<p class="nota">{{ c.erro }}</p>{% else %}<pre class="texto">{{ c.texto }}</pre>
-<form method="post" action="/p/{{ p.id }}/coleta/conector" class="inline"><input type="hidden" name="conector" value="{{ c.conector }}"><input type="hidden" name="valor" value="{{ res.consulta.normalizado }}"><button class="mini secundario">Salvar no projeto com evidência</button></form>{% endif %}</details>{% endfor %}</section>{% endif %}
+<form method="post" action="/p/{{ p.id }}/coleta/conector" class="inline"><input type="hidden" name="conector" value="{{ c.conector }}"><input type="hidden" name="valor" value="{{ res.consulta.normalizado }}"><button class="mini secundario">Salvar no caso com evidência</button></form>{% endif %}</details>{% endfor %}</section>{% endif %}
 
 {% if res.assistidas %}<section class="cartao"><h2>Portais oficiais (consulta manual) <span class="contador">{{ res.assistidas|length }}</span></h2>
 <p class="nota">Portais sem automação permitida: abra, consulte e registre o resultado com comprovante.</p>

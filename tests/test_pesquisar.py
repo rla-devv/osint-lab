@@ -95,7 +95,7 @@ def test_salvar_em_caso_novo_e_exportar(monkeypatch):
     assert "informe o nome e a finalidade" in r.text
     r = c.post(f"/pesquisar/{sid}/caso", data={"nome": "Construtora", "finalidade": "Apuração de contrato público sintético"},
                follow_redirects=True)
-    assert "Pesquisa salva no caso" in r.text and "Esta pesquisa está no caso" in r.text
+    assert "Pesquisa guardada no caso" in r.text and "Guardar no caso</button>" in r.text
     pid = orq.obter(sid)["project_id"]
     assert pid and core.list_items(pid)  # registros e o resultado completo entraram no caso
     for ext, inicio in (("md", b"# Dossi"), ("pdf", b"%PDF"), ("docx", b"PK"), ("html", b"<!doctype")):
@@ -131,3 +131,22 @@ def test_tela_antiga_continua(monkeypatch):
     r = c.post(f"/p/{pid}/pesquisa", data={"q": "11.222.333/0001-81"})
     assert r.status_code == 200 and "CONSTRUTORA HORIZONTE AZUL LTDA" in r.text
     assert pesquisa.run("11.222.333/0001-81", timeout_online=0)["resultados"]
+
+
+def test_navegacao_do_caso(demo):
+    import re as _re
+    c = TestClient(app)
+    t = c.get(f"/p/{demo}/mapa").text
+    lateral = t.split('<aside class="lateral">')[1].split("</aside>")[0]
+    rotulos = [_re.sub(r"<span.*?</span>", "", x, flags=_re.S).strip()
+               for x in _re.findall(r"<a [^>]*>(.*?)</a>", lateral, flags=_re.S)]
+    assert rotulos == [
+        "Resumo", "Pesquisas", "Material coletado", "Análise", "Verificação", "Vigilância", "Assistente", "Relatórios"]
+    abas = t.split('<nav class="abas"')[1].split("</nav>")[0]
+    assert all(x in abas for x in ("Entidades e vínculos", "Grafo", "Mapa", "Linha do tempo", "Comparar"))
+    assert 'class="ativo" href="/p/%d/mapa"' % demo in abas
+    t = c.get(f"/p/{demo}/pesquisas").text
+    assert "Pesquisas do caso" in t and f'<option value="{demo}" selected' in t
+    assert "Versão anterior" in c.get(f"/p/{demo}/rede").text  # telas antigas continuam acessíveis
+    topo = c.get("/").text.split('<nav class="topo-links">')[1].split("</nav>")[0]
+    assert ">Pesquisar<" in topo and ">Casos<" in topo and ">Bases de dados<" in topo

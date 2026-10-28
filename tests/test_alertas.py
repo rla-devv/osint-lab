@@ -30,7 +30,7 @@ def test_aviso_so_com_a_contagem(monkeypatch, demo):
     alertas.configurar(True, "https://ntfy.sh", "osintlab-abcdefghijkl", com_projeto=True)
     _evento(mid)
     alertas.verificar()
-    assert "Projeto(s):" in enviados[-1][1]["message"]
+    assert "Caso(s):" in enviados[-1][1]["message"]
     alertas.configurar(False, "https://ntfy.sh", "osintlab-abcdefghijkl")
     _evento(mid)
     assert alertas.verificar() == 0

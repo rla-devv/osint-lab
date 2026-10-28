@@ -99,7 +99,7 @@ estado: <b id="ia-estado">{{ 'rodando' if ia.rodando else ('iniciando' if ia.pro
 <label>Servidor <input name="servidor" value="{{ alertas.servidor }}" size="22"></label>
 <label>Tópico <input name="topico" value="{{ alertas.topico or alertas.sugerido }}" size="26" required minlength="12"></label>
 <label>Ao tocar, abrir <input name="link" value="{{ alertas.link }}" placeholder="https://….ts.net (opcional)" size="26"></label>
-<label><input type="checkbox" name="com_projeto" value="1" {{ 'checked' if alertas.com_projeto }}> incluir o nome do projeto</label>
+<label><input type="checkbox" name="com_projeto" value="1" {{ 'checked' if alertas.com_projeto }}> incluir o nome do caso</label>
 <button class="secundario">{{ 'Salvar' if alertas.ativo else 'Ativar' }}</button></form>
 {% if alertas.topico %}<div class="form-inline"><form method="post" action="/alertas/configurar" class="inline"><input type="hidden" name="acao" value="testar"><button class="mini secundario">Enviar teste</button></form>
 {% if alertas.ativo %}<form method="post" action="/alertas/configurar" class="inline"><input type="hidden" name="acao" value="desativar"><button class="mini secundario">Desativar</button></form>{% endif %}</div>{% endif %}
@@ -110,7 +110,7 @@ estado: <b id="ia-estado">{{ 'rodando' if ia.rodando else ('iniciando' if ia.pro
 {% elif atualizacao.versao_remota %} · última publicada: {{ atualizacao.versao_remota }} (você está atualizado){% endif %}
 {% if atualizacao.verificado_em %}<br><small>Verificado em {{ atualizacao.verificado_em }}{% if atualizacao.erro %} · erro: {{ atualizacao.erro }}{% endif %}</small>{% endif %}</p>
 {% if atualizacao.progresso.etapa %}<p class="{{ 'erro' if atualizacao.progresso.etapa == 'erro' else 'nota' }}">Atualização: {{ {'conferindo':'conferindo a release','baixando':'baixando','trocando':'trocando o arquivo','concluida':'concluída, reiniciando…','erro':'falhou'}[atualizacao.progresso.etapa] }}{% if atualizacao.progresso.erro %} — {{ atualizacao.progresso.erro }}{% endif %}</p>{% endif %}
-<p class="nota">A verificação consulta as releases públicas do projeto no GitHub uma vez por dia. "Atualizar agora" baixa o OSINTLab.exe da release, confere o SHA-256 publicado junto, troca o arquivo e reinicia; a versão anterior é apagada no início seguinte. Desligue a verificação com <code>OSINTLAB_VERIFICAR_ATUALIZACAO=0</code>.</p>
+<p class="nota">A verificação consulta as releases públicas do programa no GitHub uma vez por dia. "Atualizar agora" baixa o OSINTLab.exe da release, confere o SHA-256 publicado junto, troca o arquivo e reinicia; a versão anterior é apagada no início seguinte. Desligue a verificação com <code>OSINTLAB_VERIFICAR_ATUALIZACAO=0</code>.</p>
 <div class="form-inline"><form method="post" action="/atualizacao/verificar" class="inline"><button class="secundario" {% if not atualizacao.habilitado %}disabled{% endif %}>Verificar agora</button></form>
 {% if atualizacao.pode_instalar and not remoto %}<form method="post" action="/atualizacao/instalar" class="inline"><button>Atualizar agora para {{ atualizacao.nova.versao }}</button></form>{% endif %}</div></section>
 <section class="cartao" id="cofre"><h2>Cofre (criptografia dos dados locais)</h2>

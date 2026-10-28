@@ -17,7 +17,7 @@
 <form method="post" action="/p/{{ p.id }}/lote" enctype="multipart/form-data" class="form">
 <label>Termos (um por linha)<textarea name="termos" rows="8" placeholder="11.222.333/0001-81&#10;Construtora Exemplo Ltda&#10;ABC1D23"></textarea></label>
 <label>ou planilha CSV (primeira coluna) <input type="file" name="arquivo" accept=".csv,text/csv,.txt"></label>
-<div class="form-inline"><label><input type="checkbox" name="do_projeto" value="1"> incluir as entidades do projeto (CNPJs, empresas, placas, domínios)</label>
+<div class="form-inline"><label><input type="checkbox" name="do_projeto" value="1"> incluir as entidades do caso (CNPJs, empresas, placas, domínios)</label>
 <label><input type="checkbox" name="pessoas" value="1"> e as pessoas</label>
 <label><input type="checkbox" name="online" value="1"> consultar também as fontes online (mais lento)</label></div>
 <label>Finalidade legítima <input name="finalidade" required minlength="20" size="60" placeholder="Ex.: checagem de fornecedores da licitação X"></label>

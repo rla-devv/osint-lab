@@ -47,6 +47,7 @@
 {% if e.identificadores|length > 1 %}<p class="meta">Identificadores: {{ e.identificadores|join(' · ') }}</p>{% endif %}
 {% for t in e.temas %}<h3>{{ t.titulo }} <span class="ps-n">{{ t.registros|length }}</span></h3>
 <ul class="ps-regs">{% for h in t.registros %}<li>
+{% if s.estado != 'executando' and not h.fonte.startswith('conector:') %}<input type="checkbox" name="reg" value="{{ h.fonte }}|{{ h.registro_id }}" form="ps-salvar-form" aria-label="Marcar para salvar no caso" class="ps-marca">{% endif %}
 {% if h.url %}<a href="{{ h.url }}" target="_blank" rel="noopener noreferrer nofollow">{{ h.titulo }}</a>{% else %}{{ h.titulo }}{% endif %}
 <span class="meta"> · {{ h.nome_fonte }}{% if h.origem == 'online' %} (online){% endif %}{% if h.quando %} · {{ h.quando }}{% endif %}{% if h.nivel != e.nivel %} · {{ NV[h.nivel] }}{% endif %}</span>
 {% if h.resumo and h.resumo != e.resumo %}<br><small>{{ h.resumo }}</small>{% endif %}
@@ -61,7 +62,7 @@
 </section>
 
 
-{% set rd = vis.rede %}{% if rd and rd.socios is defined %}<section class="ps-secao" id="rede"><h2>Sócios e empresas ligadas</h2>
+{% set rd = vis.rede %}{% if rd and rd.socios is defined %}<section class="ps-secao" id="ps-rede"><h2>Sócios e empresas ligadas</h2>
 {% if rd.socios %}<h3>Quadro societário</h3><div class="ps-rolar"><table class="ps-tabela"><thead><tr><th>Sócio</th><th>Qualificação</th><th>Desde</th></tr></thead><tbody>
 {% for x in rd.socios %}<tr><td>{{ x.nome }}{% if x.documento %} <span class="meta">{{ x.documento }}</span>{% endif %}{% if x.tipo == 'empresa' %} <span class="meta">(empresa)</span>{% endif %}</td><td>{{ x.qualificacao }}</td><td class="ps-nw">{{ x.desde }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
 {% if rd.empresas %}<h3>Empresas ligadas <span class="ps-n">{{ rd.empresas|length }}</span></h3>
@@ -70,6 +71,20 @@
 <td>{% if x.alertas %}{% for h in x.alertas %}<span class="tag nv-contraditorio">{{ h.titulo[:60] }}</span> <small class="meta">{{ fontes_nome(h.fonte) }}</small><br>{% endfor %}{% elif x.verificada %}<span class="meta">nenhum registro</span>{% else %}<span class="meta">não conferida</span>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
 {% if rd.verificou %}<p class="meta">Conferência automática (1 nível, só empresas ligadas por vínculo documental) nas bases locais: {{ rd.bases|join(', ') }}. Pessoas não são pesquisadas automaticamente.</p>{% endif %}{% endif %}
 {% if rd.comuns %}<h3>Pessoas em mais de uma empresa</h3><ul class="ps-manuais">{% for c in rd.comuns %}<li>{{ c.nome }} <span class="meta">{{ c.documento }} · {{ c.empresas }} empresas (mesma pessoa provável, por nome e CPF parcial)</span></li>{% endfor %}</ul>{% endif %}
+{% set pc = res.pessoas_conferidas %}
+{% if pc %}<h3>Pessoas ligadas conferidas <span class="ps-n">{{ pc.pessoas|length }}</span></h3>
+{% if pc.achados %}<ul class="ps-regs">{% for h in pc.achados %}<li>{% if not h.fonte.startswith('conector:') %}<input type="checkbox" name="reg" value="{{ h.fonte }}|{{ h.registro_id }}" form="ps-salvar-form" aria-label="Marcar para salvar no caso" class="ps-marca">{% endif %}
+<span class="tag nv-{{ h.nivel }}">{{ NV[h.nivel] }}</span> <b>{{ h.ligado }}</b> {{ h.ligado_documento }} → {% if h.url %}<a href="{{ h.url }}" target="_blank" rel="noopener noreferrer nofollow">{{ h.titulo }}</a>{% else %}{{ h.titulo }}{% endif %}
+<span class="meta">· {{ h.nome_fonte }}</span><br><small class="meta">{{ h.justificativa }}</small></li>{% endfor %}</ul>
+{% else %}<p>Nenhuma das pessoas aparece nas listas consultadas.</p>{% endif %}
+<p class="meta">Conferido em {{ pc.em[:16]|replace('T', ' ') }} nas bases locais: {{ pc.bases|join(', ') }}.{% if pc.descartados %} {{ pc.descartados }} registro(s) com o mesmo nome e outro CPF parcial ficaram de fora.{% endif %}</p>
+{% elif s.estado != 'executando' and vis.elementos|selectattr('titulo', 'equalto', 'Pessoas ligadas')|list %}
+<form method="post" action="/pesquisar/{{ s.id }}/conferir-pessoas" class="ps-linha"><button class="secundario">Conferir as pessoas ligadas nas listas de alerta</button>
+{% if not s.finalidade and not caso %}<input name="finalidade" placeholder="Finalidade (obrigatória)" size="30" required minlength="10" maxlength="500">{% endif %}
+<span class="meta">Compara nome e CPF parcial publicado, só nas bases locais. Não é feito automaticamente.</span></form>{% endif %}
+{% if res.rede and res.rede.nos %}<details class="ps-dados" id="ps-grafo" data-id="grafo"><summary>Ver a rede como grafo</summary>
+<div id="rede" class="grafo"></div><script type="application/json" id="rede-dados">{{ res.rede|tojson }}</script>
+<div id="rede-detalhe" class="nota">■ empresa · ● pessoa · linha cheia = documental · tracejada = mesma pessoa provável.</div></details>{% endif %}
 <p class="meta">{{ rd.aviso }}{% if rd.truncada %} Rede limitada às primeiras empresas encontradas.{% endif %}</p>
 </section>{% elif rd and rd.aviso %}<p class="msg aviso">{{ rd.aviso }}</p>{% endif %}
 

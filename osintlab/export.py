@@ -161,7 +161,7 @@ def ftm_entidades(project_id: int, include_sensitive: bool = False) -> list[dict
         schema = FTM_SCHEMA.get(e["type"])
         if not schema:
             continue
-        props = {"name": [e["value"]], "notes": [f"Projeto OSINT Lab: {p['name']}"]}
+        props = {"name": [e["value"]], "notes": [f"Caso OSINT Lab: {p['name']}"]}
         if e["type"] == "cnpj":
             props.update(registrationNumber=[e["value"]], taxNumber=[e["value"]], jurisdiction=["br"])
         ids[e["id"]] = fid("ent", e["id"])

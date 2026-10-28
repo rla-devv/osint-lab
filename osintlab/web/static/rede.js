@@ -22,8 +22,12 @@
     det.replaceChildren(t);
     if (n.tipo === "empresa" && n.cnpj && !n.raiz) {
       const a = document.createElement("a");
-      const pid = location.pathname.split("/")[2];
-      a.href = `/p/${pid}/rede?q=${encodeURIComponent(n.cnpj)}`; a.textContent = " — abrir a rede desta empresa";
+      if (location.pathname.startsWith("/pesquisar")) {
+        a.href = `/pesquisar?q=${encodeURIComponent(n.cnpj)}`; a.textContent = " — pesquisar esta empresa";
+      } else {
+        const pid = location.pathname.split("/")[2];
+        a.href = `/p/${pid}/rede?q=${encodeURIComponent(n.cnpj)}`; a.textContent = " — abrir a rede desta empresa";
+      }
       det.appendChild(a);
     }
   });

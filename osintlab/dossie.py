@@ -136,7 +136,7 @@ def markdown(d: dict, projeto: dict | None = None) -> str:
     niveis = pesquisa.NIVEIS
     out = [f"# Dossiê: {d['consulta']}", "", f"Gerado em {d['gerado_em']} pelo OSINT Lab."]
     if projeto:
-        out.append(f"Projeto: {projeto['name']}. Finalidade: {projeto['purpose']}.")
+        out.append(f"Caso: {projeto['name']}. Finalidade: {projeto['purpose']}.")
     if d.get("finalidade"):
         out.append(f"Finalidade declarada desta consulta: {d['finalidade']}.")
     out += ["", "## Resumo", ""] + [f"- {x}" for x in d.get("resumo", [])]
@@ -182,10 +182,12 @@ def markdown(d: dict, projeto: dict | None = None) -> str:
     return "\n".join(out) + "\n"
 
 
-def salvar_no_projeto(pid: int, d: dict) -> dict:
+def salvar_no_projeto(pid: int, d: dict, selecionados: list[dict] | None = None) -> dict:
+    """Guarda o dossiê no caso. Os registros salvos um a um são os escolhidos ou, sem escolha, os relevantes."""
     from .core import add_item
-    relevantes = [h for h in d["pesquisa"]["resultados"] + d.get("alertas", [])
-                  if h["nivel"] not in ("hipotese", "contraditorio")]  # o texto do dossiê guarda todos
+    relevantes = selecionados if selecionados is not None else [
+        h for h in d["pesquisa"]["resultados"] + d.get("alertas", [])
+        if h["nivel"] not in ("hipotese", "contraditorio")]  # o texto do dossiê guarda todos
     ids = pesquisa.save_hits(pid, relevantes, d["consulta"])
     rede_item = None
     if (r := d.get("rede")) and r.get("encontrada"):

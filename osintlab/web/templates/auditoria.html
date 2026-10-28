@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Trilha de auditoria</h1>
-<p>Integridade da cadeia de hashes: <b class="{{ 'ok' if integra else 'erro' }}">{{ 'íntegra' if integra else 'VIOLADA no registro #' ~ invalido }}</b>{% if projeto %} · filtrando projeto #{{ projeto }} (<a href="/auditoria">todos</a>){% endif %}</p>
-<table><tr><th>#</th><th>Data/hora (UTC)</th><th>Ator</th><th>Ação</th><th>Projeto</th><th>Alvo</th><th>Detalhes</th></tr>
+<p>Integridade da cadeia de hashes: <b class="{{ 'ok' if integra else 'erro' }}">{{ 'íntegra' if integra else 'VIOLADA no registro #' ~ invalido }}</b>{% if projeto %} · filtrando caso #{{ projeto }} (<a href="/auditoria">todos</a>){% endif %}</p>
+<table><tr><th>#</th><th>Data/hora (UTC)</th><th>Ator</th><th>Ação</th><th>Caso</th><th>Alvo</th><th>Detalhes</th></tr>
 {% for r in registros %}<tr><td>{{ r.id }}</td><td>{{ r.ts }}</td><td>{{ r.actor }}</td><td>{{ r.action }}</td><td>{{ r.project_id or '' }}</td><td><small>{{ (r.target or '')[:50] }}</small></td><td><small>{{ r.details[:160] }}</small></td></tr>{% endfor %}</table>
 {% endblock %}
