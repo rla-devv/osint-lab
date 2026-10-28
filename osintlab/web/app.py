@@ -563,6 +563,10 @@ def exportar(pid: int, formato: str, sensiveis: int = 0):
         data, nome = export.stix_bundle(pid, include_sensitive=bool(sensiveis)), f"projeto-{pid}.stix.json"
     elif formato == "misp":
         data, nome = export.misp_event(pid, include_sensitive=bool(sensiveis)), f"projeto-{pid}.misp.json"
+    elif formato == "ftm":
+        linhas = "\n".join(json.dumps(e, ensure_ascii=False) for e in export.ftm_entidades(pid, bool(sensiveis)))
+        return Response(linhas + "\n", media_type="application/x-ndjson",
+                        headers={"Content-Disposition": f"attachment; filename=projeto-{pid}.ftm.json"})
     else:
         raise HTTPException(404)
     return JSONResponse(data, headers={"Content-Disposition": f"attachment; filename={nome}"})
@@ -709,6 +713,30 @@ def quadros_item(pid: int, iid: int):
         novos += 1 if novo else 0
     audit.log("quadros_extraidos", project_id=pid, target=str(iid), details={"quadros": len(quadros)})
     return back(f"/p/{pid}/itens?tipo=imagem", f"{novos} quadro(s)-chave extraído(s) do vídeo #{iid}.")
+
+
+@app.post("/p/{pid}/item/{iid}/wayback")
+def wayback_salvar(pid: int, iid: int):
+    """Pede ao Wayback Machine uma cópia independente da página (Save Page Now), para corroborar a captura local."""
+    from .. import http as _http
+    project_or_404(pid)
+    it = core.get_item(iid)
+    if not it or it["project_id"] != pid or not (it["url"] or "").startswith(("http://", "https://")):
+        raise HTTPException(404)
+    try:
+        r = _http.fetch("https://web.archive.org/save/" + it["url"], collector="wayback_salvar", preserve=False,
+                        check_robots=False)
+    except Exception as e:  # noqa: BLE001
+        return back(f"/p/{pid}/item/{iid}", erro=f"O Wayback Machine não respondeu: {e}")
+    copia = r.headers.get("content-location") or (r.final_url if "/web/" in r.final_url else "")
+    if copia and copia.startswith("/"):
+        copia = "https://web.archive.org" + copia
+    if r.status >= 400 or not copia:
+        return back(f"/p/{pid}/item/{iid}", erro=f"O Wayback Machine recusou o pedido (HTTP {r.status}); tente mais tarde.")
+    meta = {**it["metadata"], "wayback": {"url": copia, "pedido_em": __import__("datetime").datetime.now().isoformat(timespec="seconds")}}
+    get_db().execute("UPDATE items SET metadata=? WHERE id=?", (json.dumps(meta, ensure_ascii=False), iid))
+    audit.log("wayback_salvo", project_id=pid, target=str(iid), details={"copia": copia})
+    return back(f"/p/{pid}/item/{iid}", f"Cópia independente guardada no Wayback Machine: {copia}")
 
 
 @app.post("/p/{pid}/item/{iid}/transcrever")

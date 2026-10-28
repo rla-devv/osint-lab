@@ -7,7 +7,7 @@ from ..db import dumps
 
 
 def load_builtin() -> None:
-    from . import infra, opendata, geo, search, registros  # noqa: F401
+    from . import infra, opendata, geo, search, registros, web_passivo  # noqa: F401
 
 
 def run_connector(project_id: int, name: str, value: str, *, confirmed: bool = False) -> dict:

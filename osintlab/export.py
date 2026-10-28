@@ -1,4 +1,5 @@
-"""Exportação do projeto para formatos de interoperabilidade: STIX 2.1 (bundle) e MISP (evento JSON).
+"""Exportação do projeto para formatos de interoperabilidade: STIX 2.1 (bundle), MISP (evento JSON) e
+FollowTheMoney (linhas JSON, para Aleph/OpenSanctions).
 
 Por padrão NÃO exporta entidades marcadas como dados pessoais (e-mails, telefones, CPF, pessoas).
 O nível de correspondência de cada vínculo é preservado (confidence STIX + descrição).
@@ -141,3 +142,40 @@ def misp_event(project_id: int, include_sensitive: bool = False) -> dict:
     return {"Event": {"uuid": str(uuid.uuid5(NS, f"projeto:{project_id}")), "info": p["name"], "date": p["created_at"][:10],
                       "threat_level_id": "4", "analysis": "1", "distribution": "0", "published": False,
                       "Tag": [{"name": "tlp:amber"}, {"name": "osintlab:uso-pessoal"}], "Attribute": attrs}}
+
+
+# ------------------------------------------------------------------ FollowTheMoney (Aleph, OpenSanctions, nomenklatura)
+FTM_SCHEMA = {"cnpj": "Company", "organizacao": "Organization", "pessoa": "Person"}
+
+
+def ftm_entidades(project_id: int, include_sensitive: bool = False) -> list[dict]:
+    """Entidades e vínculos do projeto no modelo FollowTheMoney (uma entidade por linha, JSON)."""
+    import hashlib
+    p = get_project(project_id)
+
+    def fid(prefixo, chave):
+        return f"osintlab-{prefixo}-" + hashlib.sha1(f"{project_id}|{chave}".encode()).hexdigest()[:20]
+
+    out, ids = [], {}
+    for e in list_entities(project_id, include_sensitive=include_sensitive):
+        schema = FTM_SCHEMA.get(e["type"])
+        if not schema:
+            continue
+        props = {"name": [e["value"]], "notes": [f"Projeto OSINT Lab: {p['name']}"]}
+        if e["type"] == "cnpj":
+            props.update(registrationNumber=[e["value"]], taxNumber=[e["value"]], jurisdiction=["br"])
+        ids[e["id"]] = fid("ent", e["id"])
+        out.append({"id": ids[e["id"]], "schema": schema, "properties": props})
+    for r in relations(project_id):
+        a, b = ids.get(r["src_entity"]), ids.get(r["dst_entity"])
+        if not a or not b:
+            continue
+        nota = f"{r['rel_type']} ({r['level']}): {r.get('rationale') or ''}"[:500]
+        if r["rel_type"] == "socio_de":
+            out.append({"id": fid("own", r["id"]), "schema": "Ownership",
+                        "properties": {"owner": [a], "asset": [b], "role": ["sócio"], "description": [nota]}})
+        else:
+            out.append({"id": fid("lnk", r["id"]), "schema": "UnknownLink",
+                        "properties": {"subject": [a], "object": [b], "role": [r["rel_type"]], "description": [nota]}})
+    audit.log("exportacao_ftm", project_id=project_id, details={"entidades": len(out), "sensiveis": include_sensitive})
+    return out

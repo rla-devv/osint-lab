@@ -45,7 +45,7 @@ COORD_RX = re.compile(r"^\s*-?\d{1,2}\.\d+\s*,\s*-?\d{1,3}\.\d+\s*$")
 
 # conectores já existentes (módulo connectors) usados por tipo de entrada
 CONECTORES_POR_TIPO = {
-    "dominio": ["rdap", "dns", "crtsh", "wayback", "urlscan", "otx"],
+    "dominio": ["rdap", "dns", "crtsh", "subdominios", "favicon", "wayback", "urlscan", "otx"],
     "ip": ["rdap", "asn", "internetdb", "urlscan", "otx", "abuseipdb"],
     "url": ["wayback", "urlscan"],
     "cnpj": ["cnpj", "querido_diario"],
