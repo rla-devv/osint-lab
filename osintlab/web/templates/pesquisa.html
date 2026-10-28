@@ -49,6 +49,9 @@
 {% if res.plano.local and 'cpf' not in res.consulta.tipos %}<form method="post" action="/p/{{ p.id }}/monitor" class="form-inline"><input type="hidden" name="kind" value="pesquisa"><input type="hidden" name="target" value="{{ q }}">
 <input type="hidden" name="interval_minutes" value="1440"><input name="label" value="{{ justificativa }}" placeholder="Rótulo / finalidade" size="30">
 <button class="mini secundario">Vigiar esta pesquisa</button><span class="nota">avisa quando surgir uma correspondência nova nas bases locais.</span></form>{% endif %}
+{% if res.consulta.tipos|select('in', ['cnpj', 'organizacao', 'pessoa'])|list %}<form method="post" action="/p/{{ p.id }}/monitor" class="form-inline"><input type="hidden" name="kind" value="diario"><input type="hidden" name="target" value="{{ res.consulta.normalizado }}">
+<input type="hidden" name="interval_minutes" value="1440"><input name="label" value="{{ justificativa }}" placeholder="Finalidade (obrigatória para pessoas)" size="30">
+<button class="mini secundario">Vigiar nos diários oficiais</button><span class="nota">avisa quando o termo aparecer num diário municipal novo (Querido Diário).</span></form>{% endif %}
 
 {% if res.complementares %}<section class="cartao"><h2>Fontes online complementares <span class="contador">{{ res.complementares|length }}</span></h2>
 {% for c in res.complementares %}<details class="complementar"><summary><b>{{ c.nome }}</b> {% if c.erro %}<span class="tag alerta">sem resposta</span>{% else %}<span class="tag confirmado">ok</span>{% if c.itens %} <small class="meta">{{ c.itens }} item(ns)</small>{% endif %}{% endif %}</summary>

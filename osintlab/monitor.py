@@ -12,7 +12,9 @@ from .db import dumps, get_db, loads, now_iso
 KINDS = {"pagina": "Alteração de página", "rss": "Novas entradas em feed", "dominio": "Alterações de DNS/RDAP",
          "pesquisa": "Nova correspondência nas bases locais (pesquisa unificada)",
          "registros": "Vigilância de registros oficiais salvos (automática)",
-         "busca": "Nova ocorrência em busca de notícias (GDELT)"}
+         "busca": "Nova ocorrência em busca de notícias (GDELT)",
+         "rede": "Mudanças na rede societária de um CNPJ (novas empresas, sócios, situação)",
+         "diario": "Nova publicação em diários oficiais municipais (Querido Diário)"}
 
 
 def create(project_id: int, kind: str, target: str, interval_minutes: int = 1440, label: str = "") -> int:
@@ -20,7 +22,11 @@ def create(project_id: int, kind: str, target: str, interval_minutes: int = 1440
         raise ValueError(f"Tipo de monitor inválido: {kind}")
     if kind == "registros":
         raise ValueError("Esse monitor é criado automaticamente ao salvar registros oficiais.")
-    if kind == "pesquisa":
+    if kind == "rede":
+        import re as _re
+        if len(_re.sub(r"\D", "", target)) not in (8, 14):
+            raise ValueError("Informe o CNPJ (ou o radical de 8 dígitos) da empresa a vigiar.")
+    if kind in ("pesquisa", "diario"):
         from .privacy import looks_like_person_target
         if looks_like_person_target(target) and len(label.strip()) < 20:
             raise ValueError("Para monitorar o nome de uma pessoa, informe a finalidade legítima no rótulo "
@@ -86,9 +92,44 @@ def _pesquisa_local_state(m: dict, prev: dict | None) -> tuple[dict, list[dict]]
     return {"ids": ids, "fontes": p["local"], "versoes": {h["fonte"]: h.get("versao_base") for h in hits}}, novos
 
 
+def _rede_state(target: str) -> dict:
+    from . import vinculos
+    r = vinculos.rede(target, 2)
+    if not r.get("encontrada"):
+        raise RuntimeError(r.get("aviso") or "CNPJ não encontrado na base do CNPJ.")
+    emp = {n["id"]: {"nome": n["rotulo"], "situacao": n.get("situacao", "")} for n in r["nos"] if n["tipo"] == "empresa"}
+    nos = {n["id"]: n["rotulo"] for n in r["nos"]}
+    vinc = sorted(f"{nos[e['de']]} → {nos[e['para']]}" for e in r["arestas"])
+    return {"empresas": emp, "vinculos": vinc, "origem": r["origem"]}
+
+
+def _rede_mudancas(prev: dict, st: dict) -> list[str]:
+    out = []
+    pe, ne = prev.get("empresas", {}), st.get("empresas", {})
+    out += [f"Empresa nova na rede: {ne[k]['nome']}" for k in ne if k not in pe]
+    out += [f"Empresa saiu da rede: {pe[k]['nome']}" for k in pe if k not in ne]
+    out += [f"Situação de {ne[k]['nome']}: {pe[k]['situacao'] or '?'} → {ne[k]['situacao'] or '?'}"
+            for k in ne if k in pe and pe[k]["situacao"] != ne[k]["situacao"]]
+    pv, nv = set(prev.get("vinculos", [])), set(st.get("vinculos", []))
+    out += [f"Vínculo novo: {v}" for v in sorted(nv - pv)] + [f"Vínculo encerrado: {v}" for v in sorted(pv - nv)]
+    return out
+
+
+def _diario_state(target: str) -> tuple[dict, list[dict], str | None]:
+    from .connectors.opendata import querido_diario
+    r = querido_diario(target)
+    itens = r.get("itens", [])
+    return {"urls": [i["url"] for i in itens if i.get("url")]}, itens, r.get("evidencia")
+
+
 def run_pesquisas_locais(source_id: str) -> int:
-    """Após a sincronização de uma base, reexecuta os monitores de pesquisa que a consultam."""
+    """Após a sincronização de uma base, reexecuta os monitores de pesquisa que a consultam (e os de rede
+    societária, quando a base do CNPJ muda)."""
     n = 0
+    if source_id == "cnpj_receita":
+        for m in get_db().query("SELECT id FROM monitors WHERE kind='rede' AND enabled=1"):
+            run(m["id"])
+            n += 1
     for m in get_db().query("SELECT * FROM monitors WHERE kind='pesquisa' AND enabled=1"):
         st = loads(m["last_state"], {}) or {}
         if not st or source_id in (st.get("fontes") or []):
@@ -147,6 +188,29 @@ def run(monitor_id: int) -> dict:
                 events.append(("linha_de_base", f"{len(state['ids'])} correspondência(s) na linha de base.", "", None))
         elif m["kind"] == "registros":
             state = prev or {}
+        elif m["kind"] == "rede":
+            state = _rede_state(m["target"])
+            if prev:
+                mud = _rede_mudancas(prev, state)
+                if mud:
+                    events.append(("alteracao", f"{len(mud)} mudança(s) na rede societária", "\n".join(mud), None))
+            else:
+                events.append(("linha_de_base", f"{len(state['empresas'])} empresa(s) e {len(state['vinculos'])} "
+                                                "vínculo(s) na linha de base.", "", None))
+        elif m["kind"] == "diario":
+            state, itens, sha = _diario_state(m["target"])
+            old = set(prev.get("urls", [])) if prev else set()
+            new = [i for i in itens if i.get("url") and i["url"] not in old]
+            if prev and new:
+                from .core import add_item
+                for i in new:
+                    add_item(m["project_id"], kind="documento", title=i["title"], url=i["url"], text=i["text"],
+                             published_at=i.get("published_at"), metadata={"monitor": monitor_id, **i.get("metadata", {})},
+                             collector="monitor")
+                events.append(("novos_itens", f"{len(new)} nova(s) publicação(ões) em diários oficiais",
+                               "\n".join(i["title"] for i in new), sha))
+            elif not prev:
+                events.append(("linha_de_base", f"{len(state['urls'])} publicação(ões) na linha de base.", "", sha))
         elif m["kind"] == "busca":
             state, sha = _search_state(m["target"])
             old = set(prev.get("urls", [])) if prev else set()

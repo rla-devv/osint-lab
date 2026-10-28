@@ -10,6 +10,9 @@
 <form method="post" action="/p/{{ p.id }}/rede/salvar" class="form-inline"><input type="hidden" name="q" value="{{ q }}"><input type="hidden" name="prof" value="{{ prof }}">
 <button class="secundario">Salvar a rede no projeto (entidades e vínculos no grafo)</button>
 <a class="botao secundario" href="/p/{{ p.id }}/dossie?q={{ q|urlencode }}">Gerar dossiê desta empresa</a></form>
+<form method="post" action="/p/{{ p.id }}/monitor" class="form-inline"><input type="hidden" name="kind" value="rede"><input type="hidden" name="target" value="{{ q }}">
+<input type="hidden" name="interval_minutes" value="10080"><input type="hidden" name="label" value="Rede societária de {{ q }}">
+<button class="mini secundario">Vigiar esta rede</button><span class="nota">avisa quando entrar ou sair uma empresa ou sócio, ou mudar a situação, a cada atualização da base do CNPJ.</span></form>
 {% set grafo = True %}{% include "_rede_corpo.html" %}</section>
 {% else %}<p class="msg aviso">{{ rede.aviso }}</p>{% endif %}{% endif %}
 {% endblock %}
