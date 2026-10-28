@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ s.entrada }} · Pesquisa · OSINT Lab{% endblock %}
+{% block content %}
+<div class="ps">
+<p class="ps-voltar"><a href="/pesquisar">Nova pesquisa</a></p>
+<div id="ps-corpo" data-sid="{{ s.id }}">{% include "_pesquisa_corpo.html" %}</div>
+{% if s.estado not in ('executando',) and res %}
+<section class="ps-secao ps-acoes" id="salvar"><h2>Guardar e exportar</h2>
+{% if caso %}<p>Esta pesquisa está no caso <a href="/p/{{ caso.id }}">{{ caso.name }}</a>.</p>{% else %}
+<form method="post" action="/pesquisar/{{ s.id }}/caso" class="ps-linha">
+<label>Salvar no caso <select name="projeto" id="ps-salvar-caso"><option value="">Novo caso…</option>{% for c in casos %}<option value="{{ c.id }}">{{ c.name[:60] }}</option>{% endfor %}</select></label>
+<span class="ps-novo-caso"><input name="nome" placeholder="Nome do novo caso" maxlength="200">
+<input name="finalidade" placeholder="Finalidade do caso" maxlength="1000" size="34" value="{{ s.finalidade }}"></span>
+<button>Salvar</button></form>
+<small class="meta">O caso recebe o resultado completo e os registros documentais e prováveis, com o registro de cada fonte preservado.</small>{% endif %}
+<p class="ps-export">Exportar: {% for ext, rot in [('pdf','PDF'),('docx','Word'),('html','HTML'),('md','Markdown')] %}<a href="/pesquisar/{{ s.id }}/exportar.{{ ext }}">{{ rot }}</a>{{ ' · ' if not loop.last }}{% endfor %}</p>
+</section>{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/pesquisar.js"></script>{% endblock %}

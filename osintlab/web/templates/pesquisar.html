@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Pesquisar · OSINT Lab{% endblock %}
+{% block content %}
+<div class="ps">
+<h1 class="ps-titulo">Pesquisar</h1>
+{% include "_pesquisar_form.html" %}
+{% if historico %}<section class="ps-secao"><h2>Pesquisas recentes</h2>
+<table class="ps-tabela"><thead><tr><th>Quando</th><th>Consulta</th><th>Tipo</th><th>Situação</th></tr></thead><tbody>
+{% for h in historico %}<tr><td class="meta">{{ h.criada_em[:16]|replace('T', ' ') }}</td><td><a href="/pesquisar/{{ h.id }}">{{ h.entrada }}</a></td>
+<td>{{ rotulo_tipos(h.tipos) }}</td><td><span class="tag ps-st-{{ h.estado }}">{{ {'concluida':'concluída','executando':'em andamento','interrompida':'interrompida','aguardando_finalidade':'sem finalidade','invalida':'inválida','falha':'falha'}.get(h.estado, h.estado) }}</span></td></tr>{% endfor %}
+</tbody></table></section>{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/pesquisar.js"></script>{% endblock %}

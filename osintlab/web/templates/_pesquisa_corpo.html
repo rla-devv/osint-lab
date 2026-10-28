@@ -1,0 +1,82 @@
+{# Miolo do resultado (também servido em /pesquisar/{id}/parcial durante a execução). #}
+{% set NV = {'documental':'Documental','corroborada':'Corroborada','provavel':'Provável','hipotese':'Hipótese','contraditorio':'Contraditório','nao_verificado':'Não verificado'} %}
+{% set a = s.andamento %}{% set pe = a.por_estado %}
+<div class="ps-resultado" data-estado="{{ s.estado }}">
+<header class="ps-cab"><h1>{{ s.entrada }}</h1>
+<p class="meta">{{ rotulo[:1]|upper }}{{ rotulo[1:] }} · {{ caso.name if caso else 'pesquisa avulsa' }} · {{ s.criada_em[:16]|replace('T', ' ') }}{% if s.finalidade %} · finalidade: {{ s.finalidade }}{% endif %}</p></header>
+
+{% if s.estado == 'aguardando_finalidade' %}<p class="msg aviso">Esta pesquisa não foi executada porque exige finalidade declarada. <a href="/pesquisar">Pesquisar de novo</a> informando a finalidade.</p>
+{% elif s.estado == 'invalida' %}<p class="msg erro">{{ (res.consulta.avisos if res and res.consulta else [])|join(' ') or 'Entrada inválida.' }}</p>
+{% else %}
+<div class="ps-progresso" role="status">
+{% if s.estado == 'executando' %}<div class="ps-barra"><span style="width:{{ (100 * a.concluidas / a.total)|round|int if a.total else 0 }}%"></span></div>
+<p>Consultando as fontes: <b>{{ a.concluidas }} de {{ a.total }}</b> concluídas. Os resultados aparecem à medida que chegam.</p>
+{% else %}<p>{% if s.estado == 'interrompida' %}<b>Pesquisa interrompida</b> (o programa foi fechado durante a execução). {% elif s.estado == 'falha' %}<b>A pesquisa falhou.</b> {% endif %}
+<a href="#fontes">{{ a.total }} consultas</a>:
+{% for k, rot in [('encontrado','com resultado'),('analisado','análise feita'),('sem_resultado','sem resultado'),('falha','com falha'),('tempo_esgotado','sem resposta no prazo'),('manual','manuais'),('nao_executada','não executadas')] if pe.get(k) %}<span class="ps-cont ps-st-{{ k }}">{{ pe[k] }} {{ rot }}</span>{% endfor %}</p>{% endif %}
+</div>
+{% if vis %}
+{% for x in vis.avisos %}<p class="msg aviso">{{ x }}</p>{% endfor %}
+{% if vis.placa and vis.placa.valida %}{% set pl = vis.placa %}<section class="ps-secao"><h2>Placa {{ pl.placa }}</h2>
+<p>{{ pl.formato }}{% if pl.equivalente_mercosul %} · Mercosul <code>{{ pl.equivalente_mercosul }}</code>{% endif %}{% if pl.equivalente_antiga %} · antiga <code>{{ pl.equivalente_antiga }}</code>{% endif %}
+{% if pl.origem %} · primeiro emplacamento: <b>{{ pl.origem.estado }} ({{ pl.origem.uf }})</b>, {{ 'indício forte' if pl.origem.confianca == 'indicio_forte' else 'indício fraco' }}{% else %} · {{ pl.aviso_origem }}{% endif %}</p>
+<p class="meta">{{ pl.limites }}</p></section>{% endif %}
+{% if vis.telefone %}{% set t = vis.telefone %}<section class="ps-secao"><h2>Telefone {{ t.formatado or t.entrada }}</h2>
+{% if t.aviso %}<p class="msg aviso">{{ t.aviso }}</p>{% else %}<p>{{ t.pais }}{% if t.ddd %} · DDD {{ t.ddd }}: <b>{{ t.regiao }} ({{ t.uf }})</b>{% endif %} · {{ t.tipo }}{% if not t.valido %} · <span class="erro">fora do plano de numeração</span>{% endif %}</p>{% endif %}
+<p class="meta">{{ t.limites }}</p></section>{% endif %}
+{% if vis.nomes_cpf %}<p class="msg aviso">Nomes ligados a este CPF parcial nas bases, conferidos por nome e CPF nas demais: <b>{{ vis.nomes_cpf|join('; ') }}</b>. O CPF parcial não identifica a pessoa sozinho.</p>{% endif %}
+{% if vis.riscos %}<section class="ps-secao"><h2>Pontos de atenção <span class="ps-n">{{ vis.riscos|length }}</span></h2>
+<ul class="ps-riscos">{% for i in vis.riscos %}<li><span class="tag {{ 'alerta' if i.gravidade == 'alta' else ('hipotese' if i.gravidade == 'media' else 'coincidencia') }}">{{ {'alta':'alta','media':'média','baixa':'baixa'}[i.gravidade] }}</span> <b>{{ i.titulo }}</b> <span class="meta">{{ i.explicacao }}{% if i.evidencias %} ({{ i.evidencias|join('; ') }}){% endif %}</span></li>{% endfor %}</ul>
+<p class="meta">Sinais calculados sobre o que as fontes trouxeram; nenhum deles prova irregularidade.</p></section>{% endif %}
+
+<section class="ps-secao" id="entidades"><div class="ps-secao-cab"><h2>Encontrado <span class="ps-n">{{ vis.entidades|length }}</span></h2>
+{% if vis.entidades|length > 1 %}<div class="ps-filtros" role="group" aria-label="Filtros">
+<select data-filtro="nivel" aria-label="Correspondência"><option value="">Toda correspondência</option>{% for n, c in vis.niveis.items() %}<option value="{{ n }}">{{ NV[n] }} ({{ c }})</option>{% endfor %}</select>
+<select data-filtro="tema" aria-label="Assunto"><option value="">Todos os assuntos</option>{% for t in vis.temas %}<option value="{{ t.tema }}">{{ t.titulo }}</option>{% endfor %}</select>
+<input data-filtro="texto" placeholder="Filtrar" size="14" aria-label="Filtrar por texto"></div>{% endif %}</div>
+{% if vis.entidades and not vis.alvo and vis.entidades|rejectattr('nivel', 'in', ['hipotese', 'contraditorio'])|list|length == 0 %}<p class="msg aviso">Em todos os registros só o nome coincide{% if vis.niveis.get('contraditorio') %} ou algum dado diverge{% endif %}: nenhum confirma que se trata da mesma {{ 'pessoa' if 'pessoa' in s.tipos else 'entidade' }}. Use os dados para distinguir homônimos ou confirme na fonte oficial.</p>{% endif %}
+{% for e in vis.entidades %}
+<details class="ps-ent{{ ' ps-alvo' if e.alvo }}" data-id="ent-{{ e.chave }}" data-nivel="{{ e.nivel }}" data-temas="{{ e.temas|map(attribute='tema')|join(' ') }}" {{ 'open' if e.alvo or (loop.first and vis.entidades|length == 1) }}>
+<summary><span class="tag nv-{{ e.nivel }}">{{ NV[e.nivel] }}</span> <b class="ps-ent-nome">{{ e.titulo }}</b>
+<span class="meta">{{ e.tipo }}{% if e.identificadores %} · {{ e.identificadores[0] }}{% endif %} · {{ e.fontes|length }} fonte{{ 's' if e.fontes|length > 1 }}{% if e.via_nome %} · via {{ e.via_nome }}{% endif %}</span>
+<span class="ps-temas">{% for t in e.temas %}{{ t.titulo }}{% if t.registros|length > 1 %} ({{ t.registros|length }}){% endif %}{{ ' · ' if not loop.last }}{% endfor %}</span>{% if e.divergencias %} <span class="tag nv-contraditorio">divergência</span>{% endif %}</summary>
+<div class="ps-ent-corpo">
+{% if e.resumo %}<p>{{ e.resumo }}</p>{% endif %}
+<p class="meta">{{ e.justificativa }}</p>
+{% for dv in e.divergencias %}<p class="msg aviso">{{ dv }}</p>{% endfor %}
+{% if e.identificadores|length > 1 %}<p class="meta">Identificadores: {{ e.identificadores|join(' · ') }}</p>{% endif %}
+{% for t in e.temas %}<h3>{{ t.titulo }} <span class="ps-n">{{ t.registros|length }}</span></h3>
+<ul class="ps-regs">{% for h in t.registros %}<li>
+{% if h.url %}<a href="{{ h.url }}" target="_blank" rel="noopener noreferrer nofollow">{{ h.titulo }}</a>{% else %}{{ h.titulo }}{% endif %}
+<span class="meta"> · {{ h.nome_fonte }}{% if h.origem == 'online' %} (online){% endif %}{% if h.versao_base %} · base de {{ h.versao_base }}{% elif h.data_referencia %} · {{ h.data_referencia }}{% endif %}{% if h.nivel != e.nivel %} · {{ NV[h.nivel] }}{% endif %}</span>
+{% if h.resumo and h.resumo != e.resumo %}<br><small>{{ h.resumo }}</small>{% endif %}
+{% if h.campos %}<details class="ps-dados"><summary>Dados do registro</summary>{% for rot, v in h.campos %}
+{% if v is mapping and v.tipo == 'tabela' %}<p class="ps-dado-rot">{{ rot }}{% if v.total > v.linhas|length %} (primeiros {{ v.linhas|length }} de {{ v.total }}){% endif %}</p>
+<div class="ps-rolar"><table class="ps-tabela"><thead><tr>{% for c in v.colunas %}<th>{{ c }}</th>{% endfor %}</tr></thead><tbody>{% for l in v.linhas %}<tr>{% for x in l %}<td>{{ x }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+{% elif v is mapping %}<p class="ps-dado-rot">{{ rot }}</p><dl class="ps-dl">{% for r2, v2 in v.itens %}<dt>{{ r2 }}</dt><dd>{{ v2 if v2 is string else '…' }}</dd>{% endfor %}</dl>
+{% else %}<dl class="ps-dl"><dt>{{ rot }}</dt><dd>{{ v }}</dd></dl>{% endif %}{% endfor %}</details>{% endif %}
+</li>{% endfor %}</ul>{% endfor %}
+</div></details>
+{% else %}<p class="vazio">{% if s.estado == 'executando' %}Aguardando as respostas das fontes…{% else %}Nenhum registro nas fontes que responderam. Ausência de resultado não comprova inexistência{% if pe.get('nao_executada') %}: {{ pe.nao_executada }} fonte(s) compatível(is) não foram consultadas (veja abaixo){% endif %}.{% endif %}</p>{% endfor %}
+</section>
+
+{% set tecs = etapas|selectattr('modo', 'equalto', 'conector')|rejectattr('estado', 'equalto', 'nao_executada')|list %}
+{% if tecs %}{% set textos = {} %}{% for c in vis.tecnicas %}{% set _ = textos.update({c.conector: c}) %}{% endfor %}
+<section class="ps-secao" id="tecnicas"><h2>Consultas técnicas <span class="ps-n">{{ tecs|length }}</span></h2>
+{% for e in tecs %}{% set c = textos.get(e.ref, {}) %}<details class="ps-tec" data-id="tec-{{ e.ref }}"><summary><span class="tag ps-st-{{ e.estado }}">{{ ESTADOS[e.estado] }}</span> {{ e.nome }}{% if e.de_cache %} <span class="meta">· resposta guardada</span>{% endif %}</summary>
+{% if c.texto %}<pre class="texto">{{ c.texto }}</pre>{% if c.url %}<p class="meta"><a href="{{ c.url }}" target="_blank" rel="noopener noreferrer">ver na fonte</a></p>{% endif %}{% elif e.motivo %}<p class="meta">{{ e.motivo }}</p>{% else %}<p class="meta">{{ 'Aguardando resposta.' if e.estado in ('pendente','executando') else 'Sem conteúdo.' }}</p>{% endif %}</details>{% endfor %}
+</section>{% endif %}
+
+{% if vis.manuais %}<section class="ps-secao" id="manuais"><h2>Consultas manuais <span class="ps-n">{{ vis.manuais|length }}</span></h2>
+<p class="meta">Portais oficiais sem automação permitida. O link já leva a consulta preenchida quando o portal aceita; o resultado não é lido pelo programa.</p>
+<ul class="ps-manuais">{% for m in vis.manuais %}<li><a href="{{ m.url }}" target="_blank" rel="noopener noreferrer">{{ m.nome }}</a>{% if m.instrucoes %} <span class="meta">{{ m.instrucoes }}</span>{% endif %}</li>{% endfor %}</ul></section>{% endif %}
+{% endif %}
+
+<details class="ps-secao ps-fontes" id="fontes" data-id="fontes"><summary><h2>Fontes <span class="ps-n">{{ etapas|length }}</span></h2></summary>
+<div class="ps-rolar"><table class="ps-tabela"><thead><tr><th>Fonte</th><th>Tipo</th><th>Situação</th><th>Detalhe</th></tr></thead><tbody>
+{% for e in etapas %}<tr><td>{{ e.nome }}</td><td class="meta ps-nw">{{ MODOS[e.modo] }}</td><td><span class="tag ps-st-{{ e.estado }}">{{ ESTADOS[e.estado] }}</span></td>
+{% set det = [] %}{% if e.estado == 'encontrado' and e.modo in ('local', 'online') %}{% set _ = det.append(e.resultados ~ ' registro(s)') %}{% endif %}{% if e.motivo %}{% set _ = det.append(e.motivo) %}{% endif %}{% if e.de_cache %}{% set _ = det.append('resposta guardada de consulta recente') %}{% elif e.duracao_ms is not none and e.estado not in ('manual','nao_executada') %}{% set _ = det.append(((e.duracao_ms / 1000)|round(1)) ~ ' s') %}{% endif %}{% if e.tardia %}{% set _ = det.append('respondeu depois do prazo') %}{% endif %}
+<td class="meta">{{ det|join(' · ') }}</td></tr>{% endfor %}
+</tbody></table></div></details>
+{% endif %}
+</div>

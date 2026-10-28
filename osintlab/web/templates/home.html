@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="ps"><h1 class="ps-titulo">Pesquisar</h1>
+{% set q, campo, projeto, erro_form = '', '', None, '' %}{% include "_pesquisar_form.html" %}
+<p class="meta"><a href="/pesquisar">Pesquisas recentes</a></p></div>
 <h1>Projetos de pesquisa</h1>
 {% if not projetos %}
 <section class="cartao destaque"><h2>Primeiros passos</h2>
@@ -37,3 +40,4 @@
 </section>
 </div>
 {% endblock %}
+{% block scripts %}<script src="/static/pesquisar.js"></script>{% endblock %}

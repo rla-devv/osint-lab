@@ -1,0 +1,25 @@
+{# Formulário de pesquisa. Variáveis: q, campo, projeto, casos, CAMPOS, erro_form, pedir_finalidade, nascimento, pais #}
+<form method="post" action="/pesquisar" class="ps-busca" id="ps-form" autocomplete="off">
+<div class="ps-campo">
+<input name="q" id="ps-q" value="{{ q }}" maxlength="500" required {{ 'autofocus' if not q }} aria-label="Dado a pesquisar"
+ placeholder="CPF, CNPJ, placa, nome, telefone, e-mail, domínio, IP, processo…">
+<button>Pesquisar</button></div>
+<div class="ps-linha">
+<span id="ps-tipo" class="ps-detectado" aria-live="polite"></span>
+<label>Tipo <select name="campo" id="ps-campo">{% for k, v in CAMPOS %}<option value="{{ k }}" {{ 'selected' if k == campo }}>{{ v }}</option>{% endfor %}</select></label>
+<label>Caso <select name="projeto" id="ps-projeto"><option value="">Pesquisa avulsa</option>
+{% for c in casos %}<option value="{{ c.id }}" {{ 'selected' if projeto == c.id }}>{{ c.name[:60] }}</option>{% endfor %}</select></label>
+</div>
+<div id="ps-finalidade" class="ps-finalidade" {% if not pedir_finalidade %}hidden{% endif %}>
+<label for="ps-fin">Finalidade desta pesquisa</label>
+<input name="finalidade" id="ps-fin" maxlength="500" {{ 'required' if pedir_finalidade }} placeholder="Ex.: verificação de sócio em contrato público">
+<small class="meta">Exigida para pesquisas de pessoa e de CPF. Em um caso, vale a finalidade declarada nele.</small>
+</div>
+<details class="ps-opcoes"><summary>Dados para distinguir homônimos</summary>
+<div class="ps-linha"><label>Nascimento <input name="nascimento" value="{{ nascimento or '' }}" placeholder="AAAA-MM-DD" size="11"></label>
+<label>País <input name="pais" value="{{ pais or '' }}" placeholder="br" size="4"></label>
+<label>CPF para conferir <input name="cpf" placeholder="000.000.000-00" size="15" inputmode="numeric"></label></div>
+<small class="meta">Usados só para comparar com os registros encontrados; o CPF é guardado apenas com a máscara pública.</small>
+</details>
+{% if erro_form %}<p class="msg erro">{{ erro_form }}</p>{% endif %}
+</form>

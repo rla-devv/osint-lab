@@ -13,7 +13,7 @@
 <header class="topo">
   <a class="marca" href="/"><img src="/static/icone.png" alt="" class="logo"> OSINT Lab <small>v{{ version }}</small></a>
   {% if p %}<span class="projeto-atual">{{ p.name }}</span>{% endif %}
-  <nav class="topo-links"><a href="/">Projetos</a><a href="/central">Central de Bases</a><a href="/auditoria{% if p %}?projeto={{ p.id }}{% endif %}">Auditoria</a><a href="/configuracoes">Configurações</a></nav>
+  <nav class="topo-links"><a href="/pesquisar">Pesquisar</a><a href="/">Projetos</a><a href="/central">Central de Bases</a><a href="/auditoria{% if p %}?projeto={{ p.id }}{% endif %}">Auditoria</a><a href="/configuracoes">Configurações</a></nav>
 </header>
 <div class="layout">
 {% if p %}

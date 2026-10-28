@@ -47,6 +47,8 @@ from .central import router as central_router  # noqa: E402
 app.include_router(central_router)
 from .pesquisas_api import router as pesquisas_router  # noqa: E402
 app.include_router(pesquisas_router)
+from .pesquisar import router as pesquisar_router  # noqa: E402
+app.include_router(pesquisar_router)
 
 CSP = ("default-src 'self'; img-src 'self' data: https://*.tile.openstreetmap.org; "
        "script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; "
@@ -132,7 +134,9 @@ def back(url: str, msg: str = "", erro: str = "") -> RedirectResponse:
 # ------------------------------------------------------------------ projetos
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return render(request, "home.html", projetos=core.list_projects())
+    from .pesquisar import CAMPOS
+    projetos = core.list_projects()
+    return render(request, "home.html", projetos=projetos, casos=projetos, CAMPOS=CAMPOS)
 
 
 @app.post("/exemplo")

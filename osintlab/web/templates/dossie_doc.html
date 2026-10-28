@@ -4,5 +4,5 @@ table{border-collapse:collapse;width:100%;margin:.5rem 0}th,td{border-bottom:1px
 .cartao{border:1px solid #dde3ea;border-radius:8px;padding:.6rem 1rem;margin:1rem 0}.destaque{border-left:4px solid #2a6fd6}
 .tag{display:inline-block;padding:0 .4rem;border-radius:4px;font-size:.75rem;background:#e6ecf3}.nv-documental,.nv-corroborada,.confirmado{background:#cdeed8}
 .nv-provavel,.possivel{background:#d9e6ff}.nv-hipotese{background:#ffe7bf}.nv-contraditorio,.alerta{background:#ffd6d2}.nota,.meta{color:#5a6675;font-size:.88rem}</style></head>
-<body><h1>Dossiê: {{ d.consulta }}</h1><p class="meta">Projeto {{ p.name }} · finalidade do projeto: {{ p.purpose }} · OSINT Lab</p>
+<body><h1>Dossiê: {{ d.consulta }}</h1><p class="meta">{% if p %}Projeto {{ p.name }} · finalidade do projeto: {{ p.purpose }}{% else %}Pesquisa avulsa{% if d.finalidade %} · finalidade: {{ d.finalidade }}{% endif %}{% endif %} · OSINT Lab</p>
 {% set grafo = False %}{% include "_dossie_corpo.html" %}</body></html>

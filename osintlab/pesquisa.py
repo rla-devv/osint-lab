@@ -394,7 +394,8 @@ def corroborate(hits: list[SearchHit]) -> None:
             fontes_comuns |= by_id.get(i.lower(), set())
         if len(fontes_comuns) >= 2 and h.nivel in ("provavel", "documental"):
             h.nivel = "corroborada"
-            h.justificativa += f" Mesmo identificador em: {', '.join(sorted(fontes_comuns))}."
+            h.justificativa += " Mesmo identificador em: " + ", ".join(sorted(
+                fontes()[f].nome if f in fontes() else f for f in fontes_comuns)) + "."
 
 
 # ------------------------------------------------------------------ execução
