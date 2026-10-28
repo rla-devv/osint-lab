@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Evidências</h1>
+<div class="kpis"><div class="kpi"><b>{{ man.total }}</b><span>originais preservados</span></div>
+<div class="kpi"><b class="{{ 'ok' if man.auditoria_integra else 'erro' }}">{{ 'íntegra' if man.auditoria_integra else 'VIOLADA' }}</b><span>trilha de auditoria</span></div></div>
+<p>Hash raiz (SHA-256 da concatenação ordenada): <code>{{ man.hash_raiz }}</code> · <a href="/p/{{ p.id }}/manifesto.json">Baixar manifesto JSON</a></p>
+<table><tr><th>SHA-256</th><th>Origem</th><th>Tipo</th><th>Tamanho</th><th>Coletado em</th><th>Coletor</th><th>Íntegro</th></tr>
+{% for e in man.evidencias %}<tr><td><a href="/evidencia/{{ e.sha256 }}"><code>{{ e.sha256[:20] }}…</code></a></td><td>{{ (e.url_origem or e.nome_original or '')[:70] }}</td><td>{{ e.mime }}</td><td>{{ e.tamanho }}</td>
+<td>{{ e.coletado_em }}</td><td>{{ e.coletor }}</td><td class="{{ 'ok' if e.integro else 'erro' }}">{{ 'sim' if e.integro else 'NÃO' }}</td></tr>{% endfor %}</table>
+<p class="nota">Os originais ficam em armazenamento endereçado por conteúdo, somente leitura, e são sempre baixados como binário (nunca renderizados), para evitar execução de conteúdo externo.</p>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Comparação lado a lado</h1>
+<form method="get" class="form-inline">
+<select name="a"><option value="0">Item A…</option>{% for i in itens %}<option value="{{ i.id }}" {{ 'selected' if i.id==a }}>#{{ i.id }} {{ i.title[:60] }}</option>{% endfor %}</select>
+<select name="b"><option value="0">Item B…</option>{% for i in itens %}<option value="{{ i.id }}" {{ 'selected' if i.id==b }}>#{{ i.id }} {{ i.title[:60] }}</option>{% endfor %}</select>
+<button>Comparar</button></form>
+{% if err %}<p class="msg erro">{{ err }}</p>{% endif %}
+{% if stats_a %}<section class="cartao"><h2>Estatísticas das colunas numéricas do item #{{ a }}</h2><table><tr><th>Coluna</th><th>n</th><th>Média</th><th>Mediana</th><th>Desvio</th><th>Mín</th><th>Máx</th><th>Outliers (|z|≥3)</th></tr>
+{% for s in stats_a %}<tr><td>{{ s.coluna }}</td><td>{{ s.n }}</td><td>{{ s.media }}</td><td>{{ s.mediana }}</td><td>{{ s.desvio }}</td><td>{{ s.min }}</td><td>{{ s.max }}</td><td>{{ s.outliers|join(', ') }}</td></tr>{% endfor %}</table></section>{% endif %}
+{% if res %}
+<div class="kpis"><div class="kpi"><b>{{ (res.similaridade*100)|round(1) }}%</b><span>similaridade de sequência</span></div>
+<div class="kpi"><b>{{ (res.jaccard_shingles*100)|round(1) }}%</b><span>trechos idênticos (shingles)</span></div>
+<div class="kpi"><b>+{{ res.linhas_adicionadas }} / −{{ res.linhas_removidas }}</b><span>linhas</span></div></div>
+<div class="grade3"><section class="cartao"><h3>Entidades em comum</h3>{% for e in res.entidades_comuns %}<div>{{ e }}</div>{% endfor %}</section>
+<section class="cartao"><h3>Somente em A</h3>{% for e in res.somente_a %}<div>{{ e }}</div>{% endfor %}</section>
+<section class="cartao"><h3>Somente em B</h3>{% for e in res.somente_b %}<div>{{ e }}</div>{% endfor %}</section></div>
+{% if res.datasets %}<section class="cartao"><h2>Comparação de conjuntos de dados (1ª coluna como chave)</h2>
+<p>{{ res.datasets.iguais }} registros iguais · {{ res.datasets.alterados|length }} alterados · {{ res.datasets.somente_a|length }} só em A · {{ res.datasets.somente_b|length }} só em B</p>
+<table>{% for c in res.datasets.alterados[:100] %}<tr><td>{{ c.chave }}</td><td>{{ c.a|join(' | ') }}</td><td>{{ c.b|join(' | ') }}</td></tr>{% endfor %}</table></section>{% endif %}
+<section class="cartao"><h2>Diferenças</h2><pre class="texto diff">{% for l in res.diff.splitlines() %}<span class="{{ 'add' if l.startswith('+') else ('del' if l.startswith('-') else '') }}">{{ l }}</span>
+{% endfor %}</pre></section>
+{% endif %}
+{% endblock %}

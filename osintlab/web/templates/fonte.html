@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/central">← Central de Bases</a></p>
+<h1>{{ f.nome }} <span class="tag cat-{{ f.categoria }}">{{ f.categoria }} – {{ CATEGORIAS[f.categoria] }}</span></h1>
+<p>{{ f.descricao }}</p>
+{% if problema %}<p class="msg erro">{{ problema }}</p>{% endif %}
+{% if f.aviso %}<p class="msg aviso">{{ f.aviso }}</p>{% endif %}
+<div class="grade2">
+<section class="cartao"><h2>Ficha da fonte</h2><table>
+{% for k, v in [("Organização", f.organizacao), ("País", f.pais), ("Tema", TEMAS.get(f.tema, f.tema)), ("Situação da integração", SITUACOES[f.situacao]),
+  ("Formato", f.formato), ("Autenticação", f.autenticacao + (' (credencial: ' ~ f.credencial ~ ')' if f.credencial else '')), ("Licença", f.licenca), ("Restrições", f.restricoes),
+  ("Periodicidade oficial", f.periodicidade), ("Tamanho estimado", f.tamanho_estimado), ("Entradas aceitas", f.entradas|join(', ')),
+  ("Dados pessoais", 'sim' if f.dados_pessoais else 'não'), ("Identificador", f.id)] if v %}
+<tr><th>{{ k }}</th><td>{{ v }}</td></tr>{% endfor %}
+<tr><th>Links</th><td><a href="{{ f.url_oficial }}" target="_blank" rel="noopener noreferrer">site oficial</a>{% if f.documentacao %} · <a href="{{ f.documentacao }}" target="_blank" rel="noopener noreferrer">documentação</a>{% endif %}</td></tr></table>
+{% if f.instrucoes %}<p class="nota"><b>Como consultar:</b> {{ f.instrucoes }}</p>{% endif %}</section>
+<section class="cartao">
+{% if f.sincronizavel %}<h2>Base local</h2><table>
+<tr><th>Estado</th><td>{% if em_execucao %}<span class="tag st-executando">sincronizando…</span>{% else %}{{ st.status }}{% endif %}</td></tr>
+<tr><th>Versão local</th><td><code>{{ st.current_version or '—' }}</code></td></tr><tr><th>Versão anterior (reversão)</th><td><code>{{ st.previous_version or '—' }}</code></td></tr>
+<tr><th>Versão remota</th><td><code>{{ st.remote_version or '—' }}</code> {{ st.remote_updated_at or '' }}</td></tr>
+<tr><th>Registros</th><td>{{ st.records }}</td></tr><tr><th>Espaço</th><td>{{ human_size(st.size_bytes) }}</td></tr>
+<tr><th>Integridade</th><td>{{ st.integrity }}</td></tr><tr><th>Última verificação / sincronização</th><td>{{ st.last_check or '—' }} / {{ st.last_sync or '—' }}</td></tr>
+<tr><th>Próxima verificação</th><td>{{ st.next_check or '—' }}</td></tr><tr><th>Falhas consecutivas</th><td>{{ st.fail_count }}{% if st.last_error %}<br><small class="erro">{{ st.last_error }}</small>{% endif %}</td></tr></table>
+<div class="acoes">
+<form method="post" action="/central/fonte/{{ f.id }}/sincronizar" class="form-inline"><select name="modo"><option value="auto">automático (incremental se possível)</option><option value="completa">completa</option>{% if f.incremental %}<option value="incremental">somente incremental</option>{% endif %}</select>
+<label><input type="checkbox" name="forcar" value="1"> forçar</label><button>{{ 'Atualizar' if st.installed else 'Instalar' }}</button></form>
+{% if em_execucao %}<form method="post" action="/central/fonte/{{ f.id }}/cancelar"><button class="secundario">Cancelar</button></form>{% endif %}
+<form method="post" action="/central/fonte/{{ f.id }}/testar"><button class="secundario">Testar conectividade</button></form>
+{% if st.installed %}<form method="post" action="/central/fonte/{{ f.id }}/verificar"><button class="secundario">Verificar integridade</button></form>
+{% if st.previous_version %}<form method="post" action="/central/fonte/{{ f.id }}/reverter"><button class="secundario">Reverter para {{ st.previous_version }}</button></form>{% endif %}{% endif %}</div>
+<h3>Agendamento e opções</h3>
+<form method="post" action="/central/fonte/{{ f.id }}/configurar" class="form">
+<label>Verificar a cada (horas; vazio = manual)<input name="intervalo_horas" value="{{ st.interval_hours or '' }}"></label>
+<label><span><input type="checkbox" name="ativa" value="1" {{ 'checked' if st.enabled }}> atualização automática ativa</span></label>
+<label><span><input type="checkbox" name="pausada" value="1" {{ 'checked' if st.paused }}> pausada</span></label>
+<label>Opções (JSON){% if f.id == 'opensanctions' %} — ex.: {"dataset": "un_sc_sanctions"} ou "sanctions"{% endif %}<textarea name="opcoes" rows="2">{{ opcoes }}</textarea></label><button>Salvar</button></form>
+{% if f.id.startswith('usr_') %}<form method="post" action="/central/personalizada/{{ f.id }}/excluir"><button class="mini perigo">Excluir fonte personalizada</button></form>{% endif %}
+{% if st.installed %}<details class="perigo"><summary>Remover base local</summary><form method="post" action="/central/fonte/{{ f.id }}/remover" class="form-inline"><input name="confirmar" placeholder="{{ f.id }}"><button class="perigo">Remover</button></form></details>{% endif %}
+{% elif f.online %}<h2>Consulta online</h2><p>Esta fonte é consultada por demanda na <b>Pesquisa unificada</b> de cada projeto (resultados ficam em cache como evidência).</p>
+<form method="post" action="/central/fonte/{{ f.id }}/testar"><button class="secundario">Testar conectividade</button></form>
+{% elif f.categoria == 'C' %}<h2>Consulta assistida</h2><p>Abra o portal oficial, faça a consulta e registre o resultado na Pesquisa unificada do projeto, anexando o comprovante. Validade do registro: {{ f.validade_consulta_horas or '—' }} h.</p>
+<p><a class="botao" href="{{ f.url_oficial }}" target="_blank" rel="noopener noreferrer">Abrir portal oficial</a></p>
+{% else %}<h2>Integração indisponível</h2><p>{{ f.restricoes }}</p>{% endif %}
+</section></div>
+{% if hist %}<section class="cartao"><h2>Histórico de sincronização</h2><table><tr><th>Início</th><th>Fim</th><th>Método</th><th>Resultado</th><th>+/~/−</th><th>Registros</th><th>Passos</th></tr>
+{% for h in hist %}<tr><td>{{ h.started_at }}</td><td>{{ h.finished_at or '' }}</td><td>{{ h.method or '' }}</td><td>{{ h.status }}</td><td>{{ h.added }}/{{ h.modified }}/{{ h.deleted }}</td><td>{{ h.records or '' }}</td>
+<td><details><summary>{{ h.steps|length }} passos</summary><ol class="passos">{% for s in h.steps %}<li>{{ s.msg }}</li>{% endfor %}</ol>{% if h.error %}<p class="erro">{{ h.error }}</p>{% endif %}</details></td></tr>{% endfor %}</table></section>{% endif %}
+{% endblock %}

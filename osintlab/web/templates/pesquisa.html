@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Pesquisa</h1>
+<form method="post" action="/p/{{ p.id }}/pesquisa" class="form" id="form-pesquisa">
+<div class="campos" role="radiogroup" aria-label="Tipo de pesquisa">{% for k, (rotulo, dica) in CAMPOS.items() %}
+<label class="campo"><input type="radio" name="tipo" value="{{ k }}" data-dica="{{ dica }}" {{ 'checked' if tipo == k }}><span>{{ rotulo }}</span></label>{% endfor %}</div>
+<div class="busca-central" style="margin:0"><input name="q" id="q-pesquisa" value="{{ q }}" placeholder="{{ CAMPOS[tipo][1] if tipo in CAMPOS else CAMPOS[''][1] }}" required autocomplete="off"><button>Pesquisar</button></div>
+<div class="form-inline so-pessoa"><label>CPF para conferir <input name="cpf" value="{{ cpf }}" placeholder="000.000.000-00" size="15" inputmode="numeric" autocomplete="off"></label>
+<label>Nascimento <input name="nascimento" value="{{ nascimento }}" placeholder="AAAA-MM-DD" size="11"></label>
+<label>País <input name="pais" value="{{ pais }}" placeholder="br" size="4"></label></div>
+{% if res and res.requer_confirmacao or erro_local %}<div class="msg erro">{{ erro_local or res.motivo }}
+<label>Finalidade legítima desta consulta<input name="justificativa" value="{{ justificativa }}" size="70" required></label>
+<input type="hidden" name="confirmar" value="1"><button>Confirmar e pesquisar</button></div>{% endif %}
+</form>
+<p class="nota">Cada pesquisa consulta, de uma vez, todas as bases instaladas, as fontes online e os conectores pertinentes ao tipo. CPF e nomes nunca são tratados como identidade.</p>
+
+{% if res and not res.requer_confirmacao %}
+{% set total = res.resultados|length %}
+<div class="resumo-pesquisa">
+<p class="sintese">{{ res.sintese or (total ~ ' resultado(s).') }}</p>
+<p class="meta">{{ total }} resultado(s) em {{ secoes|length }} tema(s) · {{ (res.plano.local|length) + (res.plano.online|length) }} fonte(s) consultada(s){% if res.complementares %} · {{ res.complementares|length }} conector(es){% endif %} · tipo: <b>{{ res.consulta.tipos|join(', ') }}</b> · <a href="#detalhes">detalhes</a></p>
+</div>
+{% for a in res.consulta.avisos %}<p class="msg aviso">{{ a }}</p>{% endfor %}
+{% if res.nomes_cpf %}<p class="msg aviso">Nomes encontrados com este CPF parcial, já conferidos por nome e CPF nas demais bases: <b>{{ res.nomes_cpf|join('; ') }}</b>.</p>{% endif %}
+{% if res.placa and res.placa.valida %}<section class="cartao destaque"><h2>Placa {{ res.placa.placa }}</h2>
+<p>{{ res.placa.formato }}{% if res.placa.equivalente_mercosul %} · Mercosul <code>{{ res.placa.equivalente_mercosul }}</code>{% endif %}{% if res.placa.equivalente_antiga %} · antiga <code>{{ res.placa.equivalente_antiga }}</code>{% endif %}
+{% if res.placa.origem %} · primeiro emplacamento: <b>{{ res.placa.origem.estado }} ({{ res.placa.origem.uf }})</b> <span class="tag {{ 'st-novo' if res.placa.origem.confianca == 'indicio_forte' else 'alerta' }}">{{ 'indício forte' if res.placa.origem.confianca == 'indicio_forte' else 'indício fraco' }}</span>{% else %} · {{ res.placa.aviso_origem }}{% endif %}</p>
+<p class="nota">{{ res.placa.limites }}</p></section>{% endif %}
+
+<form method="post" action="/p/{{ p.id }}/pesquisa/salvar"><input type="hidden" name="q" value="{{ q_registro }}">
+{% for s in secoes %}<section class="cartao"><h2>{{ s.titulo }} <span class="contador">{{ s.resultados|length }}</span></h2>
+<table class="resultados">{% for h in s.resultados %}<tr><td class="sel"><input type="checkbox" name="hit" value="{{ h|tojson|forceescape }}" aria-label="Selecionar"></td>
+<td><span class="tag nv-{{ h.nivel }}">{{ NIVEIS[h.nivel] }}</span>{% if h.via_nome %} <span class="tag">via nome: {{ h.via_nome }}</span>{% endif %}<br>
+{% if h.url %}<a href="{{ h.url }}" target="_blank" rel="noopener noreferrer nofollow"><b>{{ h.titulo }}</b></a>{% else %}<b>{{ h.titulo }}</b>{% endif %}
+<small class="meta"> · {{ fontes[h.fonte].nome }}{% if h.versao_base %} · versão {{ h.versao_base }}{% endif %}</small><br>
+<small>{{ h.resumo }}</small>{% if h.justificativa %}<br><small class="meta">{{ h.justificativa }}</small>{% endif %}</td></tr>{% endfor %}</table></section>
+{% else %}<section class="cartao"><p class="vazio">Nenhum registro nas bases e fontes consultadas. Ausência de resultado não comprova inexistência.</p></section>{% endfor %}
+<div class="form-inline">{% if total %}<button>Salvar selecionados no projeto</button>{% endif %}
+{% if 'cnpj' in res.consulta.tipos %}<a class="botao secundario" href="/p/{{ p.id }}/dossie?q={{ res.consulta.normalizado|urlencode }}&tipo=cnpj&finalidade={{ justificativa|urlencode }}">Dossiê completo (rede e sócios)</a> <a class="botao secundario" href="/p/{{ p.id }}/rede?q={{ res.consulta.normalizado|urlencode }}">Rede societária</a>{% endif %}
+</div></form>
+{% if token %}<div class="form-inline exportar"><span class="meta">Exportar esta pesquisa:</span>
+{% for ext, rot in [('pdf','PDF'),('docx','Word'),('html','HTML'),('md','Markdown')] %}<a class="botao mini secundario" href="/p/{{ p.id }}/dossie/{{ token }}.{{ ext }}">{{ rot }}</a>{% endfor %}
+<form method="post" action="/p/{{ p.id }}/dossie/{{ token }}/salvar" class="inline"><button class="mini secundario">Salvar a pesquisa inteira no projeto</button></form></div>{% endif %}
+{% if res.plano.local and 'cpf' not in res.consulta.tipos %}<form method="post" action="/p/{{ p.id }}/monitor" class="form-inline"><input type="hidden" name="kind" value="pesquisa"><input type="hidden" name="target" value="{{ q }}">
+<input type="hidden" name="interval_minutes" value="1440"><input name="label" value="{{ justificativa }}" placeholder="Rótulo / finalidade" size="30">
+<button class="mini secundario">Vigiar esta pesquisa</button><span class="nota">avisa quando surgir uma correspondência nova nas bases locais.</span></form>{% endif %}
+
+{% if res.complementares %}<section class="cartao"><h2>Fontes online complementares <span class="contador">{{ res.complementares|length }}</span></h2>
+{% for c in res.complementares %}<details class="complementar"><summary><b>{{ c.nome }}</b> {% if c.erro %}<span class="tag alerta">sem resposta</span>{% else %}<span class="tag confirmado">ok</span>{% if c.itens %} <small class="meta">{{ c.itens }} item(ns)</small>{% endif %}{% endif %}</summary>
+{% if c.erro %}<p class="nota">{{ c.erro }}</p>{% else %}<pre class="texto">{{ c.texto }}</pre>
+<form method="post" action="/p/{{ p.id }}/coleta/conector" class="inline"><input type="hidden" name="conector" value="{{ c.conector }}"><input type="hidden" name="valor" value="{{ res.consulta.normalizado }}"><button class="mini secundario">Salvar no projeto com evidência</button></form>{% endif %}</details>{% endfor %}</section>{% endif %}
+
+{% if res.assistidas %}<section class="cartao"><h2>Portais oficiais (consulta manual) <span class="contador">{{ res.assistidas|length }}</span></h2>
+<p class="nota">Portais sem automação permitida: abra, consulte e registre o resultado com comprovante.</p>
+{% for a in res.assistidas %}<details><summary><a href="{{ a.url }}" target="_blank" rel="noopener noreferrer">{{ a.nome }}</a></summary>
+<p class="nota">{{ a.instrucoes }} {{ a.restricoes }}</p>
+<form method="post" action="/p/{{ p.id }}/assistida" enctype="multipart/form-data" class="form-inline"><input type="hidden" name="fonte_id" value="{{ a.fonte }}"><input type="hidden" name="consulta" value="{{ q_registro }}">
+<select name="desfecho">{% for k, v in DESFECHOS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select>
+<input name="resumo" placeholder="O que o portal mostrou" size="34"><input name="justificativa" placeholder="Finalidade" size="24" value="{{ justificativa }}">
+<input type="file" name="comprovante"><button class="mini">Registrar</button></form></details>{% endfor %}</section>{% endif %}
+
+<details class="cartao" id="detalhes"><summary>Detalhes da pesquisa</summary>
+<p class="meta">Tipo: <b>{{ res.consulta.tipos|join(', ') }}</b> · normalizado: <code>{{ q_registro if 'cpf' in res.consulta.tipos else res.consulta.normalizado }}</code></p>
+<p class="meta">Bases locais: {{ res.plano.local|join(', ') or 'nenhuma' }} · online: {{ res.plano.online|join(', ') or 'nenhuma' }}</p>
+{% if res.variantes and res.variantes|length > 1 %}<p class="meta">Variantes do nome: {{ res.variantes|join(' · ') }}</p>{% endif %}
+{% for a in res.avisos_fontes %}<p class="msg aviso">{{ a }}</p>{% endfor %}
+{% for e in res.erros %}<p class="msg erro">{{ fontes[e.fonte].nome if e.fonte in fontes else e.fonte }}: {{ e.erro }}</p>{% endfor %}
+{% if res.plano.indisponivel %}<p class="meta">Fontes pertinentes indisponíveis:</p><ul>{% for i in res.plano.indisponivel %}<li>{{ fontes[i.fonte].nome }}: {{ i.motivo }}</li>{% endfor %}</ul>{% endif %}
+{% if res.sugestoes %}<p class="meta">Pesquisas complementares sugeridas:</p><ul>{% for s in res.sugestoes %}<li>{{ s }}</li>{% endfor %}</ul>{% endif %}
+</details>
+{% endif %}
+{% if assistidas_registradas %}<details class="cartao"><summary>Consultas assistidas registradas ({{ assistidas_registradas|length }})</summary><table><tr><th>Data</th><th>Fonte</th><th>Consulta</th><th>Desfecho</th><th>Validade</th><th>Item</th></tr>
+{% for a in assistidas_registradas %}<tr><td>{{ a.consulted_at }}</td><td>{{ a.fonte_nome }}</td><td>{{ a.query }}</td><td>{{ DESFECHOS[a.outcome] }}</td>
+<td class="{{ 'erro' if a.vencida }}">{{ a.valid_until or '—' }}{% if a.vencida %} (vencida — reconferir){% endif %}</td><td>{% if a.item_id %}<a href="/p/{{ p.id }}/item/{{ a.item_id }}">#{{ a.item_id }}</a>{% endif %}</td></tr>{% endfor %}</table></details>{% endif %}
+{% endblock %}
+{% block scripts %}<script src="/static/pesquisa.js"></script>{% endblock %}

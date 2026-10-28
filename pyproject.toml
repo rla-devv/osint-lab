@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "osintlab"
+version = "0.2.0"
+description = "Plataforma pessoal de pesquisa OSINT com IA local (uso experimental, não comercial)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn>=0.27",
+  "jinja2>=3.1",
+  "python-multipart>=0.0.9",
+  "httpx>=0.27",
+  "beautifulsoup4>=4.12",
+  "lxml>=5.0",
+  "pypdf>=4.0",
+  "python-docx>=1.1",
+  "openpyxl>=3.1",
+  "pillow>=10.0",
+  "feedparser>=6.0",
+  "dnspython>=2.6",
+  "networkx>=3.2",
+  "numpy>=1.26",
+  "apscheduler>=3.10,<4",
+  "reportlab>=4.0",
+  "segno>=1.6",
+    "rapidfuzz>=3.0",
+]
+
+[project.optional-dependencies]
+# IA local avançada (opcional; funciona sem elas com fallbacks leves)
+ia = ["sentence-transformers>=3.0", "spacy>=3.7"]
+ocr = ["pytesseract>=0.3.10", "pypdfium2>=4.0",
+       "winrt-runtime>=3; sys_platform == 'win32'", "winrt-Windows.Media.Ocr; sys_platform == 'win32'",
+       "winrt-Windows.Globalization; sys_platform == 'win32'", "winrt-Windows.Graphics.Imaging; sys_platform == 'win32'",
+       "winrt-Windows.Storage.Streams; sys_platform == 'win32'", "winrt-Windows.Foundation; sys_platform == 'win32'",
+       "winrt-Windows.Foundation.Collections; sys_platform == 'win32'"]
+audio = ["faster-whisper>=1.0"]
+cofre = ["keyring>=24"]
+cripto = ["cryptography>=42", "sqlcipher3-wheels>=0.5"]
+captura = ["warcio>=1.7", "playwright>=1.40"]
+janela = ["pywebview>=5.4", "pystray>=0.19; sys_platform == 'win32'"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+osintlab = "osintlab.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["osintlab*"]
+
+[tool.setuptools.package-data]
+osintlab = ["web/templates/*.html", "web/static/*", "data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

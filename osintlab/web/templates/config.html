@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Configurações</h1>
+<div class="grade2">
+<section class="cartao" id="ia"><h2>IA local</h2>
+<p>LLM em uso: <b class="{{ 'ok' if llm_ok else 'erro' }}" id="ia-llm">{{ llm_nome }}</b>{% if not llm_ok %} · o assistente funciona em modo extrativo (copia trechos){% endif %}</p>
+<div id="ia-painel" data-fase="{{ ia.progresso.fase }}">
+{% set pf = ia.prefs %}
+{% if ia.instalado %}
+<p>Modelo baixado: <b>{{ (ia.modelos|selectattr('id', 'equalto', pf.modelo)|first).nome }}</b> · motor llama.cpp {{ ia.versao_motor }} ({{ pf.variante }}) ·
+estado: <b id="ia-estado">{{ 'rodando' if ia.rodando else ('iniciando' if ia.progresso.fase == 'iniciando' else 'parado') }}</b></p>
+<form method="post" action="/ia/ativar" class="inline"><input type="hidden" name="ativa" value="{{ 0 if pf.ativa else 1 }}"><button class="{{ 'secundario' if pf.ativa else '' }}">{{ 'Desligar IA local' if pf.ativa else 'Ligar IA local' }}</button></form>
+{% endif %}
+<p id="ia-progresso" class="nota" {% if ia.progresso.fase in ('parado', 'pronto') %}hidden{% endif %}>
+{% if ia.progresso.fase == 'erro' %}<span class="erro">Erro: {{ ia.progresso.erro }}</span>{% else %}{{ ia.progresso.fase }} {{ ia.progresso.item }}{% endif %}</p>
+<details {% if not ia.instalado %}open{% endif %}><summary>{{ 'Trocar de modelo' if ia.instalado else 'Ativar IA local com um clique' }}</summary>
+<p>Este computador tem <b>{{ ia.ram_gb }} GB</b> de RAM. O download acontece uma única vez, é verificado por SHA-256 e fica na pasta de dados.</p>
+<form method="post" action="/ia/instalar">
+{% for m in ia.modelos %}<label class="opcao"><input type="radio" name="modelo" value="{{ m.id }}" {% if m.id == (pf.modelo or ia.recomendado) %}checked{% endif %}>
+<b>{{ m.nome }}</b> · {{ m.gb }} GB · RAM mínima {{ m.ram_min_gb }} GB{% if m.id == ia.recomendado %} · <b class="ok">recomendado</b>{% endif %}{% if m.baixado %} · já baixado{% endif %}<br><small>{{ m.descricao }} Licença {{ m.licenca }}.</small></label>{% endfor %}
+{% if ia.windows %}<label class="opcao"><input type="checkbox" name="gpu" value="1" {% if pf.variante == 'win-vulkan' %}checked{% endif %}> Usar a placa de vídeo (Vulkan). Deixe desmarcado se não souber; sem placa compatível o motor usa o processador.</label>{% endif %}
+<button>Baixar e ativar</button></form>
+{% if ia.progresso.fase in ('baixando', 'verificando', 'extraindo') %}<form method="post" action="/ia/cancelar" class="inline"><button class="secundario">Cancelar download</button></form>{% endif %}
+{% if ia.instalado %}<form method="post" action="/ia/remover" class="inline"><button class="perigo">Remover motor e modelos do disco</button></form>{% endif %}
+</details>
+</div>
+{% if modelos %}<p>Modelos no Ollama: {{ modelos|join(', ') }}</p>{% endif %}
+<p>Embeddings: <b>{{ embedder }}</b></p>
+<p class="nota">Se o Ollama estiver rodando, ele tem prioridade. Ajuste por variáveis de ambiente: <code>OSINTLAB_LLM_PROVIDER</code> (auto|ollama|local|openai_compat|none), <code>OSINTLAB_LLM_MODEL</code>,
+<code>OSINTLAB_EMBEDDINGS=sentence_transformers</code>, <code>OSINTLAB_EMBEDDING_MODEL</code>. Após trocar o modelo de embeddings, reindexe com <code>osintlab reindexar</code>.</p></section>
+<section class="cartao"><h2>Coleta e privacidade</h2>
+<ul><li>Diretório de dados: <code>{{ s.data_dir }}</code></li><li>User-Agent: <code>{{ s.user_agent }}</code></li>
+<li>Respeitar robots.txt: {{ 'sim' if s.respect_robots else 'não' }}</li><li>Intervalo mínimo por host: {{ s.min_interval_per_host }} s</li>
+<li>Bloquear redes privadas (anti-SSRF): {{ 'sim' if not s.allow_private_networks else 'não' }}</li><li>Modo offline: {{ 'sim' if s.offline else 'não' }}</li>
+<li>Mascarar CPF/cartões na ingestão: {{ 'sim' if s.mask_personal_ids else 'não' }}</li><li>Retenção padrão: {{ s.default_retention_days }} dias</li>
+<li>SearXNG: {{ s.searxng_url or 'não configurado' }}</li></ul>
+<form method="post" action="/manutencao/expurgo"><button class="secundario">Aplicar retenção agora</button></form>
+<p class="nota">Interface em <code>{{ request.base_url }}</code> · <form method="post" action="/abrir-navegador" class="inline"><button class="mini secundario">abrir no navegador padrão</button></form> (útil para usar várias abas ou outro aparelho da rede).</p></section>
+</div>
+<section class="cartao" id="acesso"><h2>Acesso remoto (celular e outros computadores)</h2>
+<p>Login: <b class="{{ 'ok' if acesso.ativo else '' }}">{{ 'ativo' if acesso.ativo else 'desativado' }}</b>{% if acesso.ativo %} · segundo fator: <b>{{ 'ativo' if acesso.totp else 'não configurado' }}</b> · exigido {{ 'em todos os acessos' if acesso.exigir_local else 'só em acessos remotos' }}{% endif %}{% if remoto %} · <b>você está num acesso remoto</b>{% endif %}</p>
+<p class="nota">Para usar no celular sem expor o programa na internet: instale o Tailscale no computador e no celular, com a mesma conta, e rode no computador <code>tailscale serve --bg 8765</code>.</p>
+<details><summary>Passo a passo</summary><ol>
+<li>Instale o Tailscale (tailscale.com/download) no computador e no celular e entre com a mesma conta.</li>
+<li>Aqui, crie a senha de acesso e ative o segundo fator.</li>
+<li>Marque "Continuar rodando em segundo plano" e, se quiser, "Iniciar com o Windows".</li>
+<li>No Prompt de Comando do computador: <code>tailscale serve --bg 8765</code>. Aceite ativar HTTPS e MagicDNS se for pedido; o comando mostra o endereço <code>https://….ts.net</code>.</li>
+<li>No celular, com o Tailscale ativo, abra esse endereço e entre com a senha e o código.</li>
+<li>Desative a suspensão do Windows quando ligado na tomada: computador suspenso não responde.</li>
+</ol><p class="nota">Nada fica exposto na internet nem se abre porta no roteador. 5 tentativas erradas bloqueiam o aparelho por 5 minutos. "Origem não permitida": use exatamente o endereço mostrado pelo Tailscale. Para desfazer: <code>tailscale serve reset</code>.</p></details>
+<h3>{{ 'Trocar a senha' if acesso.ativo else '1. Criar a senha de acesso' }}</h3>
+<form method="post" action="/acesso/senha" class="linha">
+{% if acesso.ativo %}<input type="password" name="senha_atual" placeholder="Senha atual" required autocomplete="current-password">{% endif %}
+<input type="password" name="senha" placeholder="Nova senha (mín. 10)" required minlength="10" autocomplete="new-password">
+<input type="password" name="confirmacao" placeholder="Confirmação" required autocomplete="new-password"><button>{{ 'Trocar' if acesso.ativo else 'Ativar login' }}</button></form>
+{% if totp_novo %}<h3>2. Segundo fator (recomendado)</h3>
+<p>No aplicativo autenticador do celular (Google Authenticator, Aegis, 2FAS…), leia o QR{% if not totp_novo.svg %} (indisponível: digite a chave){% endif %} e informe o código que aparecer.</p>
+{% if totp_novo.svg %}<div class="qr">{{ totp_novo.svg|safe }}</div>{% endif %}
+<p><small>Chave para digitar manualmente: <code>{{ totp_novo.segredo }}</code></small></p>
+<form method="post" action="/acesso/totp" class="linha"><input name="codigo" inputmode="numeric" maxlength="7" placeholder="Código de 6 dígitos" required><button>Ativar segundo fator</button></form>{% endif %}
+{% if acesso.ativo %}<h3>Opções</h3>
+<form method="post" action="/acesso/opcoes" class="linha"><label><input type="checkbox" name="exigir_local" value="1" {% if acesso.exigir_local %}checked{% endif %}> exigir login também neste computador</label>
+<label>sessão expira em <input type="number" name="sessao_horas" value="{{ acesso.sessao_horas }}" min="1" max="720" style="width:5rem"> h</label><button class="secundario">Salvar</button></form>
+<form method="post" action="/acesso/encerrar-sessoes" class="inline"><button class="secundario">Encerrar todas as sessões</button></form>
+<form method="post" action="/sair" class="inline"><button class="secundario">Sair</button></form>
+{% if acesso.totp %}<form method="post" action="/acesso/totp/remover" class="linha"><input type="password" name="senha_atual" placeholder="Senha atual" required><button class="secundario">Remover segundo fator</button></form>{% endif %}
+<details class="perigo"><summary>Desativar login</summary><form method="post" action="/acesso/desativar" class="linha"><input type="password" name="senha_atual" placeholder="Senha atual" required><button class="perigo">Desativar</button></form></details>{% endif %}
+<h3>Manter rodando</h3>
+<form method="post" action="/sistema/segundo-plano">
+<label class="opcao"><input type="checkbox" name="ativo" value="1" {% if sistema.segundo_plano %}checked{% endif %}> Continuar rodando em segundo plano ao fechar a janela (necessário para o acesso remoto). Abrir o OSINTLab.exe de novo reabre a janela.</label>
+{% if sistema.windows %}<label class="opcao"><input type="checkbox" name="iniciar_com_windows" value="1" {% if sistema.iniciar_com_windows %}checked{% endif %} {% if not sistema.executavel %}disabled{% endif %}> Iniciar com o Windows, sem janela{% if not sistema.executavel %} (só no executável){% endif %}.</label>{% endif %}
+<button class="secundario">Salvar</button></form>
+{% if not remoto %}<form method="post" action="/sistema/encerrar"><button class="perigo">Encerrar o OSINT Lab agora</button></form>{% endif %}
+<p class="nota">Desative a suspensão automática do computador (Configurações do Windows → Sistema → Energia) para o acesso remoto não cair.</p></section>
+<section class="cartao"><h2>OCR (texto de imagens e PDFs digitalizados)</h2>
+<p>Motor em uso: <b class="{{ 'ok' if ocr.ativo else 'erro' }}">{{ {'windows': 'OCR do Windows', 'tesseract': 'Tesseract'}.get(ocr.ativo, 'nenhum') }}</b></p>
+<ul>
+<li>OCR do Windows: {% if ocr.windows.disponivel %}disponível · idiomas {{ ocr.windows.idiomas|join(', ') }}{% else %}indisponível{% endif %}{% if ocr.windows.nota %} <small>({{ ocr.windows.nota }})</small>{% endif %}</li>
+<li>Tesseract: {% if ocr.tesseract.disponivel %}{{ ocr.tesseract.versao }} · idiomas {{ ocr.tesseract.idiomas|join(', ') }}{% else %}não instalado{% endif %}{% if ocr.tesseract.nota %} <small>({{ ocr.tesseract.nota }})</small>{% endif %}</li>
+</ul>
+<form method="post" action="/ocr/motor" class="linha"><select name="motor">
+{% for v, r in [('auto', 'Automático (recomendado)'), ('windows', 'OCR do Windows'), ('tesseract', 'Tesseract'), ('nenhum', 'Desligado')] %}<option value="{{ v }}" {% if ocr.preferencia == v %}selected{% endif %}>{{ r }}</option>{% endfor %}
+</select><button class="secundario">Salvar</button></form>
+<form method="post" action="/ocr/testar"><button class="secundario">Testar OCR</button></form>
+<p class="nota">No automático, o Windows usa o próprio OCR quando tem o idioma português; senão, o Tesseract, se instalado. O OCR do Windows foi o mais rápido e acertou mais CNPJs e valores nos testes; o Tesseract é um pouco mais preciso em digitalizações ruins. Nada sai do computador.</p></section>
+<section class="cartao" id="transcricao"><h2>Transcrição de áudio e vídeo</h2>
+<div id="tr-painel" data-fase="{{ transcricao.progresso.fase }}">
+<p>Estado: <b class="{{ 'ok' if transcricao.disponivel else '' }}">{{ 'pronta' if transcricao.disponivel else 'não instalada' }}</b>{% if transcricao.modelo %} · modelo: {{ transcricao.modelo }}{% endif %}{% if transcricao.disponivel %} · conversor de formatos (FFmpeg): {{ 'sim' if transcricao.ffmpeg else 'não (só WAV, MP3 e FLAC)' }}{% endif %}</p>
+<p id="tr-progresso" class="nota" {% if transcricao.progresso.fase in ('parado', 'pronto') %}hidden{% endif %}>{% if transcricao.progresso.fase == 'erro' %}<span class="erro">Erro: {{ transcricao.progresso.erro }}</span>{% else %}{{ transcricao.progresso.fase }} {{ transcricao.progresso.item }}{% endif %}</p>
+{% if transcricao.windows %}<details {% if not transcricao.disponivel %}open{% endif %}><summary>{{ 'Trocar de modelo' if transcricao.disponivel else 'Ativar com um clique' }}</summary>
+<form method="post" action="/transcricao/instalar">{% for m in transcricao.modelos %}<label class="opcao"><input type="radio" name="modelo" value="{{ m.id }}" {{ 'checked' if m.id == (transcricao.modelo or 'small') }}> <b>{{ m.nome }}</b> ({{ m.mb }} MB){% if m.instalado %} · já baixado{% endif %}<br><small>{{ m.descricao }}</small></label>{% endfor %}
+<button>Baixar e ativar</button></form>
+<p class="nota">Baixa uma única vez o whisper.cpp (9 MB), o conversor FFmpeg (115 MB, para áudios do WhatsApp, M4A, MP4…) e o modelo, todos verificados por SHA-256. Áudios e vídeos enviados em Coleta passam a ser transcritos no próprio computador; nada é enviado para fora.</p></details>
+{% else %}<p class="nota">Fora do Windows, instale <code>whisper-cli</code> (whisper.cpp) e <code>ffmpeg</code> pelo sistema e baixe um modelo ggml para a pasta de dados, ou use o extra <code>audio</code> (faster-whisper).</p>{% endif %}
+</div></section>
+<section class="cartao" id="alertas"><h2>Avisos no celular (opcional)</h2>
+<p>Estado: <b class="{{ 'ok' if alertas.ativo else '' }}">{{ 'ativo' if alertas.ativo else 'desativado' }}</b>{% if alertas.ativo %} · tópico <code>{{ alertas.topico }}</code> em {{ alertas.servidor }}{% endif %}</p>
+<form method="post" action="/alertas/configurar" class="form-inline"><input type="hidden" name="acao" value="salvar">
+<label>Servidor <input name="servidor" value="{{ alertas.servidor }}" size="22"></label>
+<label>Tópico <input name="topico" value="{{ alertas.topico or alertas.sugerido }}" size="26" required minlength="12"></label>
+<label>Ao tocar, abrir <input name="link" value="{{ alertas.link }}" placeholder="https://….ts.net (opcional)" size="26"></label>
+<label><input type="checkbox" name="com_projeto" value="1" {{ 'checked' if alertas.com_projeto }}> incluir o nome do projeto</label>
+<button class="secundario">{{ 'Salvar' if alertas.ativo else 'Ativar' }}</button></form>
+{% if alertas.topico %}<div class="form-inline"><form method="post" action="/alertas/configurar" class="inline"><input type="hidden" name="acao" value="testar"><button class="mini secundario">Enviar teste</button></form>
+{% if alertas.ativo %}<form method="post" action="/alertas/configurar" class="inline"><input type="hidden" name="acao" value="desativar"><button class="mini secundario">Desativar</button></form>{% endif %}</div>{% endif %}
+<p class="nota">Instale o app <b>ntfy</b> no celular e inscreva-se no mesmo tópico. Quando o monitoramento encontrar algo novo, chega só "N alerta(s) novo(s)": o conteúdo fica no computador. Quem souber o tópico vê os avisos, por isso use o sugerido (aleatório).</p></section>
+<section class="cartao" id="atualizacoes"><h2>Atualizações</h2>
+<p>Versão instalada: <b>{{ atualizacao.atual }}</b> (build {{ build }})
+{% if atualizacao.nova %} · <b class="erro">nova versão {{ atualizacao.nova.versao }}</b> — <a href="{{ atualizacao.nova.url }}" target="_blank" rel="noopener">baixar no GitHub</a>
+{% elif atualizacao.versao_remota %} · última publicada: {{ atualizacao.versao_remota }} (você está atualizado){% endif %}
+{% if atualizacao.verificado_em %}<br><small>Verificado em {{ atualizacao.verificado_em }}{% if atualizacao.erro %} · erro: {{ atualizacao.erro }}{% endif %}</small>{% endif %}</p>
+{% if atualizacao.progresso.etapa %}<p class="{{ 'erro' if atualizacao.progresso.etapa == 'erro' else 'nota' }}">Atualização: {{ {'conferindo':'conferindo a release','baixando':'baixando','trocando':'trocando o arquivo','concluida':'concluída, reiniciando…','erro':'falhou'}[atualizacao.progresso.etapa] }}{% if atualizacao.progresso.erro %} — {{ atualizacao.progresso.erro }}{% endif %}</p>{% endif %}
+<p class="nota">A verificação consulta as releases públicas do projeto no GitHub uma vez por dia. "Atualizar agora" baixa o OSINTLab.exe da release, confere o SHA-256 publicado junto, troca o arquivo e reinicia; a versão anterior é apagada no início seguinte. Desligue a verificação com <code>OSINTLAB_VERIFICAR_ATUALIZACAO=0</code>.</p>
+<div class="form-inline"><form method="post" action="/atualizacao/verificar" class="inline"><button class="secundario" {% if not atualizacao.habilitado %}disabled{% endif %}>Verificar agora</button></form>
+{% if atualizacao.pode_instalar and not remoto %}<form method="post" action="/atualizacao/instalar" class="inline"><button>Atualizar agora para {{ atualizacao.nova.versao }}</button></form>{% endif %}</div></section>
+<section class="cartao" id="cofre"><h2>Cofre (criptografia dos dados locais)</h2>
+<p>Estado: <b class="{{ 'ok' if cofre.ativo else '' }}">{{ 'ativo' if cofre.ativo else 'inativo' }}</b>
+{% if cofre.ativo %} · banco: {{ 'cifrado (SQLCipher)' if cofre.banco_cifrado else 'texto claro' }} · evidências e relatórios: AES-256-GCM{% endif %}
+· SQLCipher instalado: {{ 'sim' if cofre.sqlcipher_disponivel else 'não (pip install sqlcipher3-wheels)' }}</p>
+<p class="nota">Com o cofre ativo, evidências, relatórios e (se possível) o banco principal só são legíveis com a senha. A senha não é guardada e não há recuperação. As bases públicas da Central não são cifradas.
+Para o agendador sem interface, defina <code>OSINTLAB_COFRE_SENHA</code>.</p>
+{% if not cofre.ativo %}
+<form method="post" action="/cofre/ativar" class="linha"><input type="password" name="senha" placeholder="Senha (mín. 8)" required minlength="8">
+<input type="password" name="confirmacao" placeholder="Confirmação" required><button>Ativar cofre</button></form>
+{% else %}
+<form method="post" action="/cofre/desativar" class="linha"><input type="password" name="senha" placeholder="Senha atual" required><button class="secundario">Desativar (decifrar tudo)</button></form>
+<form method="post" action="/cofre/bloquear"><button class="secundario">Bloquear agora</button></form>
+{% endif %}
+<h3>Backup cifrado</h3>
+<form method="post" action="/cofre/backup" class="linha"><input type="password" name="senha" placeholder="Senha do backup (mín. 8)" required minlength="8">
+<label><input type="checkbox" name="incluir_bases" value="1"> incluir bases da Central</label><button class="secundario">Gerar backup</button></form>
+<h3>Backup automático (diário)</h3>
+{% if backup_auto.ativo %}<p>Ativo em <code>{{ backup_auto.pasta }}</code> · mantém os {{ backup_auto.manter }} mais recentes{% if backup_auto.incluir_bases %} · com bases{% endif %}
+{% if backup_auto.ultimo %} · último: {{ backup_auto.ultimo }}{% if backup_auto.ultimo_bytes %} ({{ backup_auto.ultimo_bytes // 1024 }} KB){% endif %}{% endif %}</p>
+{% if backup_auto.erro %}<p class="msg erro">{{ backup_auto.erro }}</p>{% endif %}
+<div class="form-inline"><form method="post" action="/cofre/backup-automatico" class="inline"><input type="hidden" name="acao" value="agora"><button class="secundario">Fazer agora</button></form>
+<form method="post" action="/cofre/backup-automatico" class="inline"><input type="hidden" name="acao" value="desativar"><button class="secundario">Desativar</button></form></div>
+{% else %}<form method="post" action="/cofre/backup-automatico" class="form-inline"><input type="hidden" name="acao" value="ativar">
+<input type="password" name="senha" placeholder="Senha dos backups (mín. 8)" required minlength="8" autocomplete="new-password">
+<input name="pasta" placeholder="Pasta (vazio = {{ backup_auto.pasta }})" size="34">
+<label>Manter <input type="number" name="manter" value="7" min="1" max="60" style="width:4rem"></label>
+<label><input type="checkbox" name="incluir_bases" value="1"> incluir bases</label><button class="secundario">Ativar</button></form>
+<p class="nota">Escolha uma pasta sincronizada (OneDrive, Google Drive) ou um pendrive para ter uma cópia fora do computador. A senha não fica guardada; anote-a: sem ela, os backups não abrem.</p>{% endif %}
+<p class="nota">Restauração: <code>osintlab cofre restaurar arquivo.osintlab --destino pasta</code>.</p></section>
+<section class="cartao"><h2>Conectores instalados</h2><table><tr><th>Nome</th><th>Entradas</th><th>Chave</th><th>Termos</th></tr>
+{% for c in conectores %}<tr><td>{{ c.label }}<br><small>{{ c.name }}</small></td><td>{{ c.input_types|join(', ') }}</td><td>{{ c.requires_key or '—' }}</td><td><small>{{ c.license_note }}</small></td></tr>{% endfor %}</table></section>
+{% endblock %}
+{% block scripts %}<script src="/static/app.js"></script>{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Verificação de informações</h1>
+<section class="cartao"><h2>Corroborar um enunciado</h2>
+<form method="get" class="form-inline"><input name="enunciado" value="{{ enunciado }}" size="70" placeholder="Ex.: A obra foi concluída em março de 2024" required><button>Verificar</button></form>
+{% if corr %}
+<div class="veredito c{{ corr.credibilidade }}"><b>{{ corr.credibilidade }} – {{ corr.credibilidade_rotulo }}</b> · classificação sugerida: <b>{{ CLAIM_KINDS[corr.classificacao] }}</b> · pontuação {{ corr.pontuacao }} ·
+{{ corr.fontes_independentes }} fonte(s) independente(s) · {{ corr.contradicoes }} possível(is) contradição(ões)</div>
+<ul>{% for x in corr.explicacao %}<li>{{ x }}</li>{% endfor %}</ul>
+<table><tr><th>Item</th><th>Fonte</th><th>Postura</th><th>Similaridade</th><th>Trecho</th></tr>
+{% for i in corr["itens"] %}<tr><td><a href="/p/{{ p.id }}/item/{{ i.id }}">#{{ i.id }}</a>{% if corr.origem_provavel == i.id %} <span class="tag">origem provável</span>{% endif %}</td><td>{{ i.source_domain or 'local' }} ({{ i.source_reliability }})</td>
+<td><span class="tag {{ 'hipotese' if i.postura != 'relacionado' else 'possivel' }}">{{ i.postura }}</span></td><td>{{ i.sim }}</td><td><small>{{ i.trecho[:260] }}</small></td></tr>{% endfor %}</table>
+{% endif %}</section>
+<div class="grade2">
+<section class="cartao"><h2>Registrar afirmação / hipótese</h2>
+<form method="post" action="/p/{{ p.id }}/afirmacao" class="form">
+<label>Enunciado<textarea name="statement" required rows="2">{{ enunciado }}</textarea></label>
+<label>Natureza<select name="kind">{% for k, v in CLAIM_KINDS.items() %}<option value="{{ k }}" {{ 'selected' if corr and corr.classificacao==k }}>{{ v }}</option>{% endfor %}</select></label>
+<label>Itens de apoio (#ids)<input name="supporting" placeholder="12, 15"></label>
+<label>Itens contrários (#ids)<input name="contradicting"></label>
+<label>Grau de confiança<input name="confidence" placeholder="Ex.: B2" value="{% if corr %}{{ corr.credibilidade }}{% endif %}"></label>
+<label>Justificativa<textarea name="rationale" rows="2"></textarea></label>
+<p class="nota">Fato observado e informação documental exigem itens de apoio.</p><button>Registrar</button></form></section>
+<section class="cartao"><h2>Afirmações registradas</h2>
+{% for c in afirmacoes %}<div class="afirmacao"><span class="tag k-{{ c.kind }}">{{ c.kind_label }}</span> {{ c.statement }}
+<small class="meta">apoio {{ c.supporting|join(', ') or '—' }} · contra {{ c.contradicting|join(', ') or '—' }} {{ c.confidence }}</small>
+<form method="post" action="/p/{{ p.id }}/afirmacao/{{ c.id }}/excluir" class="inline"><button class="mini">remover</button></form></div>{% endfor %}
+{% if not afirmacoes %}<p class="vazio">Nenhuma afirmação.</p>{% endif %}
+<h2>Hipóteses sugeridas por IA</h2><button id="gerar-hipoteses" data-pid="{{ p.id }}">Gerar hipóteses concorrentes (ACH)</button><div id="hipoteses"></div></section>
+</div>
+<div class="grade3">
+<section class="cartao"><h2>Coerência temporal</h2>{% for t in temporais %}<p><a href="/p/{{ p.id }}/item/{{ t.item }}">#{{ t.item }}</a> {{ t.problema }}</p>{% endfor %}{% if not temporais %}<p class="vazio">Nenhuma inconsistência.</p>{% endif %}</section>
+<section class="cartao"><h2>Citações circulares</h2>{% for c in circulares %}<p>{{ c|join(' → ') }} → {{ c[0] }}</p>{% endfor %}{% if not circulares %}<p class="vazio">Nenhuma detectada.</p>{% endif %}</section>
+<section class="cartao"><h2>Quase duplicados</h2>{% for d in duplicatas %}<p><a href="/p/{{ p.id }}/comparar?a={{ d.a }}&b={{ d.b }}">#{{ d.a }} ≈ #{{ d.b }}</a> {{ (d.similaridade*100)|round(0) }}% <small>{{ d.a_fonte }} / {{ d.b_fonte }}</small></p>{% endfor %}{% if not duplicatas %}<p class="vazio">Nenhum.</p>{% endif %}</section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/app.js"></script>{% endblock %}

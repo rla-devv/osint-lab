@@ -1,0 +1,13 @@
+{# Corpo da rede societária: `rede` (vinculos.rede) e, opcional, `grafo` (True mostra o grafo interativo). #}
+{% set nos = {} %}{% for n in rede.nos %}{% set _ = nos.update({n.id: n}) %}{% endfor %}
+<p class="nota">{{ rede.aviso }}{% if rede.truncada %} <b>Rede limitada a {{ rede.nos|selectattr('tipo','equalto','empresa')|list|length }} empresas</b>: reduza a profundidade ou parta de uma empresa ligada.{% endif %}</p>
+{% if grafo %}<div id="rede" class="grafo"></div><script type="application/json" id="rede-dados">{{ rede|tojson }}</script>
+<div id="rede-detalhe" class="nota">Clique em um nó para ver detalhes. ■ empresa · ● pessoa · ▲ estrangeiro · linha cheia = documental · tracejada = mesma pessoa provável.</div>{% endif %}
+{% if rede.comuns %}<h3>Pessoas em mais de uma empresa</h3><table><tr><th>Nome</th><th>CPF parcial (publicado)</th><th>Empresas na rede</th></tr>
+{% for c in rede.comuns %}<tr><td>{{ c.nome }}</td><td><code>{{ c.documento }}</code></td><td>{{ c.empresas }}</td></tr>{% endfor %}</table>{% endif %}
+<h3>Empresas</h3><table><tr><th>Razão social</th><th>CNPJ</th><th>Situação</th><th>Município</th><th>Atividade</th><th>Abertura</th></tr>
+{% for n in rede.nos if n.tipo == 'empresa' %}<tr{% if n.raiz %} class="destaque"{% endif %}><td>{% if p and not n.raiz and n.cnpj %}<a href="/p/{{ p.id }}/rede?q={{ n.cnpj|urlencode }}">{{ n.rotulo }}</a>{% else %}<b>{{ n.rotulo }}</b>{% endif %}</td>
+<td><code>{{ n.cnpj }}</code></td><td><span class="tag {{ '' if n.situacao == 'ATIVA' else 'alerta' }}">{{ n.situacao or '?' }}</span></td><td>{{ n.municipio }}</td><td><small>{{ n.cnae }}</small></td><td>{{ n.abertura }}</td></tr>{% endfor %}</table>
+<h3>Vínculos ({{ rede.arestas|length }})</h3><table><tr><th>Sócio</th><th>Empresa</th><th>Qualificação</th><th>Desde</th><th>Nível</th></tr>
+{% for e in rede.arestas %}{% set a = nos[e.de] %}{% set b = nos[e.para] %}<tr><td>{{ a.rotulo }}{% if a.documento %} <small class="meta">{{ a.documento }}</small>{% endif %}</td><td>{{ b.rotulo }}</td><td>{{ e.qualificacao }}</td><td>{{ e.desde }}</td>
+<td><span class="tag {{ 'confirmado' if e.nivel == 'documental' else 'possivel' }}">{{ 'documental' if e.nivel == 'documental' else 'mesma pessoa provável' }}</span></td></tr>{% endfor %}</table>

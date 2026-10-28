@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Entidades e vínculos</h1>
+<form method="post" action="/p/{{ p.id }}/correlacionar" class="form-inline"><button>Executar correlação</button>
+<span class="nota">Níveis: <span class="tag confirmado">confirmado</span> regra determinística · <span class="tag possivel">possível</span> ≥2 fontes independentes ·
+<span class="tag coincidencia">coincidência</span> 1 fonte · <span class="tag hipotese">hipótese</span> semelhança de nomes</span></form>
+<div class="grade2">
+<section class="cartao"><h2>Entidades</h2>
+<form class="filtros" method="get"><select name="tipo"><option value="">Todos os tipos</option>{% for t in tipos %}<option {{ 'selected' if t==tipo }}>{{ t }}</option>{% endfor %}</select><button>Filtrar</button></form>
+<table><tr><th>Tipo</th><th>Valor</th><th>Itens</th></tr>
+{% for e in ents %}<tr><td>{{ e.type }}{% if e.sensitive %} <span class="tag alerta">pessoal</span>{% endif %}</td><td><a href="/p/{{ p.id }}/entidade/{{ e.id }}">{{ e.value[:80] }}</a></td><td>{{ e.n_itens }}</td></tr>{% endfor %}</table></section>
+<section class="cartao"><h2>Vínculos</h2>
+<form class="filtros" method="get"><select name="nivel"><option value="">Todos os níveis</option>{% for k, v in LEVELS.items() %}<option value="{{ k }}" {{ 'selected' if k==nivel }}>{{ v }}</option>{% endfor %}</select><button>Filtrar</button></form>
+<table><tr><th>Nível</th><th>Origem</th><th>Relação</th><th>Destino</th></tr>
+{% for r in rels %}<tr title="{{ r.rationale }}"><td><span class="tag {{ r.level }}">{{ r.level }}</span>{% if r.created_by=='usuario' %} ✎{% endif %}</td>
+<td><a href="/p/{{ p.id }}/entidade/{{ r.src_entity }}">{{ r.src_value[:40] }}</a></td><td>{{ r.rel_type }}</td><td><a href="/p/{{ p.id }}/entidade/{{ r.dst_entity }}">{{ r.dst_value[:40] }}</a></td></tr>{% endfor %}</table>
+{% if not rels %}<p class="vazio">Execute a correlação para gerar vínculos.</p>{% endif %}</section>
+</div>
+{% endblock %}

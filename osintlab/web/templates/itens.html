@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Pesquisa e itens</h1>
+<form class="busca-central" method="get">
+  <input name="q" value="{{ q }}" placeholder="Termos, frases, nomes de organizações, domínios…">
+  <select name="modo">{% for m, l in [("hibrida","Híbrida"),("textual","Textual (BM25)"),("semantica","Semântica")] %}<option value="{{ m }}" {{ 'selected' if modo==m }}>{{ l }}</option>{% endfor %}</select>
+  <button>Pesquisar</button>
+</form>
+{% if resultados is not none %}
+  <h2>{{ resultados|length }} resultado(s) para “{{ q }}”</h2>
+  {% for r in resultados %}<div class="resultado"><a href="/p/{{ p.id }}/item/{{ r.id }}"><b>{{ r.title or '(sem título)' }}</b></a>
+    <span class="tag">{{ r.kind }}</span> <span class="tag">fonte {{ r.source_reliability }}</span> <small class="meta">{{ r.source_domain or 'local' }} · relevância {{ r.score }}</small>
+    <p class="trecho">{{ r.trecho }}</p></div>{% endfor %}
+{% else %}
+  <form class="filtros" method="get">
+    <select name="status"><option value="">Todos os status</option>{% for s in ["novo","revisar","revisado","descartado"] %}<option {{ 'selected' if status==s }}>{{ s }}</option>{% endfor %}</select>
+    <select name="tipo"><option value="">Todos os tipos</option>{% for t in ["web","documento","dataset","rss","imagem","conector","busca","nota","audiovisual"] %}<option {{ 'selected' if tipo==t }}>{{ t }}</option>{% endfor %}</select>
+    <button>Filtrar</button>
+  </form>
+  <table><tr><th>#</th><th>Título</th><th>Tipo</th><th>Fonte</th><th>Conf.</th><th>Publicado</th><th>Triagem</th><th>Status</th></tr>
+  {% for i in lista %}<tr><td>{{ i.id }}</td><td><a href="/p/{{ p.id }}/item/{{ i.id }}">{{ i.title[:90] or '(sem título)' }}</a></td><td>{{ i.kind }}</td>
+  <td>{{ i.source_domain or 'local' }}</td><td title="{{ RELIABILITY[i.source_reliability] }} / {{ CREDIBILITY[i.info_credibility] }}">{{ i.source_reliability }}{{ i.info_credibility }}</td>
+  <td>{{ (i.published_at or '')[:10] }}</td><td>{{ i.triage_score }}</td><td><span class="tag st-{{ i.status }}">{{ i.status }}</span></td></tr>{% endfor %}</table>
+  {% if not lista %}<p class="vazio">Nenhum item.</p>{% endif %}
+{% endif %}
+{% endblock %}

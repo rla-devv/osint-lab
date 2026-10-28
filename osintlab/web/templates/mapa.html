@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block head %}<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>{% endblock %}
+{% block content %}
+<h1>Mapa (GEOINT)</h1>
+<p class="nota">{{ n }} ponto(s): coordenadas EXIF de imagens, coordenadas citadas em textos e geocodificações (Nominatim/OSM). A origem de cada coordenada é indicada — coordenadas EXIF podem ser alteradas e geocodificações são aproximadas.</p>
+<div class="form-inline"><label>Filtrar por data até <input type="date" id="ate"></label></div>
+<div id="mapa" data-pid="{{ p.id }}" class="mapa"></div>
+{% if dist %}<section class="cartao"><h2>Pontos mais próximos entre si</h2><table><tr><th>Item A</th><th>Item B</th><th>Distância</th></tr>
+{% for d in dist %}<tr><td>#{{ d.a }}</td><td>#{{ d.b }}</td><td>{{ d.km }} km</td></tr>{% endfor %}</table></section>{% endif %}
+<p class="nota">Mapa base © colaboradores do OpenStreetMap (ODbL).</p>
+{% endblock %}
+{% block scripts %}<script src="/static/mapa.js"></script>{% endblock %}

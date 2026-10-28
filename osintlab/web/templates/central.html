@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post" action="/central/iniciar" class="inline direita"><button class="secundario">Instalar bases iniciais (~60 MB)</button></form>
+<h1>Central de Bases de Dados</h1>
+<p class="nota">Bases locais: {{ total_local }} · espaço livre: {{ espaco_livre }}. Categorias: {% for k, v in CATEGORIAS.items() %}<span class="tag cat-{{ k }}">{{ k }}</span> {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+<nav class="abas">{% for k, l in [("fontes","Fontes disponíveis"),("instaladas","Bases instaladas"),("atualizacoes","Atualizações"),("conectores","Conectores"),("credenciais","Credenciais"),("descobertas","Descobertas"),("diagnosticos","Diagnósticos")] %}
+<a class="{{ 'ativo' if aba==k }}" href="?aba={{ k }}">{{ l }}</a>{% endfor %}</nav>
+
+{% if aba == "fontes" %}
+<form class="filtros" method="get"><input type="hidden" name="aba" value="fontes">
+<select name="tema"><option value="">Todos os temas</option>{% for k, v in TEMAS.items() %}<option value="{{ k }}" {{ 'selected' if k==tema }}>{{ v }}</option>{% endfor %}</select>
+<select name="categoria"><option value="">Todas as categorias</option>{% for k, v in CATEGORIAS.items() %}<option value="{{ k }}" {{ 'selected' if k==categoria }}>{{ k }} – {{ v }}</option>{% endfor %}</select><button>Filtrar</button></form>
+<table><tr><th>Fonte</th><th>Cat.</th><th>Tema</th><th>Organização</th><th>Situação</th><th>Estado local</th></tr>
+{% for o in ov %}{% set f = o.fonte %}<tr><td><a href="/central/fonte/{{ f.id }}"><b>{{ f.nome }}</b></a><br><small class="meta">{{ f.descricao[:120] }}</small></td>
+<td><span class="tag cat-{{ f.categoria }}" title="{{ CATEGORIAS[f.categoria] }}">{{ f.categoria }}</span></td><td>{{ TEMAS.get(f.tema, f.tema) }}</td><td><small>{{ f.organizacao }} ({{ f.pais }})</small></td>
+<td><span class="tag sit-{{ f.situacao }}">{{ SITUACOES[f.situacao] }}</span></td>
+<td>{% if o.em_execucao %}<span class="tag st-executando">sincronizando</span>{% elif o.installed %}<span class="tag st-concluido">instalada</span>{% if o.desatualizada %} <span class="tag hipotese">desatualizada</span>{% endif %}{% elif f.sincronizavel %}<span class="tag">não instalada</span>{% elif f.online %}<span class="tag possivel">online</span>{% elif f.categoria == 'C' %}<span class="tag">assistida</span>{% else %}<span class="tag coincidencia">—</span>{% endif %}
+{% if o.problema %}<br><small class="erro">{{ o.problema }}</small>{% endif %}</td></tr>{% endfor %}</table>
+
+<details class="cartao"><summary><b>Cadastrar base tabular personalizada</b> (arquivo oficial CSV/ZIP/XLSX — ex.: exportação do TABNET, VIS DATA, Sinesp, ANS)</summary>
+<form method="post" action="/central/personalizada" class="form grade2">
+<label>Identificador<input name="id" required placeholder="ex.: sinesp_ocorrencias"></label><label>Nome<input name="nome" required></label>
+<label>URL do arquivo (https)<input name="url" required></label><label>Página oficial / documentação<input name="pagina"></label>
+<label>Organização<input name="organizacao"></label><label>Tema<select name="tema">{% for k, v in TEMAS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+<label>Licença declarada<input name="licenca"></label><label>Coluna-chave (para detectar alterações)<input name="chave"></label>
+<label>Colunas de título (separadas por vírgula)<input name="titulo"></label><label>Separador (vazio = detectar)<input name="separador" maxlength="1"></label>
+<label>Codificação<select name="codificacao"><option value="">UTF-8</option><option value="latin-1">Latin-1</option></select></label>
+<label>Verificar a cada (horas)<input name="intervalo_horas"></label><button>Cadastrar</button></form></details>
+{% elif aba == "instaladas" %}
+<table><tr><th>Base</th><th>Versão local</th><th>Versão remota</th><th>Registros</th><th>Espaço</th><th>Integridade</th><th>Última sincronização</th><th>Próxima verificação</th></tr>
+{% for o in ov if o.installed %}<tr><td><a href="/central/fonte/{{ o.source_id }}">{{ o.fonte.nome }}</a></td><td><code>{{ o.current_version }}</code></td>
+<td><code>{{ o.remote_version or '' }}</code>{% if o.desatualizada %} <span class="tag hipotese">nova</span>{% endif %}</td><td>{{ o.records }}</td><td>{{ human_size(o.size_bytes) }}</td>
+<td class="{{ 'ok' if o.integrity=='ok' else 'erro' }}">{{ o.integrity }}</td><td>{{ o.last_sync or '' }}</td><td>{{ o.next_check or ('pausada' if o.paused else '—') }}</td></tr>{% else %}<tr><td colspan="8" class="vazio">Nenhuma base instalada. Abra uma fonte de categoria A/B sincronizável e clique em “Instalar/atualizar”.</td></tr>{% endfor %}</table>
+
+{% elif aba == "atualizacoes" %}
+<form method="post" action="/central/sincronizar-vencidas" class="form-inline"><button>Verificar bases vencidas agora</button>
+<span class="nota">O agendador verifica a cada minuto as bases ativas cujo intervalo venceu (janela opcional: OSINTLAB_SYNC_JANELA=22-6).</span></form>
+<table><tr><th>Início</th><th>Fonte</th><th>Gatilho</th><th>Método</th><th>Resultado</th><th>Versão</th><th>+/~/−</th><th>Registros</th><th>Detalhes</th></tr>
+{% for h in historico %}<tr><td>{{ h.started_at }}</td><td><a href="/central/fonte/{{ h.source_id }}">{{ h.source_id }}</a></td><td>{{ h.trigger }}</td><td>{{ h.method or '' }}</td>
+<td><span class="tag st-{{ 'concluido' if h.status in ('concluida','atualizada') else ('falhou' if h.status=='falhou' else 'executando') }}">{{ h.status }}</span></td>
+<td><small>{{ h.local_version or '∅' }} → {{ h.remote_version or '' }}</small></td><td>{{ h.added }}/{{ h.modified }}/{{ h.deleted }}</td><td>{{ h.records or '' }}</td>
+<td><details><summary>passos</summary><ol class="passos">{% for s in h.steps %}<li>{{ s.msg }}</li>{% endfor %}</ol>{% if h.files %}<b>Arquivos</b><ul>{% for f in h.files %}<li><small>{{ f.nome }} {{ f.bytes or '' }} B <code>{{ (f.sha256 or '')[:16] }}</code></small></li>{% endfor %}</ul>{% endif %}{% if h.error %}<p class="erro">{{ h.error }}</p>{% endif %}</details></td></tr>{% endfor %}</table>
+
+{% elif aba == "conectores" %}
+<table><tr><th>Conector</th><th>Cat.</th><th>Online</th><th>Base local</th><th>Incremental</th><th>Credencial</th><th>Falhas</th><th>Último erro</th></tr>
+{% for o in ov if o.fonte.categoria in ('A','B','D') %}{% set f = o.fonte %}<tr><td><a href="/central/fonte/{{ f.id }}">{{ f.nome }}</a></td><td>{{ f.categoria }}</td><td>{{ 'sim' if f.online else '—' }}</td><td>{{ 'sim' if f.sincronizavel else '—' }}</td><td>{{ 'sim' if f.incremental else '—' }}</td>
+<td>{{ f.credencial or '—' }}</td><td>{{ o.fail_count or 0 }}</td><td><small class="erro">{{ (o.last_error or '')[:120] }}</small></td></tr>{% endfor %}</table>
+
+{% elif aba == "credenciais" %}
+<p class="nota">Armazenamento: <b>{{ backend }}</b>. Variáveis <code>OSINTLAB_CRED_&lt;NOME&gt;</code> têm precedência. Os valores nunca são exibidos, gravados no banco ou em relatórios.</p>
+<table><tr><th>Credencial</th><th>Usada por</th><th>Origem</th><th>Valor</th><th>Definir / remover</th></tr>
+{% for c in creds %}<tr><td><code>{{ c.nome }}</code></td><td>{{ c.usada_por|join(', ') }}</td><td>{{ c.fonte or 'não configurada' }}</td><td><code>{{ c.mascara }}</code></td>
+<td><form method="post" action="/central/credencial" class="form-inline"><input type="hidden" name="nome" value="{{ c.nome }}"><input type="password" name="valor" placeholder="nova chave" autocomplete="off"><button>Salvar</button>
+{% if c.fonte in ('keyring','arquivo') %}<button name="remover" value="1" class="secundario">Remover</button>{% endif %}</form></td></tr>{% endfor %}</table>
+
+{% elif aba == "descobertas" %}
+<form method="post" action="/central/descobrir" class="form-inline"><button>Buscar novas fontes agora</button>
+<span class="nota">Consulta catálogos CKAN públicos e o GitHub. Nada é instalado: cada candidato exige revisão humana, conferência da licença e auditoria de código antes de virar conector.</span></form>
+<table><tr><th>Candidato</th><th>Origem</th><th>Formatos</th><th>Licença</th><th>Pont.</th><th>Justificativa</th><th>Status</th><th></th></tr>
+{% for d in descobertas %}<tr><td><a href="{{ d.url }}" target="_blank" rel="noopener noreferrer">{{ d.title }}</a><br><small class="meta">{{ d.organization }} · {{ (d.description or '')[:140] }}</small></td><td>{{ d.provider }}</td>
+<td><small>{{ d.formats|join(', ') }}</small></td><td><small>{{ d.license }}</small></td><td>{{ d.score }}</td><td><small>{{ d.rationale }}</small></td><td><span class="tag">{{ d.status }}</span></td>
+<td class="acoes">{% for s, l in [("aprovada","aprovar"),("descartada","descartar")] if d.status != s %}<form method="post" action="/central/descoberta/{{ d.id }}"><input type="hidden" name="status" value="{{ s }}"><button class="mini">{{ l }}</button></form>{% endfor %}</td></tr>
+{% else %}<tr><td colspan="8" class="vazio">Nenhuma descoberta ainda.</td></tr>{% endfor %}</table>
+
+{% elif aba == "diagnosticos" %}
+<p class="nota">Teste de conectividade (uma requisição leve) e verificação de integridade (PRAGMA integrity_check + versão + contagem) por fonte.</p>
+<table><tr><th>Fonte</th><th>Estado</th><th>Integridade</th><th>Ações</th></tr>
+{% for o in ov if o.fonte.sincronizavel or o.fonte.online %}<tr><td><a href="/central/fonte/{{ o.source_id }}">{{ o.fonte.nome }}</a></td><td>{{ o.status }}</td><td>{{ o.integrity }}</td>
+<td class="acoes"><form method="post" action="/central/fonte/{{ o.source_id }}/testar"><button class="mini">testar conectividade</button></form>
+{% if o.installed %}<form method="post" action="/central/fonte/{{ o.source_id }}/verificar"><button class="mini">verificar integridade</button></form>{% endif %}</td></tr>{% endfor %}</table>
+{% endif %}
+{% endblock %}

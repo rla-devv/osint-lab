@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Projetos de pesquisa</h1>
+{% if not projetos %}
+<section class="cartao destaque"><h2>Primeiros passos</h2>
+<ol class="passos">
+<li><b>Veja a ferramenta funcionando</b> com um projeto de demonstração, 100% sintético (obra pública fictícia, notícias, contratos e uma foto com GPS).
+<form method="post" action="/exemplo" class="inline"><button>Criar projeto de demonstração</button></form></li>
+<li><b>Instale as bases iniciais</b> na <a href="/central">Central de Bases</a>: IBGE, sanções da ONU, OFAC, Canadá, CEIS/CNEP, TCU e parlamentares, cerca de 60 MB.
+<form method="post" action="/central/iniciar" class="inline"><button class="secundario">Instalar bases iniciais</button></form></li>
+<li><b>Crie o seu projeto</b> abaixo, com a finalidade registrada, e use a <i>Pesquisa unificada</i>, a coleta de URLs e arquivos e os fluxos automáticos.</li>
+</ol>
+<p class="nota">Tudo roda no seu computador. Nenhum dado é enviado a terceiros além das consultas às fontes que você escolher.</p></section>
+{% endif %}
+<div class="grade2">
+<section class="cartao">
+  <h2>Novo projeto</h2>
+  <form method="post" action="/projetos" class="form">
+    <label>Nome<input name="name" required maxlength="200" placeholder="Ex.: Verificação de notícia sobre obra pública"></label>
+    <label>Finalidade legítima (obrigatória)<textarea name="purpose" required minlength="15" rows="3"
+      placeholder="Descreva o objetivo da pesquisa. Ex.: estudo acadêmico sobre desinformação em contratos municipais."></textarea></label>
+    <label>Descrição / escopo<textarea name="description" rows="2"></textarea></label>
+    <label>Retenção dos dados (dias)<input type="number" name="retention_days" value="365" min="0"></label>
+    <p class="nota">A finalidade fica registrada na trilha de auditoria e em todos os relatórios (LGPD art. 6º, I).</p>
+    <button>Criar projeto</button>
+  </form>
+</section>
+<section class="cartao">
+  <h2>Projetos ativos</h2>
+  {% if not projetos %}<p class="vazio">Nenhum projeto ainda.</p>{% else %}<form method="post" action="/exemplo" class="inline"><button class="secundario">Criar projeto de demonstração</button></form>{% endif %}
+  <ul class="lista-projetos">
+  {% for pr in projetos %}
+    <li><a href="/p/{{ pr.id }}"><b>{{ pr.name }}</b></a><br><small>{{ pr.purpose[:140] }}</small><br>
+      <small class="meta">{{ pr.n_itens }} itens · {{ pr.n_entidades }} entidades · criado em {{ pr.created_at[:10] }}</small></li>
+  {% endfor %}
+  </ul>
+</section>
+</div>
+{% endblock %}

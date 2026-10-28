@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Relatórios</h1>
+<section class="cartao"><form method="post" action="/p/{{ p.id }}/relatorio" class="form-inline">
+<select name="tipo">{% for k, v in tipos.items() %}<option value="{{ k }}" {{ 'selected' if k=='completo' }}>{{ v }}</option>{% endfor %}</select>
+<select name="fmt">{% for f in ["html","pdf","docx","md","json"] %}<option>{{ f }}</option>{% endfor %}</select><button>Gerar</button></form>
+<p class="nota">Todos os relatórios incluem finalidade declarada, aviso metodológico, distinção entre fatos, documentos, inferências e hipóteses e (no técnico/completo) o manifesto de evidências com hash raiz.</p></section>
+<section class="cartao"><h2>Interoperabilidade</h2>
+<p><a class="botao secundario" href="/p/{{ p.id }}/exportar/stix">Exportar STIX 2.1</a> <a class="botao secundario" href="/p/{{ p.id }}/exportar/misp">Exportar evento MISP</a></p>
+<p class="nota">Para OpenCTI, MISP e outras ferramentas. Dados pessoais (e-mails, telefones, CPF, pessoas) são excluídos por padrão; o nível de cada vínculo é mantido como <code>confidence</code> e rótulo.</p></section>
+<section class="cartao"><h2>Gerados</h2><ul>{% for f in arquivos %}<li><a href="/p/{{ p.id }}/relatorio/{{ f }}" target="_blank">{{ f }}</a></li>{% endfor %}</ul>{% if not arquivos %}<p class="vazio">Nenhum relatório.</p>{% endif %}</section>
+{% endblock %}

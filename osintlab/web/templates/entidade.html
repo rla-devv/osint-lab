@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ e.type }}: {{ e.value }}</h1>
+{% if e.sensitive %}<p class="msg erro">Dado pessoal: trate conforme a finalidade declarada do projeto. Não é exibido no grafo por padrão nem exportado em relatórios de entidades.</p>{% endif %}
+<div class="grade2">
+<section class="cartao"><h2>Aprofundar (conectores compatíveis)</h2>
+{% for c in conectores %}<form method="post" action="/p/{{ p.id }}/coleta/conector" class="form-inline"><input type="hidden" name="conector" value="{{ c.name }}"><input type="hidden" name="valor" value="{{ e.value }}"><button class="secundario">{{ c.label }}</button></form>{% endfor %}
+{% if not conectores %}<p class="vazio">Nenhum conector para este tipo.</p>{% endif %}
+<h2>Registrar vínculo manual</h2>
+<form method="post" action="/p/{{ p.id }}/relacao" class="form"><input type="hidden" name="src" value="{{ e.id }}">
+<label>ID da entidade de destino<input name="dst" type="number" required></label><label>Relação<input name="rel_type" placeholder="ex.: controla, publicou, mesmo_endereco" required></label>
+<label>Nível<select name="level">{% for k, v in LEVELS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+<label>Justificativa e fontes<textarea name="rationale" required placeholder="Cite itens (#id) que sustentam o vínculo"></textarea></label><button>Salvar</button></form></section>
+<section class="cartao"><h2>Vínculos</h2>
+{% for r in rels %}<p><span class="tag {{ r.level }}">{{ LEVELS[r.level] }}</span> {{ r.src_value }} —{{ r.rel_type }}→ {{ r.dst_value }}<br><small>{{ r.rationale }}</small></p>{% endfor %}
+{% if not rels %}<p class="vazio">Sem vínculos.</p>{% endif %}</section>
+</div>
+<section class="cartao"><h2>Menções ({{ mentions|length }})</h2>
+<table><tr><th>Item</th><th>Contexto</th></tr>{% for m in mentions %}<tr><td><a href="/p/{{ p.id }}/item/{{ m.item_id }}">#{{ m.item_id }} {{ m.title[:60] }}</a></td><td><small>{{ m.context }}</small></td></tr>{% endfor %}</table></section>
+{% endblock %}

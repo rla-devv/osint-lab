@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="cartao" style="max-width:480px;margin:3rem auto"><h1>Cofre bloqueado</h1>
+<p>Os dados locais estão cifrados. Informe a senha do cofre para continuar.</p>
+{% if erro %}<p class="erro">{{ erro }}</p>{% endif %}
+<form method="post" action="/desbloquear" class="linha"><input type="password" name="senha" autofocus required placeholder="Senha do cofre"><button>Desbloquear</button></form>
+</section>
+{% endblock %}

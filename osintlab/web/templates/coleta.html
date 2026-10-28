@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Coleta e fluxos</h1>
+<p class="nota">Toda coleta é passiva: respeita robots.txt, limita a taxa de requisições por host, bloqueia redes privadas e preserva os originais com SHA-256.</p>
+<div class="grade2">
+<section class="cartao"><h2>Páginas web e documentos online</h2>
+<form method="post" action="/p/{{ p.id }}/coleta/url" class="form"><label>URLs (uma por linha, máx. 50)<textarea name="url" rows="4" required placeholder="https://www.exemplo.gov.br/noticia"></textarea></label><button>Coletar e preservar</button></form>
+</section>
+<section class="cartao"><h2>Arquivos (PDF, DOCX, XLSX, CSV, JSON, imagens, áudio/vídeo)</h2>
+<form method="post" action="/p/{{ p.id }}/coleta/upload" enctype="multipart/form-data" class="form">
+<input type="file" name="arquivos" multiple required>
+<label>URL de origem (opcional)<input name="source_url" placeholder="De onde o arquivo foi obtido"></label>
+<label>Nota de proveniência<input name="nota" placeholder="Ex.: baixado do portal de transparência em 21/10/2026"></label>
+<button>Importar em lote</button></form></section>
+</div>
+<section class="cartao"><h2>Conectores de fontes abertas</h2>
+<form method="post" action="/p/{{ p.id }}/coleta/conector" class="form-inline">
+<select name="conector">{% for c in conectores %}<option value="{{ c.name }}">{{ c.label }} — entrada: {{ c.input_types|join('/') }}{% if c.requires_key %} (requer chave){% endif %}</option>{% endfor %}</select>
+<input name="valor" required placeholder="Domínio, IP, CNPJ, termo, URL de feed, coordenadas…" size="40">
+<button>Consultar</button></form>
+<details><summary>Ver catálogo de conectores e licenças</summary><table><tr><th>Conector</th><th>Descrição</th><th>Fonte / termos</th></tr>
+{% for c in conectores %}<tr><td>{{ c.label }}</td><td>{{ c.description }}</td><td><a href="{{ c.source_url }}" target="_blank" rel="noopener noreferrer">{{ c.source_url }}</a><br><small>{{ c.license_note }}</small></td></tr>{% endfor %}</table></details>
+</section>
+<section class="cartao"><h2>Fluxos automatizados</h2>
+<form method="post" action="/p/{{ p.id }}/fluxo" class="form-inline">
+<select name="fluxo">{% for k, f in fluxos.items() %}<option value="{{ k }}">{{ f.label }}</option>{% endfor %}</select>
+<input name="alvo" required placeholder="exemplo.com.br, nome da organização ou tema" size="40"><button>Executar</button></form>
+<ul class="nota">{% for k, f in fluxos.items() %}<li><b>{{ f.label }}:</b> {{ f.descricao }}</li>{% endfor %}</ul>
+<p class="nota">Alvos que aparentam ser pessoas físicas exigem justificativa de finalidade antes da execução.</p>
+<table><tr><th>#</th><th>Fluxo</th><th>Alvo</th><th>Status</th><th>Passos</th><th></th></tr>
+{% for j in jobs %}<tr><td>{{ j.id }}</td><td>{{ j.workflow }}</td><td>{{ j.params.alvo }}</td><td><span class="tag st-{{ j.status }}">{{ j.status }}</span></td>
+<td>{% for s in j.steps_state %}<span class="tag st-{{ s.status }}" title="{{ s.erro or '' }}">{{ s.rotulo }}</span> {% endfor %}</td>
+<td>{% if j.status == 'aguardando_confirmacao' %}<form method="post" action="/p/{{ p.id }}/fluxo/{{ j.id }}/confirmar" class="form-inline"><input name="justificativa" placeholder="Justificativa da finalidade legítima" size="30" required><button>Confirmar</button></form>{% endif %}
+{% if j.status == 'falhou' %}<form method="post" action="/p/{{ p.id }}/fluxo/{{ j.id }}/retomar"><button>Retomar</button></form>{% endif %}
+{% if j.status in ('pendente','executando','aguardando_confirmacao') %}<form method="post" action="/p/{{ p.id }}/fluxo/{{ j.id }}/cancelar"><button class="secundario">Cancelar</button></form>{% endif %}</td></tr>{% endfor %}</table>
+</section>
+<section class="cartao"><h2>Nota manual</h2>
+<form method="post" action="/p/{{ p.id }}/coleta/nota" class="form"><input name="titulo" placeholder="Título" required><textarea name="texto" rows="3" required placeholder="Observação, transcrição ou registro manual"></textarea><button>Salvar nota</button></form></section>
+{% endblock %}

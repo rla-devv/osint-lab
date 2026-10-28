@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Linha do tempo</h1>
+<p><a href="?coletas={{ 0 if coletas else 1 }}">{{ 'Ocultar' if coletas else 'Mostrar' }} eventos de coleta</a></p>
+{% if atividade.anomalias %}<p class="msg erro">Picos de volume (z ≥ 2): {% for a in atividade.anomalias %}{{ a.data }} ({{ a.n }}) {% endfor %}</p>{% endif %}
+<div class="timeline">
+{% for e in eventos %}<div class="evento t-{{ e.tipo }}"><span class="data">{{ e.data }}</span><span class="tag">{{ e.tipo }}</span>
+{% if e.item %}<a href="/p/{{ p.id }}/item/{{ e.item }}">{{ e.descricao[:200] }}</a>{% else %}{{ e.descricao[:200] }}{% endif %}
+<small class="meta">{{ e.natureza }}{% if e.fonte %} · {{ e.fonte }}{% endif %}</small></div>{% endfor %}
+{% if not eventos %}<p class="vazio">Sem eventos datados.</p>{% endif %}
+</div>
+<section class="cartao"><h2>Volume por fonte</h2><table>{% for f, n in atividade.por_fonte %}<tr><td>{{ f }}</td><td>{{ n }}</td></tr>{% endfor %}</table></section>
+{% endblock %}

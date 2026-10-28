@@ -1,0 +1,1696 @@
+{
+"_fonte": "Wikipédia (pt), 'Placas de identificação de veículos no Brasil', revisão 69658141 (01/03/2025), seção 'Distribuição de sequências por ordem alfabética'. A tabela foi retirada do artigo em 2025 por falta de fonte verificável. Não é fonte oficial: use como indício.",
+"_licenca": "CC BY-SA 4.0 (Wikipédia)",
+"_url": "https://pt.wikipedia.org/w/index.php?oldid=69658141",
+"series": [
+{
+"de": "AAA",
+"ate": "BEZ",
+"uf": "PR",
+"estado": "Paraná",
+"sequencia": 1,
+"desde": "02/1990"
+},
+{
+"de": "BFA",
+"ate": "GKI",
+"uf": "SP",
+"estado": "São Paulo",
+"sequencia": 1,
+"desde": "07/1991"
+},
+{
+"de": "GKJ",
+"ate": "HOK",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 1,
+"desde": "09/1991"
+},
+{
+"de": "HOL",
+"ate": "HQE",
+"uf": "MA",
+"estado": "Maranhão",
+"sequencia": 1,
+"desde": "01/1992"
+},
+{
+"de": "HQF",
+"ate": "HTW",
+"uf": "MS",
+"estado": "Mato Grosso do Sul",
+"sequencia": 1,
+"desde": "03/1992"
+},
+{
+"de": "HTX",
+"ate": "HZA",
+"uf": "CE",
+"estado": "Ceará",
+"sequencia": 1,
+"desde": "10/1992"
+},
+{
+"de": "HZB",
+"ate": "IAP",
+"uf": "SE",
+"estado": "Sergipe",
+"sequencia": 1,
+"desde": "09/1993"
+},
+{
+"de": "IAQ",
+"ate": "JDO",
+"uf": "RS",
+"estado": "Rio Grande do Sul",
+"sequencia": 1,
+"desde": "03/1992"
+},
+{
+"de": "JDP",
+"ate": "JKR",
+"uf": "DF",
+"estado": "Distrito Federal",
+"sequencia": 1,
+"desde": "04/1994"
+},
+{
+"de": "JKS",
+"ate": "JSZ",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 1,
+"desde": "08/1993"
+},
+{
+"de": "JTA",
+"ate": "JWE",
+"uf": "PA",
+"estado": "Pará",
+"sequencia": 1,
+"desde": "07/1993"
+},
+{
+"de": "JWF",
+"ate": "JXY",
+"uf": "AM",
+"estado": "Amazonas",
+"sequencia": 1,
+"desde": "09/1993"
+},
+{
+"de": "JXZ",
+"ate": "KAU",
+"uf": "MT",
+"estado": "Mato Grosso",
+"sequencia": 1,
+"desde": "09/1993"
+},
+{
+"de": "KAV",
+"ate": "KFC",
+"uf": "GO",
+"estado": "Goiás",
+"sequencia": 1,
+"desde": "05/1994"
+},
+{
+"de": "KFD",
+"ate": "KME",
+"uf": "PE",
+"estado": "Pernambuco",
+"sequencia": 1,
+"desde": "08/1994"
+},
+{
+"de": "KMF",
+"ate": "LVE",
+"uf": "RJ",
+"estado": "Rio de Janeiro",
+"sequencia": 1,
+"desde": "05/1994"
+},
+{
+"de": "LVF",
+"ate": "LWQ",
+"uf": "PI",
+"estado": "Piauí",
+"sequencia": 1,
+"desde": "04/1996"
+},
+{
+"de": "LWR",
+"ate": "MMM",
+"uf": "SC",
+"estado": "Santa Catarina",
+"sequencia": 1,
+"desde": "06/1996"
+},
+{
+"de": "MMN",
+"ate": "MOW",
+"uf": "PB",
+"estado": "Paraíba",
+"sequencia": 1,
+"desde": "07/1996"
+},
+{
+"de": "MOX",
+"ate": "MTZ",
+"uf": "ES",
+"estado": "Espírito Santo",
+"sequencia": 1,
+"desde": "12/1995"
+},
+{
+"de": "MUA",
+"ate": "MVK",
+"uf": "AL",
+"estado": "Alagoas",
+"sequencia": 1,
+"desde": "08/1996"
+},
+{
+"de": "MVL",
+"ate": "MXG",
+"uf": "TO",
+"estado": "Tocantins",
+"sequencia": 1,
+"desde": "11/1996"
+},
+{
+"de": "MXH",
+"ate": "MZM",
+"uf": "RN",
+"estado": "Rio Grande do Norte",
+"sequencia": 1,
+"desde": "06/1998"
+},
+{
+"de": "MZN",
+"ate": "NAG",
+"uf": "AC",
+"estado": "Acre",
+"sequencia": 1,
+"desde": "06/1998"
+},
+{
+"de": "NAH",
+"ate": "NBA",
+"uf": "RR",
+"estado": "Roraima",
+"sequencia": 1,
+"desde": "07/1998"
+},
+{
+"de": "NBB",
+"ate": "NEH",
+"uf": "RO",
+"estado": "Rondônia",
+"sequencia": 1,
+"desde": "07/1998"
+},
+{
+"de": "NEI",
+"ate": "NFB",
+"uf": "AP",
+"estado": "Amapá",
+"sequencia": 1,
+"desde": "09/1998"
+},
+{
+"de": "NFC",
+"ate": "NGZ",
+"uf": "GO",
+"estado": "Goiás",
+"sequencia": 2,
+"desde": "08/2003"
+},
+{
+"de": "NHA",
+"ate": "NHT",
+"uf": "MA",
+"estado": "Maranhão",
+"sequencia": 2,
+"desde": "12/2006"
+},
+{
+"de": "NHU",
+"ate": "NIX",
+"uf": "PI",
+"estado": "Piauí",
+"sequencia": 2,
+"desde": "05/2007"
+},
+{
+"de": "NIY",
+"ate": "NJW",
+"uf": "MT",
+"estado": "Mato Grosso",
+"sequencia": 2,
+"desde": "10/2007"
+},
+{
+"de": "NJX",
+"ate": "NLU",
+"uf": "GO",
+"estado": "Goiás",
+"sequencia": 3,
+"desde": "11/2007"
+},
+{
+"de": "NLV",
+"ate": "NMO",
+"uf": "AL",
+"estado": "Alagoas",
+"sequencia": 2,
+"desde": "01/2008"
+},
+{
+"de": "NMP",
+"ate": "NNI",
+"uf": "MA",
+"estado": "Maranhão",
+"sequencia": 3,
+"desde": "05/2008"
+},
+{
+"de": "NNJ",
+"ate": "NOH",
+"uf": "RN",
+"estado": "Rio Grande do Norte",
+"sequencia": 2,
+"desde": "07/2008"
+},
+{
+"de": "NOI",
+"ate": "NPB",
+"uf": "AM",
+"estado": "Amazonas",
+"sequencia": 2,
+"desde": "07/2008"
+},
+{
+"de": "NPC",
+"ate": "NPQ",
+"uf": "MT",
+"estado": "Mato Grosso",
+"sequencia": 3,
+"desde": "09/2008"
+},
+{
+"de": "NPR",
+"ate": "NQK",
+"uf": "PB",
+"estado": "Paraíba",
+"sequencia": 2,
+"desde": "11/2008"
+},
+{
+"de": "NQL",
+"ate": "NRE",
+"uf": "CE",
+"estado": "Ceará",
+"sequencia": 2,
+"desde": "12/2008"
+},
+{
+"de": "NRF",
+"ate": "NSD",
+"uf": "MS",
+"estado": "Mato Grosso do Sul",
+"sequencia": 2,
+"desde": "11/2009"
+},
+{
+"de": "NSE",
+"ate": "NTC",
+"uf": "PA",
+"estado": "Pará",
+"sequencia": 2,
+"desde": "11/2009"
+},
+{
+"de": "NTD",
+"ate": "NTW",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 2,
+"desde": "02/2010"
+},
+{
+"de": "NTX",
+"ate": "NUG",
+"uf": "MT",
+"estado": "Mato Grosso",
+"sequencia": 4,
+"desde": "03/2010"
+},
+{
+"de": "NUH",
+"ate": "NUL",
+"uf": "RR",
+"estado": "Roraima",
+"sequencia": 2,
+"desde": "06/2010"
+},
+{
+"de": "NUM",
+"ate": "NVF",
+"uf": "CE",
+"estado": "Ceará",
+"sequencia": 3,
+"desde": "06/2010"
+},
+{
+"de": "NVG",
+"ate": "NVN",
+"uf": "SE",
+"estado": "Sergipe",
+"sequencia": 2,
+"desde": "03/2010"
+},
+{
+"de": "NVO",
+"ate": "NWR",
+"uf": "GO",
+"estado": "Goiás",
+"sequencia": 4,
+"desde": "03/2010"
+},
+{
+"de": "NWS",
+"ate": "NXQ",
+"uf": "MA",
+"estado": "Maranhão",
+"sequencia": 4,
+"desde": "07/2010"
+},
+{
+"de": "NXR",
+"ate": "NXT",
+"uf": "AC",
+"estado": "Acre",
+"sequencia": 2,
+"desde": "05/2011"
+},
+{
+"de": "NXU",
+"ate": "NXW",
+"uf": "PE",
+"estado": "Pernambuco",
+"sequencia": 2,
+"desde": "07/2010"
+},
+{
+"de": "NXX",
+"ate": "NYG",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 2,
+"desde": "10/2011"
+},
+{
+"de": "NYH",
+"ate": "NZZ",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 3,
+"desde": "10/2010"
+},
+{
+"de": "OAA",
+"ate": "OAO",
+"uf": "AM",
+"estado": "Amazonas",
+"sequencia": 3,
+"desde": "12/2010"
+},
+{
+"de": "OAP",
+"ate": "OBS",
+"uf": "MT",
+"estado": "Mato Grosso",
+"sequencia": 5,
+"desde": "05/2011"
+},
+{
+"de": "OBT",
+"ate": "OCA",
+"uf": "PA",
+"estado": "Pará",
+"sequencia": 3,
+"desde": "07/2011"
+},
+{
+"de": "OCB",
+"ate": "OCU",
+"uf": "CE",
+"estado": "Ceará",
+"sequencia": 4,
+"desde": "02/2011"
+},
+{
+"de": "OCV",
+"ate": "ODT",
+"uf": "ES",
+"estado": "Espírito Santo",
+"sequencia": 2,
+"desde": "05/2011"
+},
+{
+"de": "ODU",
+"ate": "OEI",
+"uf": "PI",
+"estado": "Piauí",
+"sequencia": 3,
+"desde": "09/2011"
+},
+{
+"de": "OEJ",
+"ate": "OES",
+"uf": "SE",
+"estado": "Sergipe",
+"sequencia": 3,
+"desde": "08/2011"
+},
+{
+"de": "OET",
+"ate": "OFH",
+"uf": "PB",
+"estado": "Paraíba",
+"sequencia": 3,
+"desde": "04/2011"
+},
+{
+"de": "OFI",
+"ate": "OFW",
+"uf": "PA",
+"estado": "Pará",
+"sequencia": 4,
+"desde": "03/2011"
+},
+{
+"de": "OFX",
+"ate": "OGG",
+"uf": "PB",
+"estado": "Paraíba",
+"sequencia": 4,
+"desde": "06/2011"
+},
+{
+"de": "OGH",
+"ate": "OHA",
+"uf": "GO",
+"estado": "Goiás",
+"sequencia": 5,
+"desde": "04/2011"
+},
+{
+"de": "OHB",
+"ate": "OHK",
+"uf": "AL",
+"estado": "Alagoas",
+"sequencia": 3,
+"desde": "09/2011"
+},
+{
+"de": "OHL",
+"ate": "OHW",
+"uf": "RO",
+"estado": "Rondônia",
+"sequencia": 2,
+"desde": "11/2011"
+},
+{
+"de": "OHX",
+"ate": "OIQ",
+"uf": "CE",
+"estado": "Ceará",
+"sequencia": 5,
+"desde": "12/2011"
+},
+{
+"de": "OIR",
+"ate": "OJQ",
+"uf": "MA",
+"estado": "Maranhão",
+"sequencia": 5,
+"desde": "01/2012"
+},
+{
+"de": "OJR",
+"ate": "OKC",
+"uf": "RN",
+"estado": "Rio Grande do Norte",
+"sequencia": 3,
+"desde": "04/2012"
+},
+{
+"de": "OKD",
+"ate": "OKH",
+"uf": "SC",
+"estado": "Santa Catarina",
+"sequencia": 2,
+"desde": "02/2014"
+},
+{
+"de": "OKI",
+"ate": "OLG",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 4,
+"desde": "10/2011"
+},
+{
+"de": "OLH",
+"ate": "OLN",
+"uf": "TO",
+"estado": "Tocantins",
+"sequencia": 2,
+"desde": "02/2012"
+},
+{
+"de": "OLO",
+"ate": "OMH",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 3,
+"desde": "03/2012"
+},
+{
+"de": "OMI",
+"ate": "OOF",
+"uf": "GO",
+"estado": "Goiás",
+"sequencia": 6,
+"desde": "04/2012"
+},
+{
+"de": "OOG",
+"ate": "OOU",
+"uf": "MS",
+"estado": "Mato Grosso do Sul",
+"sequencia": 3,
+"desde": "02/2012"
+},
+{
+"de": "OOV",
+"ate": "ORC",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 4,
+"desde": "06/2012"
+},
+{
+"de": "ORD",
+"ate": "ORM",
+"uf": "AL",
+"estado": "Alagoas",
+"sequencia": 4,
+"desde": "01/2012"
+},
+{
+"de": "ORN",
+"ate": "OSV",
+"uf": "CE",
+"estado": "Ceará",
+"sequencia": 6,
+"desde": "07/2012"
+},
+{
+"de": "OSW",
+"ate": "OTZ",
+"uf": "PA",
+"estado": "Pará",
+"sequencia": 5,
+"desde": "08/2012"
+},
+{
+"de": "OUA",
+"ate": "OUE",
+"uf": "PI",
+"estado": "Piauí",
+"sequencia": 4,
+"desde": "11/2012"
+},
+{
+"de": "OUF",
+"ate": "OVD",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 5,
+"desde": "12/2012"
+},
+{
+"de": "OVE",
+"ate": "OVF",
+"uf": "ES",
+"estado": "Espírito Santo",
+"sequencia": 3,
+"desde": "12/2012"
+},
+{
+"de": "OVH",
+"ate": "OVL",
+"uf": "ES",
+"estado": "Espírito Santo",
+"sequencia": 4,
+"desde": "07/2013"
+},
+{
+"de": "OVM",
+"ate": "OVV",
+"uf": "DF",
+"estado": "Distrito Federal",
+"sequencia": 2,
+"desde": "11/2013"
+},
+{
+"de": "OVW",
+"ate": "OVY",
+"uf": "PI",
+"estado": "Piauí",
+"sequencia": 5,
+"desde": "10/2013"
+},
+{
+"de": "OVZ",
+"ate": "OWG",
+"uf": "RN",
+"estado": "Rio Grande do Norte",
+"sequencia": 4,
+"desde": "06/2013"
+},
+{
+"de": "OWH",
+"ate": "OXK",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 5,
+"desde": "10/2013"
+},
+{
+"de": "OXQ",
+"ate": "OXZ",
+"uf": "MA",
+"estado": "Maranhão",
+"sequencia": 6,
+"desde": "04/2014"
+},
+{
+"de": "OYA",
+"ate": "OYC",
+"uf": "TO",
+"estado": "Tocantins",
+"sequencia": 3,
+"desde": "11/2013"
+},
+{
+"de": "OYD",
+"ate": "OYK",
+"uf": "ES",
+"estado": "Espírito Santo",
+"sequencia": 5,
+"desde": "12/2013"
+},
+{
+"de": "OYL",
+"ate": "OYZ",
+"uf": "PE",
+"estado": "Pernambuco",
+"sequencia": 6,
+"desde": "02/2014"
+},
+{
+"de": "OZC",
+"ate": "OZV",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 6,
+"desde": "03/2014"
+},
+{
+"de": "OZW",
+"ate": "PBZ",
+"uf": "DF",
+"estado": "Distrito Federal",
+"sequencia": 3,
+"desde": "05/2014"
+},
+{
+"de": "PCA",
+"ate": "PED",
+"uf": "PE",
+"estado": "Pernambuco",
+"sequencia": 7,
+"desde": "12/2014"
+},
+{
+"de": "PEE",
+"ate": "PFQ",
+"uf": "PE",
+"estado": "Pernambuco",
+"sequencia": 3,
+"desde": "09/2010"
+},
+{
+"de": "PFR",
+"ate": "PGK",
+"uf": "PE",
+"estado": "Pernambuco",
+"sequencia": 4,
+"desde": "07/2012"
+},
+{
+"de": "PGL",
+"ate": "PGU",
+"uf": "PE",
+"estado": "Pernambuco",
+"sequencia": 5,
+"desde": "10/2013"
+},
+{
+"de": "PGV",
+"ate": "PGZ",
+"uf": "PE",
+"estado": "Pernambuco",
+"sequencia": 8,
+"desde": "12/2014"
+},
+{
+"de": "PHA",
+"ate": "PHZ",
+"uf": "AM",
+"estado": "Amazonas",
+"sequencia": 5,
+"desde": "06/2014"
+},
+{
+"de": "PIA",
+"ate": "PIZ",
+"uf": "PI",
+"estado": "Piauí",
+"sequencia": 6,
+"desde": "06/2014"
+},
+{
+"de": "PJA",
+"ate": "PLZ",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 7,
+"desde": "10/2014"
+},
+{
+"de": "PMA",
+"ate": "POZ",
+"uf": "CE",
+"estado": "Ceará",
+"sequencia": 8,
+"desde": "06/2014"
+},
+{
+"de": "PPA",
+"ate": "PPZ",
+"uf": "ES",
+"estado": "Espírito Santo",
+"sequencia": 6,
+"desde": "08/2014"
+},
+{
+"de": "PQA",
+"ate": "PRZ",
+"uf": "GO",
+"estado": "Goiás",
+"sequencia": 7,
+"desde": "03/2015"
+},
+{
+"de": "PSA",
+"ate": "PTZ",
+"uf": "MA",
+"estado": "Maranhão",
+"sequencia": 7,
+"desde": "12/2014"
+},
+{
+"de": "PUA",
+"ate": "PZZ",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 6,
+"desde": "05/2014"
+},
+{
+"de": "QAA",
+"ate": "QAZ",
+"uf": "MS",
+"estado": "Mato Grosso do Sul",
+"sequencia": 4,
+"desde": "12/2014"
+},
+{
+"de": "QBA",
+"ate": "QCZ",
+"uf": "MT",
+"estado": "Mato Grosso",
+"sequencia": 6,
+"desde": "05/2014"
+},
+{
+"de": "QDA",
+"ate": "QEZ",
+"uf": "PA",
+"estado": "Pará",
+"sequencia": 6,
+"desde": "10/2014"
+},
+{
+"de": "QFA",
+"ate": "QFZ",
+"uf": "PB",
+"estado": "Paraíba",
+"sequencia": 6,
+"desde": "05/2014"
+},
+{
+"de": "QGA",
+"ate": "QGZ",
+"uf": "RN",
+"estado": "Rio Grande do Norte",
+"sequencia": 5,
+"desde": "09/2014"
+},
+{
+"de": "QHA",
+"ate": "QJZ",
+"uf": "SC",
+"estado": "Santa Catarina",
+"sequencia": 3,
+"desde": "05/2014"
+},
+{
+"de": "QKA",
+"ate": "QKM",
+"uf": "TO",
+"estado": "Tocantins",
+"sequencia": 4,
+"desde": "11/2014"
+},
+{
+"de": "QKN",
+"ate": "QKZ",
+"uf": "SE",
+"estado": "Sergipe",
+"sequencia": 5,
+"desde": "06/2014"
+},
+{
+"de": "QLA",
+"ate": "QLM",
+"uf": "AL",
+"estado": "Alagoas",
+"sequencia": 6,
+"desde": "09/2015"
+},
+{
+"de": "QLN",
+"ate": "QLT",
+"uf": "AP",
+"estado": "Amapá",
+"sequencia": 2,
+"desde": "01/2015"
+},
+{
+"de": "QLU",
+"ate": "QLZ",
+"uf": "AC",
+"estado": "Acre",
+"sequencia": 5,
+"desde": "08/2014"
+},
+{
+"de": "QMA",
+"ate": "QMP",
+"uf": "SE",
+"estado": "Sergipe",
+"sequencia": 6,
+"desde": "03/2017"
+},
+{
+"de": "QMQ",
+"ate": "QQZ",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 7,
+"desde": "07/2017"
+},
+{
+"de": "QRB",
+"ate": "QRM",
+"uf": "ES",
+"estado": "Espírito Santo",
+"sequencia": 7,
+"desde": "05/2018"
+},
+{
+"de": "QRN",
+"ate": "QRZ",
+"uf": "PI",
+"estado": "Piauí",
+"sequencia": 7,
+"desde": "10/2018"
+},
+{
+"de": "QSA",
+"ate": "QSM",
+"uf": "PB",
+"estado": "Paraíba",
+"sequencia": 7,
+"desde": "04/2018"
+},
+{
+"de": "QSN",
+"ate": "QSZ",
+"uf": "SP",
+"estado": "São Paulo",
+"sequencia": 2,
+"desde": "11/2018"
+},
+{
+"de": "QTA",
+"ate": "QTJ",
+"uf": "RO",
+"estado": "Rondônia",
+"sequencia": 5,
+"desde": "08/2018"
+},
+{
+"de": "QTK",
+"ate": "QTM",
+"uf": "SC",
+"estado": "Santa Catarina",
+"sequencia": 4,
+"desde": "11/2018"
+},
+{
+"de": "QTN",
+"ate": "QTS",
+"uf": "GO",
+"estado": "Goiás",
+"sequencia": 8,
+"desde": "08/2019"
+},
+{
+"de": "QTU",
+"ate": "QTZ",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 8,
+"desde": "09/2019"
+},
+{
+"de": "QUA",
+"ate": "QUZ",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 8,
+"desde": "06/2019"
+},
+{
+"de": "QVA",
+"ate": "QVZ",
+"uf": "PA",
+"estado": "Pará",
+"sequencia": 7,
+"desde": "04/2019"
+},
+{
+"de": "QWA",
+"ate": "QWF",
+"uf": "TO",
+"estado": "Tocantins",
+"sequencia": 5,
+"desde": "05/2019"
+},
+{
+"de": "QWG",
+"ate": "QWL",
+"uf": "AL",
+"estado": "Alagoas",
+"sequencia": 8,
+"desde": "06/2019"
+},
+{
+"de": "QWM",
+"ate": "QWQ",
+"uf": "AC",
+"estado": "Acre",
+"sequencia": 6,
+"desde": "08/2019"
+},
+{
+"de": "QWR",
+"ate": "QXZ",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 9,
+"desde": "10/2019"
+},
+{
+"de": "QYA",
+"ate": "QYZ",
+"uf": "PE",
+"estado": "Pernambuco",
+"sequencia": 9,
+"desde": "07/2019"
+},
+{
+"de": "QZA",
+"ate": "QZZ",
+"uf": "AM",
+"estado": "Amazonas",
+"sequencia": 6,
+"desde": "08/2019"
+},
+{
+"de": "RAA",
+"ate": "RAJ",
+"uf": "SC",
+"estado": "Santa Catarina",
+"sequencia": 5,
+"desde": "08/2019"
+},
+{
+"de": "RAK",
+"ate": "RAZ",
+"uf": "MT",
+"estado": "Mato Grosso",
+"sequencia": 7,
+"desde": "11/2019"
+},
+{
+"de": "RBA",
+"ate": "RBJ",
+"uf": "ES",
+"estado": "Espírito Santo",
+"sequencia": 8,
+"desde": "03/2020"
+},
+{
+"de": "RBK",
+"ate": "RCN",
+"uf": "GO",
+"estado": "Goiás",
+"sequencia": 9,
+"desde": "11/2019"
+},
+{
+"de": "RCO",
+"ate": "RDR",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 9,
+"desde": "12/2019"
+},
+{
+"de": "RDS",
+"ate": "REB",
+"uf": "SC",
+"estado": "Santa Catarina",
+"sequencia": 6,
+"desde": "01/2020"
+},
+{
+"de": "REC",
+"ate": "REV",
+"uf": "DF",
+"estado": "Distrito Federal",
+"sequencia": 4,
+"desde": "02/2020"
+},
+{
+"de": "REW",
+"ate": "REZ",
+"uf": "MS",
+"estado": "Mato Grosso do Sul",
+"sequencia": 5,
+"desde": "05/2021"
+},
+{
+"de": "RFA",
+"ate": "RGD",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 10,
+"desde": "05/2020"
+},
+{
+"de": "RGE",
+"ate": "RGM",
+"uf": "RN",
+"estado": "Rio Grande do Norte",
+"sequencia": 7,
+"desde": "03/2020"
+},
+{
+"de": "RGO",
+"ate": "RGU",
+"uf": "AL",
+"estado": "Alagoas",
+"sequencia": 9,
+"desde": "08/2020"
+},
+{
+"de": "RGV",
+"ate": "RGZ",
+"uf": "AL",
+"estado": "Alagoas",
+"sequencia": 11,
+"desde": "10/2023"
+},
+{
+"de": "RHA",
+"ate": "RHZ",
+"uf": "PR",
+"estado": "Paraná",
+"sequencia": 2,
+"desde": "09/2020"
+},
+{
+"de": "RIA",
+"ate": "RIL",
+"uf": "CE",
+"estado": "Ceará",
+"sequencia": 9,
+"desde": "02/2021"
+},
+{
+"de": "RIM",
+"ate": "RIN",
+"uf": "TO",
+"estado": "Tocantins",
+"sequencia": 7,
+"desde": "11/2022"
+},
+{
+"de": "RIP",
+"ate": "RKV",
+"uf": "RJ",
+"estado": "Rio de Janeiro",
+"sequencia": 3,
+"desde": "01/2020"
+},
+{
+"de": "RKW",
+"ate": "RLP",
+"uf": "SC",
+"estado": "Santa Catarina",
+"sequencia": 7,
+"desde": "09/2020"
+},
+{
+"de": "RLQ",
+"ate": "RLZ",
+"uf": "PB",
+"estado": "Paraíba",
+"sequencia": 8,
+"desde": "10/2020"
+},
+{
+"de": "RMA",
+"ate": "RMC",
+"uf": "TO",
+"estado": "Tocantins",
+"sequencia": 8,
+"desde": "09/2023"
+},
+{
+"de": "RMD",
+"ate": "RNZ",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 11,
+"desde": "12/2020"
+},
+{
+"de": "ROA",
+"ate": "ROZ",
+"uf": "MA",
+"estado": "Maranhão",
+"sequencia": 8,
+"desde": "03/2021"
+},
+{
+"de": "RPA",
+"ate": "RPZ",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 10,
+"desde": "12/2021"
+},
+{
+"de": "RQA",
+"ate": "RQL",
+"uf": "RN",
+"estado": "Rio Grande do Norte",
+"sequencia": 8,
+"desde": "06/2022"
+},
+{
+"de": "RQM",
+"ate": "RQV",
+"uf": "ES",
+"estado": "Espírito Santo",
+"sequencia": 9,
+"desde": "03/2021"
+},
+{
+"de": "RQW",
+"ate": "RRH",
+"uf": "SE",
+"estado": "Sergipe",
+"sequencia": 7,
+"desde": "11/2021"
+},
+{
+"de": "RRI",
+"ate": "RRZ",
+"uf": "MT",
+"estado": "Mato Grosso",
+"sequencia": 8,
+"desde": "11/2021"
+},
+{
+"de": "RSA",
+"ate": "RSF",
+"uf": "TO",
+"estado": "Tocantins",
+"sequencia": 6,
+"desde": "03/2021"
+},
+{
+"de": "RSG",
+"ate": "RST",
+"uf": "PI",
+"estado": "Piauí",
+"sequencia": 8,
+"desde": "09/2021"
+},
+{
+"de": "RSU",
+"ate": "RSZ",
+"uf": "RO",
+"estado": "Rondônia",
+"sequencia": 6,
+"desde": "07/2021"
+},
+{
+"de": "RTA",
+"ate": "RVZ",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 12,
+"desde": "10/2021"
+},
+{
+"de": "RWA",
+"ate": "RWJ",
+"uf": "MS",
+"estado": "Mato Grosso do Sul",
+"sequencia": 6,
+"desde": "12/2021"
+},
+{
+"de": "RWK",
+"ate": "RXJ",
+"uf": "PA",
+"estado": "Pará",
+"sequencia": 8,
+"desde": "11/2021"
+},
+{
+"de": "RXK",
+"ate": "RYZ",
+"uf": "SC",
+"estado": "Santa Catarina",
+"sequencia": 8,
+"desde": "09/2021"
+},
+{
+"de": "RZA",
+"ate": "RZD",
+"uf": "RR",
+"estado": "Roraima",
+"sequencia": 3,
+"desde": "09/2021"
+},
+{
+"de": "RZE",
+"ate": "RZZ",
+"uf": "PE",
+"estado": "Pernambuco",
+"sequencia": 10,
+"desde": "09/2021"
+},
+{
+"de": "SAA",
+"ate": "SAJ",
+"uf": "AL",
+"estado": "Alagoas",
+"sequencia": 10,
+"desde": "12/2021"
+},
+{
+"de": "SAK",
+"ate": "SAM",
+"uf": "AP",
+"estado": "Amapá",
+"sequencia": 3,
+"desde": "11/2021"
+},
+{
+"de": "SAN",
+"ate": "SBV",
+"uf": "CE",
+"estado": "Ceará",
+"sequencia": 10,
+"desde": "12/2021"
+},
+{
+"de": "SBW",
+"ate": "SDO",
+"uf": "GO",
+"estado": "Goiás",
+"sequencia": 10,
+"desde": "02/2022"
+},
+{
+"de": "SDP",
+"ate": "SFO",
+"uf": "PR",
+"estado": "Paraná",
+"sequencia": 3,
+"desde": "03/2022"
+},
+{
+"de": "SFP",
+"ate": "SGM",
+"uf": "ES",
+"estado": "Espírito Santo",
+"sequencia": 10,
+"desde": "07/2022"
+},
+{
+"de": "SGN",
+"ate": "SGZ",
+"uf": "DF",
+"estado": "Distrito Federal",
+"sequencia": 5,
+"desde": "07/2022"
+},
+{
+"de": "SHB",
+"ate": "SJI",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 13,
+"desde": "07/2022"
+},
+{
+"de": "SJJ",
+"ate": "SKT",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 11,
+"desde": "08/2023"
+},
+{
+"de": "SKU",
+"ate": "SLF",
+"uf": "PB",
+"estado": "Paraíba",
+"sequencia": 9,
+"desde": "10/2022"
+},
+{
+"de": "SLG",
+"ate": "SLL",
+"uf": "RO",
+"estado": "Rondônia",
+"sequencia": 7,
+"desde": "09/2022"
+},
+{
+"de": "SLM",
+"ate": "SLV",
+"uf": "PI",
+"estado": "Piauí",
+"sequencia": 9,
+"desde": "11/2022"
+},
+{
+"de": "SLW",
+"ate": "SML",
+"uf": "MS",
+"estado": "Mato Grosso do Sul",
+"sequencia": 7,
+"desde": "09/2023"
+},
+{
+"de": "SMM",
+"ate": "SNJ",
+"uf": "MA",
+"estado": "Maranhão",
+"sequencia": 9,
+"desde": "07/2023"
+},
+{
+"de": "SNK",
+"ate": "SPB",
+"uf": "PE",
+"estado": "Pernambuco",
+"sequencia": 11,
+"desde": "05/2023"
+},
+{
+"de": "SPC",
+"ate": "SQP",
+"uf": "MT",
+"estado": "Mato Grosso",
+"sequencia": 9,
+"desde": "07/2023"
+},
+{
+"de": "SQQ",
+"ate": "SQU",
+"uf": "AC",
+"estado": "Acre",
+"sequencia": 8,
+"desde": "09/2023"
+},
+{
+"de": "SQV",
+"ate": "SSE",
+"uf": "RJ",
+"estado": "Rio de Janeiro",
+"sequencia": 4,
+"desde": "07/2023"
+},
+{
+"de": "SSF",
+"ate": "SSQ",
+"uf": "DF",
+"estado": "Distrito Federal",
+"sequencia": 6,
+"desde": "09/2023"
+},
+{
+"de": "SSR",
+"ate": "SWZ",
+"uf": "SP",
+"estado": "São Paulo",
+"sequencia": 3,
+"desde": "10/2023"
+},
+{
+"de": "SXA",
+"ate": "SXZ",
+"uf": "SC",
+"estado": "Santa Catarina",
+"sequencia": 9,
+"desde": "12/2023"
+},
+{
+"de": "SYA",
+"ate": "SYZ",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 14,
+"desde": "11/2023"
+},
+{
+"de": "SZA",
+"ate": "SZZ",
+"uf": "PA",
+"estado": "Pará",
+"sequencia": 9,
+"desde": "12/2023"
+},
+{
+"de": "TAA",
+"ate": "TAH",
+"uf": "AM",
+"estado": "Amazonas",
+"sequencia": 7,
+"desde": "03/2024"
+},
+{
+"de": "TAI",
+"ate": "TBZ",
+"uf": "PR",
+"estado": "Paraná",
+"sequencia": 4,
+"desde": "07/2024"
+},
+{
+"de": "TCA",
+"ate": "TEZ",
+"uf": "MG",
+"estado": "Minas Gerais",
+"sequencia": 16,
+"desde": "07/2024"
+},
+{
+"de": "TFA",
+"ate": "TGN",
+"uf": "GO",
+"estado": "Goiás",
+"sequencia": 11,
+"desde": "12/2024"
+},
+{
+"de": "TGO",
+"ate": "TGQ",
+"uf": "AP",
+"estado": "Amapá",
+"sequencia": 4,
+"desde": "09/2024"
+},
+{
+"de": "TGR",
+"ate": "THH",
+"uf": "BA",
+"estado": "Bahia",
+"sequencia": 12,
+"desde": "02/2025"
+},
+{
+"de": "THI",
+"ate": "THM",
+"uf": "RO",
+"estado": "Rondônia",
+"sequencia": 8,
+"desde": "09/2024"
+},
+{
+"de": "THN",
+"ate": "TIN",
+"uf": "CE",
+"estado": "Ceará",
+"sequencia": 11,
+"desde": "10/2024"
+},
+{
+"de": "TIO",
+"ate": "TMJ",
+"uf": "SP",
+"estado": "São Paulo",
+"sequencia": 4,
+"desde": "09/2024"
+},
+{
+"de": "TNH",
+"ate": "TNT",
+"uf": "AL",
+"estado": "Alagoas",
+"sequencia": 12,
+"desde": "09/2024"
+},
+{
+"de": "TNU",
+"ate": "TOD",
+"uf": "SE",
+"estado": "Sergipe",
+"sequencia": 8,
+"desde": "01/2025"
+},
+{
+"de": "TOE",
+"ate": "TOS",
+"uf": "ES",
+"estado": "Espírito Santo",
+"sequencia": 11,
+"desde": "02/2025"
+},
+{
+"de": "TOT",
+"ate": "TPH",
+"uf": "PB",
+"estado": "Paraíba",
+"sequencia": 10,
+"desde": "11/2024"
+},
+{
+"de": "TPI",
+"ate": "TPZ",
+"uf": "SC",
+"estado": "Santa Catarina",
+"sequencia": 10,
+"desde": "02/2025"
+},
+{
+"de": "TRX",
+"ate": "TSO",
+"uf": "AM",
+"estado": "Amazonas",
+"sequencia": 8,
+"desde": "12/2024"
+},
+{
+"de": "TSP",
+"ate": "TSZ",
+"uf": "RN",
+"estado": "Rio Grande do Norte",
+"sequencia": 9,
+"desde": "12/2024"
+},
+{
+"de": "TTA",
+"ate": "TUX",
+"uf": "RJ",
+"estado": "Rio de Janeiro",
+"sequencia": 5,
+"desde": "11/2024"
+},
+{
+"de": "TUY",
+"ate": "TVJ",
+"uf": "DF",
+"estado": "Distrito Federal",
+"sequencia": 7,
+"desde": "01/2025"
+},
+{
+"de": "RIO",
+"ate": "RIO",
+"uf": "RJ",
+"estado": "Rio de Janeiro",
+"sequencia": 0,
+"desde": "09/2018",
+"nota": "Série especial RIO0A01 a RIO9J99, em homenagem ao estado (observação do mesmo artigo)."
+}
+]
+}

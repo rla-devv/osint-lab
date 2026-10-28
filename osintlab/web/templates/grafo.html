@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block head %}<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>{% endblock %}
+{% block content %}
+<h1>Grafo de vínculos</h1>
+<div class="form-inline">
+<label>Nível mínimo <select id="nivel"><option value="confirmado">Somente confirmados</option><option value="possivel">+ possíveis</option><option value="hipotese">+ hipóteses</option><option value="coincidencia" selected>Todos</option></select></label>
+<label><input type="checkbox" id="sensiveis"> incluir dados pessoais</label>
+<button id="recarregar">Atualizar</button> <a class="botao secundario" href="/p/{{ p.id }}/grafo.graphml">Exportar GraphML (Gephi/yEd)</a>
+</div>
+<div id="grafo" data-pid="{{ p.id }}" class="grafo"></div>
+<div id="detalhe" class="nota">Clique em um nó ou aresta para ver detalhes. Cores = comunidades (Louvain); tamanho = centralidade. Linhas tracejadas = hipóteses/coincidências.</div>
+{% endblock %}
+{% block scripts %}<script src="/static/grafo.js"></script>{% endblock %}

@@ -1,0 +1,153 @@
+name: Executável Windows
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install .[janela] pyinstaller
+      - name: Testes
+        run: pytest -q
+      - name: OCR do Windows no Python (antes de empacotar)
+        timeout-minutes: 3
+        env:
+          OSINTLAB_DATA_DIR: ${{ runner.temp }}\osintlab-ocr-py
+          PYTHONIOENCODING: utf-8
+        run: python -m osintlab.cli ocr --diagnostico
+      - name: Identificar o build
+        run: |
+          $sha = "${{ github.sha }}".Substring(0, 7)
+          $data = Get-Date -Format "yyyy-MM-dd"
+          Set-Content -Path osintlab/_build.py -Value ('"""Identificação do build."""' + "`nBUILD = `"$sha $data`"`n") -Encoding utf8
+          pip install . --no-deps --quiet
+          python -c "import osintlab; print('build', osintlab.__build__)"
+      - name: Empacotar
+        run: pyinstaller scripts/OSINTLab.spec --noconfirm --clean
+      - name: Verificar o executável
+        run: |
+          $p = Start-Process -FilePath .\dist\OSINTLab.exe -ArgumentList "bases" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "OSINTLab.exe bases falhou ($($p.ExitCode))" }
+          $p = Start-Process -FilePath .\dist\OSINTLab.exe -ArgumentList "--help" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "OSINTLab.exe --help falhou ($($p.ExitCode))" }
+          "Tamanho: {0:N1} MB" -f ((Get-Item .\dist\OSINTLab.exe).Length / 1MB)
+      - name: Testar o OCR do Windows no executável
+        timeout-minutes: 4
+        env:
+          OSINTLAB_DATA_DIR: ${{ runner.temp }}\osintlab-ocr
+          PYTHONIOENCODING: utf-8
+        run: |
+          $p = Start-Process -FilePath .\dist\OSINTLab.exe -ArgumentList "ocr","--diagnostico" -PassThru -RedirectStandardOutput "$env:RUNNER_TEMP\ocr.txt" -RedirectStandardError "$env:RUNNER_TEMP\ocr-err.txt"
+          if (-not $p.WaitForExit(150000)) { Write-Host "OCR nao terminou em 150 s"; taskkill /F /T /PID $p.Id 2>$null }
+          Start-Sleep -Seconds 1
+          Write-Host "--- saida ---"; Get-Content "$env:RUNNER_TEMP\ocr.txt" -Encoding utf8
+          Write-Host "--- erros ---"; Get-Content "$env:RUNNER_TEMP\ocr-err.txt" -Encoding utf8
+          if ($p.ExitCode -ne 0) { throw "OCR do executavel falhou (codigo $($p.ExitCode))" }
+          exit 0
+      - name: Testar a IA local no executável (motor llama.cpp + Qwen2.5 1.5B)
+        timeout-minutes: 15
+        env:
+          OSINTLAB_DATA_DIR: ${{ runner.temp }}\osintlab-ia
+          PYTHONIOENCODING: utf-8
+        run: |
+          $p = Start-Process -FilePath .\dist\OSINTLab.exe -ArgumentList "ia","instalar","--modelo","qwen2.5-1.5b" -PassThru -Wait -RedirectStandardOutput "$env:RUNNER_TEMP\ia1.txt" -RedirectStandardError "$env:RUNNER_TEMP\ia1-err.txt"
+          Get-Content "$env:RUNNER_TEMP\ia1.txt" -Encoding utf8 | Select-Object -Last 6; Get-Content "$env:RUNNER_TEMP\ia1-err.txt" -Encoding utf8
+          if ($p.ExitCode -ne 0) { throw "Instalacao da IA local falhou (codigo $($p.ExitCode))" }
+          $p = Start-Process -FilePath .\dist\OSINTLab.exe -ArgumentList "ia","testar" -PassThru -RedirectStandardOutput "$env:RUNNER_TEMP\ia2.txt" -RedirectStandardError "$env:RUNNER_TEMP\ia2-err.txt"
+          if (-not $p.WaitForExit(600000)) { Write-Host "Teste da IA nao terminou em 10 min"; taskkill /F /T /PID $p.Id 2>$null }
+          Start-Sleep -Seconds 1
+          Get-Content "$env:RUNNER_TEMP\ia2.txt" -Encoding utf8; Get-Content "$env:RUNNER_TEMP\ia2-err.txt" -Encoding utf8
+          if (Test-Path "$env:OSINTLAB_DATA_DIR\ia\motor.log") { Write-Host "--- motor.log (fim) ---"; Get-Content "$env:OSINTLAB_DATA_DIR\ia\motor.log" -Tail 15 }
+          if ($p.ExitCode -ne 0) { throw "Teste da IA local falhou (codigo $($p.ExitCode))" }
+          if (Get-Process -Name llama-server -ErrorAction SilentlyContinue) { throw "O motor continuou rodando depois do teste" }
+          exit 0
+      - name: Testar a transcrição no executável (whisper.cpp + FFmpeg, áudio Opus)
+        timeout-minutes: 12
+        env:
+          OSINTLAB_DATA_DIR: ${{ runner.temp }}\osintlab-tr
+          PYTHONIOENCODING: utf-8
+        run: |
+          $p = Start-Process -FilePath .\dist\OSINTLab.exe -ArgumentList "transcricao","instalar","--modelo","base" -PassThru -Wait -RedirectStandardOutput "$env:RUNNER_TEMP\tr1.txt" -RedirectStandardError "$env:RUNNER_TEMP\tr1-err.txt"
+          Get-Content "$env:RUNNER_TEMP\tr1.txt" -Encoding utf8; Get-Content "$env:RUNNER_TEMP\tr1-err.txt" -Encoding utf8
+          if ($p.ExitCode -ne 0) { throw "Instalacao da transcricao falhou (codigo $($p.ExitCode))" }
+          Add-Type -AssemblyName System.Speech
+          $s = New-Object System.Speech.Synthesis.SpeechSynthesizer
+          $s.SetOutputToWaveFile("$env:RUNNER_TEMP\fala.wav"); $s.Speak("The construction company signed a contract with the city hall."); $s.Dispose()
+          & "$env:OSINTLAB_DATA_DIR\transcricao\ffmpeg\ffmpeg.exe" -hide_banner -loglevel error -y -i "$env:RUNNER_TEMP\fala.wav" -c:a libopus "$env:RUNNER_TEMP\fala.ogg"
+          $p = Start-Process -FilePath .\dist\OSINTLab.exe -ArgumentList "transcricao","testar","$env:RUNNER_TEMP\fala.ogg","--idioma","auto" -PassThru -RedirectStandardOutput "$env:RUNNER_TEMP\tr2.txt" -RedirectStandardError "$env:RUNNER_TEMP\tr2-err.txt"
+          if (-not $p.WaitForExit(300000)) { Write-Host "Transcricao nao terminou em 5 min"; taskkill /F /T /PID $p.Id 2>$null }
+          Start-Sleep -Seconds 1
+          $out = Get-Content "$env:RUNNER_TEMP\tr2.txt" -Encoding utf8 -Raw; $out; Get-Content "$env:RUNNER_TEMP\tr2-err.txt" -Encoding utf8
+          if ($p.ExitCode -ne 0) { throw "Teste da transcricao falhou (codigo $($p.ExitCode))" }
+          if ($out -notmatch "(?i)contract") { throw "A transcricao nao reconheceu a fala sintetizada" }
+          exit 0
+      - name: Testar o executável sem console e o modo servir
+        env:
+          OSINTLAB_JANELA: "0"
+          OSINTLAB_ABRIR_NAVEGADOR: "0"
+          OSINTLAB_DATA_DIR: ${{ runner.temp }}\osintlab-dados
+        timeout-minutes: 8
+        run: |
+          function Espera($nome, $porta, $seg) {
+            foreach ($i in 1..$seg) {
+              Start-Sleep -Seconds 1
+              try { $r = Invoke-RestMethod -Uri "http://127.0.0.1:$porta/api/ping" -TimeoutSec 3; if ($r.ok) { Write-Host "$nome respondeu em ${i}s: versao $($r.versao) build $($r.build)"; return $true } } catch {}
+            }
+            Write-Host "$nome NAO respondeu em ${seg}s"; return $false
+          }
+          function Mostra($rotulo, $arq) { if (Test-Path $arq) { "--- $rotulo ---"; Get-Content $arq } else { "--- ${rotulo}: ausente ---" } }
+          # 1) modo programa (sem console), saída redirecionada a arquivos para não segurar o passo
+          $p = Start-Process -FilePath .\dist\OSINTLab.exe -PassThru -RedirectStandardOutput "$env:RUNNER_TEMP\gui-out.txt" -RedirectStandardError "$env:RUNNER_TEMP\gui-err.txt"
+          $ok1 = Espera "modo programa" 8765 60
+          $t = Measure-Command { try { Invoke-RestMethod -Uri "http://127.0.0.1:8765/api/saude" -TimeoutSec 20 | Out-Null } catch { Write-Host "saude: $_" } }; Write-Host ("/api/saude levou {0:N1} s" -f $t.TotalSeconds)
+          "--- netstat 8765 ---"; netstat -ano | findstr ":8765"
+          "--- processos OSINTLab ---"; Get-Process -Name OSINTLab -ErrorAction SilentlyContinue | Format-Table Id, StartTime, CPU -AutoSize | Out-String
+          # encerramento pelo programa (mesmo caminho do menu da bandeja): o processo deve sair sozinho
+          try { Invoke-WebRequest -Uri "http://127.0.0.1:8765/sistema/encerrar" -Method Post -Headers @{ Origin = "http://127.0.0.1:8765" } -TimeoutSec 10 -UseBasicParsing | Out-Null } catch { Write-Host "encerrar: $_" }
+          $saiu = $p.WaitForExit(15000); Write-Host "encerrou sozinho: $saiu"
+          taskkill /F /T /PID $p.Id 2>$null; taskkill /F /T /IM OSINTLab.exe 2>$null; Start-Sleep -Seconds 2
+          $bandeja = Select-String -Path "$env:OSINTLAB_DATA_DIR\osintlab.log" -Pattern "bandeja" -ErrorAction SilentlyContinue | ForEach-Object { $_.Line }
+          "--- bandeja ---"; $bandeja
+          Mostra "gui stdout" "$env:RUNNER_TEMP\gui-out.txt"; Mostra "gui stderr" "$env:RUNNER_TEMP\gui-err.txt"; Mostra "osintlab.log" "$env:OSINTLAB_DATA_DIR\osintlab.log"
+          # 2) modo servir (linha de comando, mesma thread principal) para comparação
+          Remove-Item "$env:OSINTLAB_DATA_DIR\osintlab.log" -ErrorAction SilentlyContinue
+          $p2 = Start-Process -FilePath .\dist\OSINTLab.exe -ArgumentList "servir","--port","8777" -PassThru -RedirectStandardOutput "$env:RUNNER_TEMP\cli-out.txt" -RedirectStandardError "$env:RUNNER_TEMP\cli-err.txt"
+          $ok2 = Espera "modo servir" 8777 60
+          taskkill /F /T /PID $p2.Id 2>$null; taskkill /F /T /IM OSINTLab.exe 2>$null; Start-Sleep -Seconds 2
+          Mostra "cli stdout" "$env:RUNNER_TEMP\cli-out.txt"; Mostra "cli stderr" "$env:RUNNER_TEMP\cli-err.txt"
+          if (-not $ok1) { throw "O executavel sem console nao serviu a interface" }
+          if (-not $saiu) { throw "O executavel nao encerrou pelo comando Encerrar" }
+          if ($bandeja -match "pystray ausente") { throw "pystray nao foi incluido no executavel" }
+          if (-not ($bandeja -match "na bandeja ativo")) { throw "O icone da bandeja nao foi criado" }
+          if (-not $ok2) { throw "O modo servir nao respondeu" }
+          exit 0  # o ultimo taskkill devolve codigo de erro quando ja nao ha processo; nao e falha do teste
+      - name: Publicar artefato (download na página da execução)
+        uses: actions/upload-artifact@v6
+        with:
+          name: OSINTLab-windows
+          path: dist/OSINTLab.exe
+      - name: SHA-256 do executável (conferido pela atualização automática)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: (Get-FileHash dist\OSINTLab.exe -Algorithm SHA256).Hash.ToLower() + "  OSINTLab.exe" | Out-File -Encoding ascii dist\OSINTLab.exe.sha256
+      - name: Publicar release (apenas em tags v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/OSINTLab.exe
+            dist/OSINTLab.exe.sha256
+          generate_release_notes: true

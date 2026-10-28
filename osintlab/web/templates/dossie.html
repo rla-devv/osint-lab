@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block head %}{% if d and d.rede and d.rede.encontrada %}<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>{% endif %}{% endblock %}
+{% block content %}
+<h1>Dossiê</h1>
+<p class="nota">Um relatório único com tudo o que as fontes têm: cadastro, sanções, procurados, contratos públicos, processos, eleitoral e, para CNPJ, a rede societária com a checagem de cada sócio e empresa ligada. Leva de alguns segundos a um minuto.</p>
+<form method="get" class="form" id="form-pesquisa"><div class="campos" role="radiogroup" aria-label="Campo">{% for k, (rotulo, dica) in CAMPOS.items() %}
+<label class="campo"><input type="radio" name="tipo" value="{{ k }}" data-dica="{{ dica }}" {{ 'checked' if tipo == k }}><span>{{ rotulo }}</span></label>{% endfor %}</div>
+<div class="busca-central" style="margin:0"><input name="q" id="q-pesquisa" value="{{ q }}" placeholder="{{ CAMPOS[tipo][1] if tipo in CAMPOS else CAMPOS[''][1] }}" required autocomplete="off"><button>Gerar dossiê</button></div>
+<div class="form-inline"><label>Finalidade legítima <input name="finalidade" value="{{ finalidade }}" size="60" minlength="20" required placeholder="Ex.: due diligence de fornecedor antes de contratar"></label>
+<label>Rede <select name="prof"><option value="1" {{ 'selected' if prof == 1 }}>só sócios</option><option value="2" {{ 'selected' if prof == 2 }}>+ outras empresas dos sócios</option></select></label></div></form>
+{% if erro_local %}<p class="msg erro">{{ erro_local }}</p>{% endif %}
+{% if d %}{% if d.pesquisa.consulta.tipos and ('cpf' in d.pesquisa.consulta.tipos or 'invalido' in d.pesquisa.consulta.tipos) %}{% for a in d.pesquisa.consulta.avisos %}<p class="msg erro">{{ a }}</p>{% endfor %}{% else %}
+<div class="form-inline"><form method="post" action="/p/{{ p.id }}/dossie/{{ token }}/salvar" class="inline"><button>Salvar no projeto</button></form>
+{% for ext, rot in [('pdf','PDF'),('docx','Word'),('html','HTML'),('md','Markdown')] %}<a class="botao secundario" href="/p/{{ p.id }}/dossie/{{ token }}.{{ ext }}">Baixar {{ rot }}</a> {% endfor %}
+<span class="nota">Disponível por 1 hora; depois, gere de novo.</span></div>
+{% set grafo = True %}{% include "_dossie_corpo.html" %}{% endif %}{% endif %}
+{% endblock %}
+{% block scripts %}<script src="/static/pesquisa.js"></script>{% if d and d.rede and d.rede.encontrada %}<script src="/static/rede.js"></script>{% endif %}{% endblock %}

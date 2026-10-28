@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}OSINT Lab{% endblock %}</title>
+<link rel="icon" href="/static/favicon.png" type="image/png">
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#122033">
+<link rel="apple-touch-icon" href="/static/icone-192.png"><script src="/static/pwa.js" defer></script>
+<link rel="stylesheet" href="/static/app.css">
+{% block head %}{% endblock %}
+</head>
+<body>
+<header class="topo">
+  <a class="marca" href="/"><img src="/static/icone.png" alt="" class="logo"> OSINT Lab <small>v{{ version }}</small></a>
+  {% if p %}<span class="projeto-atual">{{ p.name }}</span>{% endif %}
+  <nav class="topo-links"><a href="/">Projetos</a><a href="/central">Central de Bases</a><a href="/auditoria{% if p %}?projeto={{ p.id }}{% endif %}">Auditoria</a><a href="/configuracoes">Configurações</a></nav>
+</header>
+<div class="layout">
+{% if p %}
+<aside class="lateral">
+  {% set abas = [("painel","Painel",""),("pesquisa","Pesquisa","/pesquisa"),("rede","Rede societária","/rede"),("itens","Itens do projeto","/itens"),("coleta","Coleta e fluxos","/coleta"),
+     ("entidades","Entidades e vínculos","/entidades"),("grafo","Grafo","/grafo"),("mapa","Mapa (GEOINT)","/mapa"),
+     ("tempo","Linha do tempo","/linha-do-tempo"),("verificacao","Verificação","/verificacao"),("comparar","Comparação","/comparar"),
+     ("monitor","Monitoramento","/monitoramento"),("assistente","Assistente de IA","/assistente"),
+     ("relatorios","Relatórios","/relatorios"),("evidencias","Evidências","/evidencias")] %}
+  {% for key, label, path in abas %}
+  <a class="{{ 'ativo' if aba == key }}" href="/p/{{ p.id }}{{ path }}">{{ label }}
+    {% if key == 'itens' and st and st.revisar %}<span class="badge">{{ st.revisar }}</span>{% endif %}
+    {% if key == 'monitor' and st and st.alertas %}<span class="badge alerta">{{ st.alertas }}</span>{% endif %}</a>
+  {% endfor %}
+</aside>
+{% endif %}
+<main class="conteudo">
+  {% if nova_versao %}<div class="msg aviso">Versão {{ nova_versao.versao }} disponível (você usa a {{ nova_versao.atual }}). <a href="{{ nova_versao.url }}" target="_blank" rel="noopener">Ver no GitHub</a>.</div>{% endif %}
+  {% if request.query_params.get('msg') %}<div class="msg ok">{{ request.query_params.get('msg') }}</div>{% endif %}
+  {% if request.query_params.get('erro') %}<div class="msg erro">{{ request.query_params.get('erro') }}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+</div>
+<footer class="rodape">Uso pessoal, experimental e não comercial · somente fontes abertas e coleta passiva · dados armazenados localmente</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

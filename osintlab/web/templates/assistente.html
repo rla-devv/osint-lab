@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Assistente de IA</h1>
+<p class="nota">Modelo: <b>{{ llm_nome }}</b>{% if not llm_ok %} — sem LLM local; o assistente funciona em modo extrativo (trechos + fontes). Veja <a href="/configuracoes">Configurações</a>.{% endif %}
+ Respostas usam apenas o conteúdo do projeto (RAG local), com rótulos de natureza e citações validadas.</p>
+<div id="chat" data-pid="{{ p.id }}" class="chat"></div>
+<form id="form-pergunta" class="busca-central"><input id="pergunta" placeholder="Pergunte sobre o material coletado… Ex.: Quais fontes divergem sobre a data do evento?" autocomplete="off"><button>Perguntar</button></form>
+<section class="cartao"><h2>Consultas sugeridas para buscas externas</h2><ul class="sugestoes">{% for s in sugestoes %}<li><code>{{ s }}</code></li>{% endfor %}</ul>
+<p class="nota">Use estas consultas na sua metabusca (SearXNG) ou nos conectores. Operadores como <code>site:</code> e <code>filetype:</code> dependem do motor de busca.</p></section>
+{% endblock %}
+{% block scripts %}<script src="/static/app.js"></script>{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>#{{ it.id }} {{ it.title or '(sem título)' }}</h1>
+<p class="meta">{{ it.kind }} · {% if it.url %}<a href="{{ it.url }}" rel="noopener noreferrer nofollow" target="_blank">{{ it.url }}</a> · {% endif %}
+coletado em {{ it.collected_at }}{% if it.published_at %} · publicado em {{ it.published_at }}{% endif %}</p>
+<div class="grade2">
+<section class="cartao">
+<h2>Avaliação</h2>
+<form method="post" class="form-inline">
+  <label>Status <select name="status">{% for s in ["novo","revisar","revisado","descartado"] %}<option {{ 'selected' if it.status==s }}>{{ s }}</option>{% endfor %}</select></label>
+  <label>Fonte <select name="source_reliability">{% for k, v in RELIABILITY.items() %}<option value="{{ k }}" {{ 'selected' if it.source_reliability==k }}>{{ k }} – {{ v }}</option>{% endfor %}</select></label>
+  <label>Informação <select name="info_credibility">{% for k, v in CREDIBILITY.items() %}<option value="{{ k }}" {{ 'selected' if it.info_credibility==k }}>{{ k }} – {{ v }}</option>{% endfor %}</select></label>
+  <button>Salvar</button>
+</form>
+{% if it.metadata.triagem %}<p class="nota">Triagem {{ it.triage_score }}: relevância {{ it.metadata.triagem.relevancia }}, atualidade {{ it.metadata.triagem.atualidade }},
+ confiabilidade {{ it.metadata.triagem.confiabilidade }}.{% if it.metadata.triagem.motivos_revisao %} Revisar: {{ it.metadata.triagem.motivos_revisao|join(', ') }}.{% endif %}</p>{% endif %}
+{% if it.metadata.avisos %}<p class="msg erro">{{ it.metadata.avisos|join(' ') }}</p>{% endif %}
+{% if it.metadata.situacao_registro %}<p class="msg {{ 'erro' if it.metadata.situacao_registro != 'inalterado' else 'ok' }}">Registro oficial: <b>{{ it.metadata.situacao_registro }}</b> na versão {{ it.metadata.verificado_na_versao }} da fonte (verificado em {{ it.metadata.verificado_em }}).
+{% if it.metadata.situacao_registro == 'removido' %} O registro deixou de constar na fonte: trate as informações como históricas.{% endif %}</p>{% endif %}
+<h2>Evidência preservada</h2>
+{% if ev %}<p><code>SHA-256 {{ ev.sha256 }}</code><br>{{ ev.size }} bytes · {{ ev.mime }} · coletado {{ ev.collected_at }} por {{ ev.collector }}
+ · integridade: <b class="{{ 'ok' if integro else 'erro' }}">{{ 'verificada' if integro else 'FALHOU' }}</b><br>
+ <a href="/evidencia/{{ ev.sha256 }}">Baixar original</a></p>{% else %}<p class="vazio">Sem original preservado (ex.: resultado de busca). Colete a URL para preservar.</p>{% endif %}
+{% if it.metadata.capturas %}<p>Capturas: {% if it.metadata.capturas.warc %}<a href="/evidencia/{{ it.metadata.capturas.warc }}">WARC</a>{% endif %}
+{% if it.metadata.capturas.captura_png %} · <a href="/evidencia/{{ it.metadata.capturas.captura_png }}">captura de tela</a>{% endif %}
+{% if it.metadata.capturas.captura_pdf %} · <a href="/evidencia/{{ it.metadata.capturas.captura_pdf }}">PDF renderizado</a>{% endif %}
+{% if it.metadata.capturas.captura_erro %}<small class="erro">{{ it.metadata.capturas.captura_erro }}</small>{% endif %}</p>{% endif %}
+<p><a class="botao" href="?resumo=1">Resumir com IA</a> <a class="botao" href="/p/{{ p.id }}/comparar?a={{ it.id }}">Comparar com…</a>
+ <a class="botao" href="/p/{{ p.id }}/verificacao?enunciado={{ (it.title or '')|urlencode }}">Verificar título</a></p>
+{% if it.kind == 'audiovisual' and it.evidence_sha256 %}<form method="post" action="/p/{{ p.id }}/item/{{ it.id }}/transcrever" class="inline"><button class="secundario">{{ 'Refazer a transcrição' if it.content_text else 'Transcrever agora' }}</button></form>
+{% if it.metadata.modelo %}<small class="meta"> transcrito com {{ it.metadata.modelo }}{% if it.metadata.transcrito_em %} em {{ it.metadata.transcrito_em }}{% endif %}</small>{% endif %}{% endif %}
+{% if resumo %}<div class="resumo"><h3>Resumo (gerado; confira no texto)</h3><pre class="texto">{{ resumo }}</pre></div>{% endif %}
+</section>
+<section class="cartao"><h2>Entidades extraídas ({{ ents|length }})</h2>
+<table><tr><th>Tipo</th><th>Valor</th><th>Contexto</th></tr>
+{% for e in ents[:200] %}<tr><td>{{ e.type }}{% if e.sensitive %} <span class="tag alerta" title="dado pessoal">pessoal</span>{% endif %}</td>
+<td><a href="/p/{{ p.id }}/entidade/{{ e.id }}">{{ e.value }}</a></td><td><small>{{ e.context[:140] }}</small></td></tr>{% endfor %}</table></section>
+</div>
+{% if it.kind == 'imagem' %}<section class="cartao"><h2>Análise da imagem</h2>
+<table><tr><th>Dimensões</th><td>{{ it.metadata.dimensoes }} ({{ it.metadata.formato }})</td></tr>
+{% for k in ['Make','Model','Software','DateTime','DateTimeOriginal','Artist','Copyright'] if it.metadata[k] %}<tr><th>{{ k }}</th><td>{{ it.metadata[k] }}</td></tr>{% endfor %}
+{% if it.metadata.gps %}<tr><th>GPS (EXIF)</th><td>{{ it.metadata.gps.lat }}, {{ it.metadata.gps.lon }} — <a href="/p/{{ p.id }}/mapa">ver no mapa</a></td></tr>{% endif %}
+<tr><th>Hash perceptual</th><td><code>dHash {{ it.metadata.dhash }} · aHash {{ it.metadata.ahash }}</code></td></tr>
+<tr><th>Content Credentials (C2PA)</th><td>{{ it.metadata.c2pa.nota or ('manifesto presente' if it.metadata.c2pa.manifesto else 'ausente') }}</td></tr></table>
+{% if it.metadata.alerta_edicao %}<p class="msg erro">{{ it.metadata.alerta_edicao }}. Isso não prova manipulação, mas exige cautela.</p>{% endif %}
+{% if it.metadata.observacao %}<p class="nota">{{ it.metadata.observacao }}</p>{% endif %}
+{% if semelhantes %}<h3>Imagens visualmente semelhantes nos seus projetos</h3><table><tr><th>Imagem</th><th>Projeto</th><th>Semelhança</th></tr>
+{% for s in semelhantes %}<tr><td><a href="/p/{{ s.pid }}/item/{{ s.id }}">#{{ s.id }} {{ s.title }}</a></td><td>{{ 'este projeto' if s.mesmo_projeto else s.projeto }}</td><td>{{ (s.sim*100)|round(0)|int }}%</td></tr>{% endfor %}</table>
+{% else %}<p class="nota">Nenhuma imagem parecida nos seus projetos (comparação por hash perceptual, feita no computador).</p>{% endif %}
+<h3>Busca reversa na internet (assistida)</h3>
+{% if reversa.url_publica %}<p class="nota">O serviço recebe só o endereço público de origem da imagem (<code>{{ reversa.url_publica[:80] }}</code>), não o arquivo.</p>
+{% else %}<p class="nota">Esta imagem não tem endereço público: o botão abre o site de envio. <a href="/evidencia/{{ it.evidence_sha256 }}">Baixe a imagem</a> e envie-a lá manualmente. <b>Ao enviar, a imagem sai do seu computador</b> e passa a ser tratada pelos termos do serviço; não envie imagens com dados pessoais sem necessidade.</p>{% endif %}
+<div class="form-inline">{% for k, sv in reversa.servicos.items() %}<form method="post" action="/p/{{ p.id }}/item/{{ it.id }}/busca-reversa" target="_blank" class="inline"><input type="hidden" name="servico" value="{{ k }}"><button class="mini secundario">{{ sv.nome }}</button></form>{% endfor %}</div>
+<p class="nota">Cada busca fica registrada na auditoria. Sem reconhecimento facial ou biométrico (decisão de projeto). Resultados de busca reversa indicam onde imagens parecidas aparecem, não quem está nelas nem a origem certa.</p></section>{% endif %}
+<section class="cartao"><h2>Conteúdo</h2><pre class="texto">{{ it.content_text[:60000] }}</pre></section>
+<details class="cartao"><summary>Metadados</summary><pre class="texto">{{ it.metadata|tojson_pretty }}</pre></details>
+{% endblock %}

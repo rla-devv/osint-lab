@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block head %}<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>{% endblock %}
+{% block content %}
+<h1>Rede societária</h1>
+<p class="nota">Sócios da empresa, outras empresas de cada sócio e participações entre empresas, a partir do quadro societário da Receita. {% if not base_local %}<b>A base do CNPJ não está instalada</b>: a consulta usa a BrasilAPI e mostra só os sócios da empresa. Instale-a na <a href="/central/fonte/cnpj_receita">Central de Bases</a> para ver a rede completa (pode filtrar por UF).{% endif %}</p>
+<form method="get" class="form-inline"><input name="q" value="{{ q }}" placeholder="CNPJ ou radical (8 dígitos)" required size="24">
+<label>Profundidade <select name="prof">{% for n, t in [(1,'1 · sócios'),(2,'2 · + outras empresas deles'),(3,'3 · + mais um nível')] %}<option value="{{ n }}" {{ 'selected' if prof == n }}>{{ t }}</option>{% endfor %}</select></label><button>Montar rede</button></form>
+{% if erro_local %}<p class="msg erro">{{ erro_local }}</p>{% endif %}
+{% if rede %}{% if rede.encontrada %}<section class="cartao">
+<form method="post" action="/p/{{ p.id }}/rede/salvar" class="form-inline"><input type="hidden" name="q" value="{{ q }}"><input type="hidden" name="prof" value="{{ prof }}">
+<button class="secundario">Salvar a rede no projeto (entidades e vínculos no grafo)</button>
+<a class="botao secundario" href="/p/{{ p.id }}/dossie?q={{ q|urlencode }}">Gerar dossiê desta empresa</a></form>
+{% set grafo = True %}{% include "_rede_corpo.html" %}</section>
+{% else %}<p class="msg aviso">{{ rede.aviso }}</p>{% endif %}{% endif %}
+{% endblock %}
+{% block scripts %}<script src="/static/rede.js"></script>{% endblock %}

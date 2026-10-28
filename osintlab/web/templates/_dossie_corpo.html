@@ -1,0 +1,21 @@
+{# Corpo do dossiê (tela e arquivo HTML). Variáveis: d, NIVEIS, fontes; `grafo` liga o grafo interativo. #}
+<section class="cartao destaque"><h2>Resumo</h2><ul>{% for x in d.resumo %}<li>{{ x }}</li>{% endfor %}</ul>
+<p class="meta">Gerado em {{ d.gerado_em }}{% if d.duracao_s %} em {{ d.duracao_s }} s{% endif %} · finalidade declarada: {{ d.finalidade }}</p></section>
+{% if d.alertas or d.ligados %}<section class="cartao"><h2>Pessoas e empresas ligadas: sanções, fiscalização, PEP, procurados e justiça</h2>
+{% if d.alertas %}<table><tr><th>Ligado</th><th>Registro</th><th>Fonte</th><th>Nível</th><th>Justificativa</th></tr>
+{% for h in d.alertas %}<tr><td>{{ h.ligado }}</td><td>{% if h.url %}<a href="{{ h.url }}" target="_blank" rel="noopener noreferrer nofollow">{{ h.titulo }}</a>{% else %}{{ h.titulo }}{% endif %}<br><small>{{ h.resumo }}</small></td>
+<td>{{ fontes[h.fonte].nome }}</td><td><span class="tag nv-{{ h.nivel }}">{{ NIVEIS[h.nivel] }}</span></td><td><small>{{ h.justificativa }}</small></td></tr>{% endfor %}</table>
+{% else %}<p>Nenhuma correspondência nas fontes de sanções, fiscalização, PEP, procurados e justiça instaladas ou online.</p>{% endif %}
+<p class="nota">Conferidos ({{ d.ligados|length }}): {{ d.ligados|map(attribute='nome')|join('; ') }}. Nome igual não é identidade: confira sempre o documento.</p></section>{% endif %}
+{% for s in d.secoes %}<section class="cartao"><h2>{{ s.titulo }} ({{ s.resultados|length }})</h2><table class="resultados">
+{% for h in s.resultados %}<tr><td><span class="tag nv-{{ h.nivel }}">{{ NIVEIS[h.nivel] }}</span>{% if h.via_nome %} <span class="tag">via nome: {{ h.via_nome }}</span>{% endif %}<br>
+{% if h.url %}<a href="{{ h.url }}" target="_blank" rel="noopener noreferrer nofollow"><b>{{ h.titulo }}</b></a>{% else %}<b>{{ h.titulo }}</b>{% endif %}
+<small class="meta"> · {{ fontes[h.fonte].nome }}{% if h.versao_base %} · versão {{ h.versao_base }}{% endif %}</small><br><small>{{ h.resumo }}</small>{% if h.justificativa %}<br><small class="meta">{{ h.justificativa }}</small>{% endif %}</td></tr>{% endfor %}</table></section>
+{% else %}<section class="cartao"><p class="vazio">Nenhum registro nas fontes consultadas. Ausência de resultado não comprova inexistência.</p></section>{% endfor %}
+{% if d.rede and d.rede.encontrada %}<section class="cartao"><h2>Rede societária</h2>{% set rede = d.rede %}{% include "_rede_corpo.html" %}</section>
+{% elif d.rede %}<p class="msg aviso">{{ d.rede.aviso }}</p>{% endif %}
+{% set comp = (d.pesquisa.complementares or [])|rejectattr('erro')|list %}{% if comp %}<section class="cartao"><h2>Fontes online complementares</h2>
+{% for c in comp %}<details><summary><b>{{ c.nome }}</b></summary><pre class="texto">{{ c.texto }}</pre></details>{% endfor %}</section>{% endif %}
+{% if d.pesquisa.assistidas %}<section class="cartao"><h2>Consultas assistidas sugeridas</h2><ul>{% for a in d.pesquisa.assistidas %}<li><a href="{{ a.url }}" target="_blank" rel="noopener noreferrer">{{ a.nome }}</a> <small class="meta">{{ a.instrucoes }}</small></li>{% endfor %}</ul></section>{% endif %}
+{% if d.erros %}<section class="cartao"><h2>Fontes com falha</h2><ul>{% for e in d.erros %}<li>{{ fontes[e.fonte].nome if e.fonte in fontes else e.fonte }}: {{ e.erro }}</li>{% endfor %}</ul></section>{% endif %}
+<p class="nota">Vínculos e correspondências são registros declaratórios das fontes na data indicada e não implicam responsabilidade. Nome igual não é identidade. Ausência de resultado não comprova inexistência.</p>

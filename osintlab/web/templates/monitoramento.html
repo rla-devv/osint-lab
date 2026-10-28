@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Monitoramento</h1>
+<section class="cartao"><h2>Novo monitor</h2>
+<form method="post" action="/p/{{ p.id }}/monitor" class="form-inline">
+<select name="kind">{% for k, v in tipos.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select>
+<input name="target" required placeholder="URL, feed, domínio ou termo" size="40">
+<label>a cada <input type="number" name="interval_minutes" value="1440" min="15" style="width:6em"> min</label>
+<input name="label" placeholder="Rótulo (opcional)"><button>Criar</button></form>
+<p class="nota">Intervalo mínimo de 15 minutos. O agendador roda enquanto a aplicação estiver aberta e retoma tarefas pendentes ao reiniciar.</p></section>
+<section class="cartao"><h2>Monitores</h2><table><tr><th>Tipo</th><th>Alvo</th><th>Intervalo</th><th>Última execução</th><th>Estado</th><th></th></tr>
+{% for m in monitores %}<tr><td>{{ tipos[m.kind] }}</td><td>{{ m.label or m.target }}</td><td>{{ m.interval_minutes }} min</td><td>{{ m.last_run or '—' }}</td>
+<td>{% if m.last_error %}<span class="tag alerta" title="{{ m.last_error }}">erro</span>{% elif m.enabled %}<span class="tag possivel">ativo</span>{% else %}<span class="tag">pausado</span>{% endif %}</td>
+<td class="acoes"><form method="post" action="/p/{{ p.id }}/monitor/{{ m.id }}/executar"><button class="mini">executar agora</button></form>
+<form method="post" action="/p/{{ p.id }}/monitor/{{ m.id }}/alternar"><button class="mini">{{ 'pausar' if m.enabled else 'ativar' }}</button></form>
+<form method="post" action="/p/{{ p.id }}/monitor/{{ m.id }}/excluir"><button class="mini perigo">excluir</button></form></td></tr>{% endfor %}</table>
+{% if not monitores %}<p class="vazio">Nenhum monitor.</p>{% endif %}</section>
+<section class="cartao"><h2>Histórico de eventos</h2>
+{% for e in eventos %}<details><summary><span class="tag {{ 'alerta' if not e.seen }}">{{ e.change_type }}</span> {{ e.ts }} · {{ e.target }} — {{ e.summary }}</summary>
+{% if e.diff %}<pre class="texto diff">{% for l in e.diff.splitlines() %}<span class="{{ 'add' if l.startswith('+') else ('del' if l.startswith('-') else '') }}">{{ l }}</span>
+{% endfor %}</pre>{% endif %}{% if e.evidence_sha256 %}<a href="/evidencia/{{ e.evidence_sha256 }}">evidência {{ e.evidence_sha256[:16] }}…</a>{% endif %}</details>{% endfor %}
+{% if not eventos %}<p class="vazio">Sem eventos.</p>{% endif %}</section>
+{% endblock %}
