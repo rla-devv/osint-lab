@@ -70,6 +70,8 @@ def gerar(consulta: str, *, project_id: int | None = None, confirmado: bool = Fa
         with ThreadPoolExecutor(max_workers=5) as ex:
             for hits in ex.map(lambda x: _checar(x, sel, project_id), d["ligados"]):
                 d["alertas"].extend(hits)
+    from . import riscos
+    d["riscos"] = riscos.avaliar(d)
     d["resumo"] = _resumo(d)
     d["duracao_s"] = round(time.time() - inicio, 1)
     audit.log("dossie_gerado", project_id=project_id,
@@ -83,6 +85,8 @@ def de_pesquisa(res: dict, consulta: str, finalidade: str = "") -> dict:
     d = {"consulta": consulta, "gerado_em": time.strftime("%Y-%m-%d %H:%M"), "finalidade": finalidade, "pesquisa": res,
          "requer_confirmacao": False, "rede": None, "alertas": [], "ligados": [], "erros": list(res.get("erros", [])),
          "secoes": _secoes(res.get("resultados", []))}
+    from . import riscos
+    d["riscos"] = riscos.avaliar(d)
     d["resumo"] = _resumo(d)
     return d
 
@@ -100,6 +104,10 @@ def _resumo(d: dict) -> list[str]:
                           + (f"; {len(r['comuns'])} pessoa(s) em mais de uma empresa" if r["comuns"] else "") + ".")
         elif r.get("aviso"):
             linhas.append(r["aviso"])
+    if d.get("riscos"):
+        n = {g: sum(1 for i in d["riscos"] if i["gravidade"] == g) for g in ("alta", "media", "baixa")}
+        linhas.append(f"{len(d['riscos'])} indicador(es) de risco: {n['alta']} de gravidade alta, {n['media']} média, "
+                      f"{n['baixa']} baixa.")
     if d["ligados"]:
         linhas.append(f"{len(d['ligados'])} pessoa(s)/empresa(s) ligada(s) conferida(s) em sanções, fiscalização, PEP, "
                       f"procurados e justiça: {len(d['alertas'])} correspondência(s) que merecem verificação.")
@@ -132,6 +140,11 @@ def markdown(d: dict, projeto: dict | None = None) -> str:
     if d.get("finalidade"):
         out.append(f"Finalidade declarada desta consulta: {d['finalidade']}.")
     out += ["", "## Resumo", ""] + [f"- {x}" for x in d.get("resumo", [])]
+    if d.get("riscos"):
+        out += ["", "## Indicadores de risco (sinais para conferir, não conclusões)", ""]
+        for i in d["riscos"]:
+            out.append(f"- **[{i['gravidade'].upper()}] {i['titulo']}**: {i['explicacao']} "
+                       + ("Evidências: " + "; ".join(i["evidencias"]) if i["evidencias"] else ""))
     for s in d.get("secoes", []):
         out += ["", f"## {s['titulo']}", ""]
         for h in s["resultados"]:

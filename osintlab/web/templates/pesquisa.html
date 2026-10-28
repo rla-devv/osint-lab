@@ -12,7 +12,7 @@
 <label>Finalidade legítima desta consulta<input name="justificativa" value="{{ justificativa }}" size="70" required></label>
 <input type="hidden" name="confirmar" value="1"><button>Confirmar e pesquisar</button></div>{% endif %}
 </form>
-<p class="nota">Cada pesquisa consulta, de uma vez, todas as bases instaladas, as fontes online e os conectores pertinentes ao tipo. CPF e nomes nunca são tratados como identidade.</p>
+<p class="nota"><a href="/p/{{ p.id }}/lote">Pesquisar uma lista de uma vez</a> · Cada pesquisa consulta, de uma vez, todas as bases instaladas, as fontes online e os conectores pertinentes ao tipo. CPF e nomes nunca são tratados como identidade.</p>
 
 {% if res and not res.requer_confirmacao %}
 {% set total = res.resultados|length %}
@@ -22,11 +22,16 @@
 </div>
 {% for a in res.consulta.avisos %}<p class="msg aviso">{{ a }}</p>{% endfor %}
 {% if res.nomes_cpf %}<p class="msg aviso">Nomes encontrados com este CPF parcial, já conferidos por nome e CPF nas demais bases: <b>{{ res.nomes_cpf|join('; ') }}</b>.</p>{% endif %}
+{% if res.telefone %}<section class="cartao destaque"><h2>Telefone {{ res.telefone.formatado or res.telefone.entrada }}</h2>
+{% if res.telefone.aviso %}<p class="msg aviso">{{ res.telefone.aviso }}</p>{% else %}
+<p>{{ res.telefone.pais }}{% if res.telefone.ddd %} · DDD {{ res.telefone.ddd }}: <b>{{ res.telefone.regiao }} ({{ res.telefone.uf }})</b>{% endif %} · {{ res.telefone.tipo }}{% if not res.telefone.valido %} · <span class="erro">número fora do plano de numeração</span>{% endif %}</p>{% endif %}
+<p class="nota">{{ res.telefone.limites }}</p></section>{% endif %}
 {% if res.placa and res.placa.valida %}<section class="cartao destaque"><h2>Placa {{ res.placa.placa }}</h2>
 <p>{{ res.placa.formato }}{% if res.placa.equivalente_mercosul %} · Mercosul <code>{{ res.placa.equivalente_mercosul }}</code>{% endif %}{% if res.placa.equivalente_antiga %} · antiga <code>{{ res.placa.equivalente_antiga }}</code>{% endif %}
 {% if res.placa.origem %} · primeiro emplacamento: <b>{{ res.placa.origem.estado }} ({{ res.placa.origem.uf }})</b> <span class="tag {{ 'st-novo' if res.placa.origem.confianca == 'indicio_forte' else 'alerta' }}">{{ 'indício forte' if res.placa.origem.confianca == 'indicio_forte' else 'indício fraco' }}</span>{% else %} · {{ res.placa.aviso_origem }}{% endif %}</p>
 <p class="nota">{{ res.placa.limites }}</p></section>{% endif %}
 
+{% include "_riscos.html" %}
 <form method="post" action="/p/{{ p.id }}/pesquisa/salvar"><input type="hidden" name="q" value="{{ q_registro }}">
 {% for s in secoes %}<section class="cartao"><h2>{{ s.titulo }} <span class="contador">{{ s.resultados|length }}</span></h2>
 <table class="resultados">{% for h in s.resultados %}<tr><td class="sel"><input type="checkbox" name="hit" value="{{ h|tojson|forceescape }}" aria-label="Selecionar"></td>

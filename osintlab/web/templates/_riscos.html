@@ -1,0 +1,5 @@
+{# Indicadores de risco (riscos.avaliar). Variável: riscos #}
+{% if riscos %}<section class="cartao riscos"><h2>Indicadores de risco <span class="contador">{{ riscos|length }}</span></h2>
+<p class="nota">Sinais para conferir, calculados sobre o que a pesquisa trouxe. Nenhum deles prova irregularidade.</p>
+<ul class="riscos">{% for i in riscos %}<li class="risco g-{{ i.gravidade }}"><span class="tag {{ 'alerta' if i.gravidade == 'alta' else ('hipotese' if i.gravidade == 'media' else 'coincidencia') }}">{{ {'alta':'alta','media':'média','baixa':'baixa'}[i.gravidade] }}</span>
+<b>{{ i.titulo }}</b><br><small>{{ i.explicacao }}</small>{% if i.evidencias %}<br><small class="meta">{{ i.evidencias|join(' · ') }}</small>{% endif %}</li>{% endfor %}</ul></section>{% endif %}

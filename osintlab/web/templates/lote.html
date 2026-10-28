@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block head %}{% if job and job.estado == 'rodando' %}<meta http-equiv="refresh" content="3">{% endif %}{% endblock %}
+{% block content %}
+<h1>Pesquisa em lote</h1>
+<p class="nota">Uma lista de CNPJs, nomes, placas, CPFs… pesquisada de uma vez nas bases instaladas, com uma linha por termo. Até {{ max_termos }} termos. <a href="/p/{{ p.id }}/pesquisa">Voltar à pesquisa</a></p>
+{% if job %}<section class="cartao">
+<p><b>{{ job.feitos }} de {{ job.total }}</b> pesquisado(s) · {{ {'rodando':'em andamento (a página atualiza sozinha)','concluido':'concluído','erro':'erro'}[job.estado] }}{% if job.erro %}: {{ job.erro }}{% endif %}
+{% if job.so_locais %} · só bases locais{% endif %}</p>
+<progress max="{{ job.total }}" value="{{ job.feitos }}" style="width:100%"></progress>
+{% if job.linhas %}<div class="form-inline"><a class="botao mini secundario" href="/p/{{ p.id }}/lote/{{ token }}.csv">Baixar CSV (Excel)</a></div>
+<table><tr><th>Termo</th><th>Tipo</th><th>Achados</th><th>Melhor nível</th><th>Destaques</th></tr>
+{% for li in job.linhas|sort(attribute='fortes', reverse=True) %}<tr><td>{% if li.pesquisavel %}<a href="/p/{{ p.id }}/pesquisa?q={{ li.termo|urlencode }}">{{ li.termo }}</a>{% else %}{{ li.termo }}{% endif %}</td>
+<td><small>{{ li.tipo }}</small></td><td>{{ li.resultados }}{% if li.fortes %} <b>({{ li.fortes }} forte{{ 's' if li.fortes > 1 }})</b>{% endif %}</td>
+<td>{% if li.melhor %}<span class="tag nv-{{ li.melhor }}">{{ NIVEIS[li.melhor] }}</span>{% endif %}</td>
+<td><small>{{ li.destaques|join('; ') }}{% for a in li.avisos %} <span class="erro">{{ a }}</span>{% endfor %}</small></td></tr>{% endfor %}</table>{% endif %}
+</section>{% endif %}
+<form method="post" action="/p/{{ p.id }}/lote" enctype="multipart/form-data" class="form">
+<label>Termos (um por linha)<textarea name="termos" rows="8" placeholder="11.222.333/0001-81&#10;Construtora Exemplo Ltda&#10;ABC1D23"></textarea></label>
+<label>ou planilha CSV (primeira coluna) <input type="file" name="arquivo" accept=".csv,text/csv,.txt"></label>
+<div class="form-inline"><label><input type="checkbox" name="do_projeto" value="1"> incluir as entidades do projeto (CNPJs, empresas, placas, domínios)</label>
+<label><input type="checkbox" name="pessoas" value="1"> e as pessoas</label>
+<label><input type="checkbox" name="online" value="1"> consultar também as fontes online (mais lento)</label></div>
+<label>Finalidade legítima <input name="finalidade" required minlength="20" size="60" placeholder="Ex.: checagem de fornecedores da licitação X"></label>
+<button>Pesquisar a lista</button></form>
+<p class="nota">Nomes iguais não são a mesma pessoa: os níveis de correspondência continuam valendo. CPFs aparecem só com a máscara pública.</p>
+{% endblock %}

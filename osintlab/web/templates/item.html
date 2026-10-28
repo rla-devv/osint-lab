@@ -27,6 +27,7 @@ coletado em {{ it.collected_at }}{% if it.published_at %} · publicado em {{ it.
 {% if it.metadata.capturas.captura_erro %}<small class="erro">{{ it.metadata.capturas.captura_erro }}</small>{% endif %}</p>{% endif %}
 <p><a class="botao" href="?resumo=1">Resumir com IA</a> <a class="botao" href="/p/{{ p.id }}/comparar?a={{ it.id }}">Comparar com…</a>
  <a class="botao" href="/p/{{ p.id }}/verificacao?enunciado={{ (it.title or '')|urlencode }}">Verificar título</a></p>
+{% if it.kind == 'audiovisual' and it.evidence_sha256 and ev and (ev.mime or '').startswith('video') %}<form method="post" action="/p/{{ p.id }}/item/{{ it.id }}/quadros" class="inline"><button class="secundario">Extrair quadros-chave (para busca reversa)</button></form> {% endif %}
 {% if it.kind == 'audiovisual' and it.evidence_sha256 %}<form method="post" action="/p/{{ p.id }}/item/{{ it.id }}/transcrever" class="inline"><button class="secundario">{{ 'Refazer a transcrição' if it.content_text else 'Transcrever agora' }}</button></form>
 {% if it.metadata.modelo %}<small class="meta"> transcrito com {{ it.metadata.modelo }}{% if it.metadata.transcrito_em %} em {{ it.metadata.transcrito_em }}{% endif %}</small>{% endif %}{% endif %}
 {% if resumo %}<div class="resumo"><h3>Resumo (gerado; confira no texto)</h3><pre class="texto">{{ resumo }}</pre></div>{% endif %}

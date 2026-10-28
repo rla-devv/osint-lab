@@ -63,15 +63,17 @@ CAMPOS = {
     "pessoa": ("Pessoa", "Nome completo"),
     "cpf": ("CPF", "000.000.000-00"),
     "placa": ("Placa", "ABC1D23 ou ABC-1234"),
+    "telefone": ("Telefone", "(61) 99999-9999 ou +55 61 3333-4444"),
     "aeronave": ("Aeronave", "Matrícula: PR-ABC ou PT-XYZ"),
     "veiculo": ("Veículo", "Marca e modelo, ex.: Fiat Uno"),
     "rede": ("Domínio, IP ou URL", "exemplo.com.br, 200.160.2.3 ou https://…"),
     "processo": ("Processo", "Número CNJ: 0000000-00.0000.0.00.0000"),
     "municipio": ("Município", "Nome do município"),
 }
-ESPERADO = {"cpf": {"cpf"}, "cnpj": {"cnpj"}, "placa": {"placa"}, "aeronave": {"aeronave"}, "processo": {"processo"}, "municipio": {"municipio"},
+ESPERADO = {"telefone": {"telefone"}, "cpf": {"cpf"}, "cnpj": {"cnpj"}, "placa": {"placa"}, "aeronave": {"aeronave"}, "processo": {"processo"}, "municipio": {"municipio"},
             "rede": {"dominio", "ip", "url", "email"}}
-ERRO_CAMPO = {"cpf": "Não é um CPF válido (confira os 11 dígitos e os dígitos verificadores).",
+ERRO_CAMPO = {"telefone": "Não parece um número de telefone (informe com DDD).",
+              "cpf": "Não é um CPF válido (confira os 11 dígitos e os dígitos verificadores).",
               "cnpj": "Não é um CNPJ válido (confira os 14 dígitos e os dígitos verificadores).",
               "placa": "Não é uma placa válida (formatos ABC1234 ou ABC1D23).",
               "aeronave": "Não é uma matrícula brasileira de aeronave (PP, PR, PS, PT ou PU seguido de 3 letras).",
@@ -93,7 +95,11 @@ def _classify_campo(q: str, campo: str) -> dict:
     if campo == "veiculo":
         return {"entrada": raw, "tipos": ["veiculo"], "normalizado": raw, "avisos": []}
     out = _classify(raw, "organizacao")
-    if campo == "aeronave":
+    if campo == "telefone":
+        from . import telefone
+        if telefone.parece_telefone(raw, estrito=False):
+            return {"entrada": raw, "tipos": ["telefone"], "normalizado": raw, "avisos": []}
+    elif campo == "aeronave":
         from .bases.fontes.fiscalizacao import normalizar_marca
         if marca := normalizar_marca(raw):
             return {"entrada": raw, "tipos": ["aeronave"], "normalizado": marca, "avisos": []}
@@ -112,6 +118,8 @@ def _classify(q: str, forcar: str = "") -> dict:
     out = {"entrada": raw, "tipos": [], "normalizado": raw, "avisos": []}
     if len(digits) == 14 and cnpj_valid(digits):
         out.update(tipos=["cnpj", "identificador"], normalizado=format_cnpj(digits))
+    elif _telefone(raw):
+        out.update(tipos=["telefone"])
     elif len(digits) == 11 and cpf_valid(digits) and not re.search(r"[A-Za-z]", raw):
         out.update(tipos=["cpf"], normalizado=digits)
         out["avisos"].append("As fontes oficiais publicam só parte do CPF: registros com os mesmos dígitos podem ser de "
@@ -154,6 +162,11 @@ def _classify(q: str, forcar: str = "") -> dict:
                 tipos += ["pessoa", "nome"] if pessoa else ["organizacao", "nome", "texto"]
                 out.update(tipos=tipos)
     return out
+
+
+def _telefone(raw: str) -> bool:
+    from . import telefone
+    return telefone.parece_telefone(raw, estrito=True)
 
 
 def _placa(raw: str) -> bool:
@@ -401,6 +414,9 @@ def run(query: str, *, project_id: int | None = None, attrs: dict | None = None,
     if "placa" in q["tipos"]:
         from . import veiculos
         res["placa"] = veiculos.analisar(q["normalizado"])
+    if "telefone" in q["tipos"]:
+        from . import telefone
+        res["telefone"] = telefone.analisar(q["normalizado"])
     if ("pessoa" in q["tipos"] or "cpf" in q["tipos"]) and not confirmado:
         res["requer_confirmacao"] = True
         res["motivo"] = ("A entrada parece ser o nome de uma pessoa física. Declare a finalidade legítima para "
@@ -458,7 +474,7 @@ def run(query: str, *, project_id: int | None = None, attrs: dict | None = None,
     local_threads = [threading.Thread(target=local, args=(fid,), daemon=True)
                      for fid in p["local"] if sel is None or fid in sel]
     online_threads = {fid: threading.Thread(target=online, args=(fid,), daemon=True)
-                      for fid in p["online"] if sel is None or fid in sel}
+                      for fid in p["online"] if (sel is None or fid in sel) and timeout_online > 0}  # 0 = só bases locais
     for t in [*local_threads, *online_threads.values()]:
         t.start()
     for t in local_threads:

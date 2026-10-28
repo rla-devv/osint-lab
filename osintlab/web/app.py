@@ -682,6 +682,35 @@ def transcricao_estado():
     return tl.estado()
 
 
+@app.get("/p/{pid}/metadados", response_class=HTMLResponse)
+def metadados_projeto(request: Request, pid: int):
+    from .. import metadados
+    return render(request, "metadados.html", p=project_or_404(pid), m=metadados.do_projeto(pid), aba="evidencias")
+
+
+@app.post("/p/{pid}/item/{iid}/quadros")
+def quadros_item(pid: int, iid: int):
+    """Extrai os quadros-chave de um vídeo coletado; cada quadro vira imagem do projeto (para busca reversa)."""
+    from ..ai import video
+    project_or_404(pid)
+    it = core.get_item(iid)
+    if not it or it["project_id"] != pid or not it["evidence_sha256"]:
+        raise HTTPException(404)
+    ev = get_db().one("SELECT original_name, mime FROM evidence WHERE sha256=?", (it["evidence_sha256"],))
+    try:
+        quadros = video.quadros_chave(evidence.read(it["evidence_sha256"]), (ev and ev["original_name"]) or "video.mp4")
+    except Exception as e:  # noqa: BLE001
+        return back(f"/p/{pid}/item/{iid}", erro=str(e))
+    novos = 0
+    for i, q in enumerate(quadros, 1):
+        t = q["tempo_s"]
+        nome = f"quadro-{iid}-{i:02d}" + (f"-{t:.0f}s" if t is not None else "") + ".jpg"
+        novo = core.ingest_file(pid, q["jpeg"], nome, note=f"Quadro-chave do item #{iid}" + (f" em {t} s" if t is not None else ""))
+        novos += 1 if novo else 0
+    audit.log("quadros_extraidos", project_id=pid, target=str(iid), details={"quadros": len(quadros)})
+    return back(f"/p/{pid}/itens?tipo=imagem", f"{novos} quadro(s)-chave extraído(s) do vídeo #{iid}.")
+
+
 @app.post("/p/{pid}/item/{iid}/transcrever")
 def transcrever_item(pid: int, iid: int):
     """Transcreve (ou refaz) um áudio/vídeo já coletado, a partir da evidência preservada."""

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Evidências</h1>
+<p><a class="botao mini secundario" href="/p/{{ p.id }}/metadados">Metadados dos documentos (autores, programas, datas)</a></p>
 <div class="kpis"><div class="kpi"><b>{{ man.total }}</b><span>originais preservados</span></div>
 <div class="kpi"><b class="{{ 'ok' if man.auditoria_integra else 'erro' }}">{{ 'íntegra' if man.auditoria_integra else 'VIOLADA' }}</b><span>trilha de auditoria</span></div></div>
 <p>Hash raiz (SHA-256 da concatenação ordenada): <code>{{ man.hash_raiz }}</code> · <a href="/p/{{ p.id }}/manifesto.json">Baixar manifesto JSON</a></p>

@@ -260,12 +260,14 @@ def _pesquisar(request, pid, q, tipo, nascimento, pais, cpf, confirmar, justific
     from ..privacy import cpf_publico
     eh_cpf = bool(res and "cpf" in res["consulta"]["tipos"])
     q_registro = cpf_publico(q) if eh_cpf else q  # nunca reenviar o CPF completo em formulários de registro
-    token = ""
+    token, riscos = "", []
     if res and not res.get("requer_confirmacao") and "invalido" not in res["consulta"]["tipos"]:
         from .. import dossie
-        token = dossie.guardar(dossie.de_pesquisa(res, q_registro, justificativa.strip()[:500]))
+        dd = dossie.de_pesquisa(res, q_registro, justificativa.strip()[:500])
+        riscos = dd["riscos"]
+        token = dossie.guardar(dd)
     return w.render(request, "pesquisa.html", p=p, q=q, tipo=tipo, nascimento=nascimento, pais=pais, cpf=cpf, res=res,
-                    secoes=_secoes(res["resultados"]) if res else [], q_registro=q_registro, token=token,
+                    secoes=_secoes(res["resultados"]) if res else [], q_registro=q_registro, token=token, riscos=riscos,
                     justificativa=justificativa, erro_local=erro, NIVEIS=pesquisa.NIVEIS, fontes=fontes(),
                     CAMPOS=pesquisa.CAMPOS, assistidas_registradas=assistida.list_(pid), DESFECHOS=assistida.DESFECHOS,
                     aba="pesquisa")
@@ -410,3 +412,47 @@ def dossie_salvar(pid: int, token: str):
     if not r["item"]:
         return w.back(f"/p/{pid}/itens", "Este dossiê já estava salvo no projeto.")
     return w.back(f"/p/{pid}/item/{r['item']}", f"Dossiê salvo no projeto com {r['registros']} registro(s) com evidência.")
+
+
+# ------------------------------------------------------------------ pesquisa em lote
+@router.get("/p/{pid}/lote", response_class=HTMLResponse)
+def pagina_lote(request: Request, pid: int, t: str = ""):
+    from .. import lote
+    w = _app()
+    p = w.project_or_404(pid)
+    job = lote.obter(t) if t else None
+    return w.render(request, "lote.html", p=p, job=job, token=t, NIVEIS=pesquisa.NIVEIS, fontes=fontes(),
+                    max_termos=lote.MAX_TERMOS, aba="pesquisa")
+
+
+@router.post("/p/{pid}/lote")
+async def iniciar_lote(request: Request, pid: int):
+    from .. import lote
+    w = _app()
+    w.project_or_404(pid)
+    form = await request.form()
+    arquivo = form.get("arquivo")
+    dados = await arquivo.read() if arquivo is not None and getattr(arquivo, "filename", "") else None
+    termos = lote.ler_termos(str(form.get("termos", "")), dados)
+    if form.get("do_projeto"):
+        termos = lote.ler_termos("\n".join(termos + lote.termos_do_projeto(pid, bool(form.get("pessoas")))))
+    finalidade = str(form.get("finalidade", "")).strip()
+    if not termos:
+        return w.back(f"/p/{pid}/lote", erro="Informe ao menos um termo (um por linha) ou um arquivo CSV.")
+    if len(finalidade) < FINALIDADE_MIN:
+        return w.back(f"/p/{pid}/lote", erro=f"Descreva a finalidade legítima da pesquisa em lote (mín. {FINALIDADE_MIN} caracteres).")
+    token = lote.iniciar(pid, termos, so_locais=not form.get("online"), finalidade=finalidade)
+    return w.back(f"/p/{pid}/lote?t={token}", f"Pesquisando {len(termos)} termo(s) em segundo plano.")
+
+
+@router.get("/p/{pid}/lote/{token}.csv")
+def lote_csv(pid: int, token: str):
+    from fastapi.responses import Response
+
+    from .. import lote
+    _app().project_or_404(pid)
+    job = lote.obter(token)
+    if not job:
+        raise HTTPException(404, "Lote expirado: rode de novo.")
+    return Response(lote.csv_resultado(job), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": "attachment; filename=pesquisa-em-lote.csv"})

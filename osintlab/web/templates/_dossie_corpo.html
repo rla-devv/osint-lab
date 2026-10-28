@@ -1,6 +1,7 @@
 {# Corpo do dossiê (tela e arquivo HTML). Variáveis: d, NIVEIS, fontes; `grafo` liga o grafo interativo. #}
 <section class="cartao destaque"><h2>Resumo</h2><ul>{% for x in d.resumo %}<li>{{ x }}</li>{% endfor %}</ul>
 <p class="meta">Gerado em {{ d.gerado_em }}{% if d.duracao_s %} em {{ d.duracao_s }} s{% endif %} · finalidade declarada: {{ d.finalidade }}</p></section>
+{% set riscos = d.riscos %}{% include "_riscos.html" %}
 {% if d.alertas or d.ligados %}<section class="cartao"><h2>Pessoas e empresas ligadas: sanções, fiscalização, PEP, procurados e justiça</h2>
 {% if d.alertas %}<table><tr><th>Ligado</th><th>Registro</th><th>Fonte</th><th>Nível</th><th>Justificativa</th></tr>
 {% for h in d.alertas %}<tr><td>{{ h.ligado }}</td><td>{% if h.url %}<a href="{{ h.url }}" target="_blank" rel="noopener noreferrer nofollow">{{ h.titulo }}</a>{% else %}{{ h.titulo }}{% endif %}<br><small>{{ h.resumo }}</small></td>

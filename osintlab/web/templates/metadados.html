@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Metadados dos documentos</h1>
+<p class="nota">Autor, último editor, programa e datas gravados dentro dos arquivos do projeto (PDF, Word, Excel, imagens). Metadados podem ser apagados ou alterados: são pistas, não provas. <a href="/p/{{ p.id }}/evidencias">Voltar às evidências</a></p>
+{% if m.pessoas_repetidas %}<section class="cartao"><h2>Nomes que aparecem em mais de um documento</h2><ul>
+{% for nome, ids in m.pessoas_repetidas %}<li><b>{{ nome }}</b>: {% for i in ids %}<a href="/p/{{ p.id }}/item/{{ i }}">#{{ i }}</a> {% endfor %}</li>{% endfor %}</ul></section>{% endif %}
+{% if m.programas %}<section class="cartao"><h2>Programas usados</h2><p>{% for prog, ids in m.programas %}<span class="tag">{{ prog }} ({{ ids|length }})</span> {% endfor %}</p></section>{% endif %}
+<section class="cartao"><h2>Documentos ({{ m.documentos|length }})</h2>
+<table><tr><th>Documento</th><th>Autor</th><th>Último editor</th><th>Programa</th><th>Criado</th><th>Modificado</th></tr>
+{% for d in m.documentos %}<tr><td><a href="/p/{{ p.id }}/item/{{ d.id }}">#{{ d.id }} {{ d.titulo[:60] }}</a>{% for a in d.alertas %}<br><span class="tag alerta">{{ a }}</span>{% endfor %}</td>
+<td>{{ d.autor }}</td><td>{{ d.editor }}</td><td><small>{{ d.programa }}</small></td><td>{{ d.criado }}</td><td>{{ d.modificado }}</td></tr>
+{% else %}<tr><td colspan="6" class="vazio">Nenhum documento com metadados no projeto.</td></tr>{% endfor %}</table></section>
+{% endblock %}
