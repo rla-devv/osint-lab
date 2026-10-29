@@ -200,3 +200,27 @@ def internetdb(value: str) -> dict:
         data, sha = {"detail": "sem dados"}, None
     txt = f"InternetDB {ip}: portas {data.get('ports')}, hostnames {data.get('hostnames')}, vulns {data.get('vulns')}"
     return {"dados": data, "evidencia": sha, "url_consulta": url, "texto": txt}
+
+
+@connector("ip_api", "Geolocalização de IP (ip-api)", "País, região, cidade, provedor e ASN de um IP (base de "
+           "geolocalização; aproximada, não é a localização física exata).", ["ip"],
+           source_url="https://ip-api.com/docs", license_note="ip-api.com — gratuito para uso não comercial")
+def ip_api(value: str) -> dict:
+    v = value.strip()
+    url = f"http://ip-api.com/json/{v}"
+    data, res = http.get_json(url, params={"fields": "status,message,country,regionName,city,isp,org,as,lat,lon,"
+                              "reverse,mobile,proxy,hosting,query"}, collector="conector:ip_api", preserve=False,
+                              retries=1)
+    if not isinstance(data, dict) or data.get("status") != "success":
+        return {"dados": {}, "url_consulta": f"https://ip-api.com/#{v}",
+                "texto": f"ip-api não localizou {v}: {(data or {}).get('message', 'sem resposta')}."}
+    out = {"ip": data.get("query"), "pais": data.get("country"), "regiao": data.get("regionName"),
+           "cidade": data.get("city"), "provedor": data.get("isp"), "organizacao": data.get("org"),
+           "asn": data.get("as"), "reverso": data.get("reverse") or None,
+           "coordenadas": (f"{data['lat']},{data['lon']}" if data.get("lat") is not None else None),
+           "tipo": ", ".join(t for t, f in (("móvel", data.get("mobile")), ("proxy/VPN", data.get("proxy")),
+                                            ("hospedagem", data.get("hosting"))) if f) or None}
+    txt = [f"ip-api {out['ip']}: " + ", ".join(x for x in (out["cidade"], out["regiao"], out["pais"]) if x)] + \
+          [f"{k}: {x}" for k, x in out.items() if x and k not in ("ip", "cidade", "regiao", "pais")]
+    return {"dados": {k: x for k, x in out.items() if x}, "texto": "\n".join(txt),
+            "evidencia": res.evidence_sha256 if res else None, "url_consulta": f"https://ip-api.com/#{v}"}

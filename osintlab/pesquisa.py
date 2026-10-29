@@ -43,7 +43,7 @@ COORD_RX = re.compile(r"^\s*-?\d{1,2}\.\d+\s*,\s*-?\d{1,3}\.\d+\s*$")
 # conectores já existentes (módulo connectors) usados por tipo de entrada
 CONECTORES_POR_TIPO = {
     "dominio": ["rdap", "dns", "crtsh", "subdominios", "favicon", "wayback", "urlscan", "otx", "threatfox", "virustotal", "shodan"],
-    "ip": ["rdap", "asn", "internetdb", "urlscan", "otx", "abuseipdb", "threatfox", "virustotal", "shodan", "greynoise", "censys"],
+    "ip": ["rdap", "asn", "internetdb", "ip_api", "urlscan", "otx", "abuseipdb", "threatfox", "virustotal", "shodan", "greynoise", "censys"],
     "url": ["wayback", "urlscan", "threatfox", "virustotal"],
     "hash": ["malwarebazaar", "threatfox", "virustotal"],
     "cnpj": ["cnpj", "querido_diario"],
@@ -51,7 +51,8 @@ CONECTORES_POR_TIPO = {
     "cep": ["cep"],
     "organizacao": ["wikidata", "gdelt", "querido_diario", "sec_edgar", "companies_house"],
     "texto": ["gdelt", "wikipedia", "querido_diario"],
-    "username": ["github", "bluesky", "mastodon"],
+    "username": ["github", "gitlab", "bluesky", "mastodon"],
+    "telefone": ["ddd"],
 }
 
 
@@ -171,7 +172,8 @@ def _classify(q: str, forcar: str = "") -> dict:
         out.update(tipos=["url"])
     elif "@" in raw and DOM_RX.match(raw.split("@")[-1]):
         out.update(tipos=["email"], normalizado=raw.lower())
-        out["avisos"].append("E-mail é dado pessoal: apenas o domínio será consultado em fontes técnicas.")
+        out["avisos"].append("E-mail é dado pessoal: o domínio é consultado automaticamente em fontes técnicas. "
+                             "O Gravatar (perfil público pelo hash do e-mail) só roda por ação explícita.")
     elif COORD_RX.match(raw):
         out.update(tipos=["coordenadas"])
     else:
@@ -240,7 +242,7 @@ def plan(q: dict) -> dict:
     for t in tipos:
         conectores += [c for c in CONECTORES_POR_TIPO.get(t, []) if c in reg and c not in conectores]
     if "email" in tipos:
-        conectores += ["dns", "rdap"]
+        conectores += ["dns", "rdap", "gravatar"]
     return {"local": local, "online": online, "assistida": assistida, "conectores": conectores,
             "indisponivel": indisponivel}
 

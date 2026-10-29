@@ -6,7 +6,9 @@
   "placa": false,
   "plano": {
    "assistida": [],
-   "conectores": [],
+   "conectores": [
+    "ddd"
+   ],
    "indisponivel": [],
    "local": [],
    "online": []
@@ -318,6 +320,7 @@
     "censys",
     "greynoise",
     "internetdb",
+    "ip_api",
     "otx",
     "rdap",
     "shodan",
@@ -380,7 +383,9 @@
   "placa": false,
   "plano": {
    "assistida": [],
-   "conectores": [],
+   "conectores": [
+    "ddd"
+   ],
    "indisponivel": [],
    "local": [],
    "online": []
@@ -786,6 +791,7 @@
    "assistida": [],
    "conectores": [
     "dns",
+    "gravatar",
     "rdap"
    ],
    "indisponivel": [],

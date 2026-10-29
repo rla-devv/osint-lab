@@ -99,3 +99,56 @@ def mastodon(value: str) -> dict:
                                                           if v and k not in ("conta", "perfil")]
     return {"dados": {k: v for k, v in d.items() if v is not None}, "url_consulta": d["perfil"] or url,
             "evidencia": res.evidence_sha256 if res else None, "texto": "\n".join(txt)}
+
+
+@connector("gitlab", "GitLab (perfil público)",
+           "Perfil público de um usuário no GitLab.com: nome, bio, organização e site.",
+           ["username"], source_url="https://docs.gitlab.com/ee/api/users.html",
+           license_note="API pública do GitLab.com (leitura de perfis públicos)")
+def gitlab(value: str) -> dict:
+    u = limpar(value)
+    if not parece_usuario(u):
+        raise ValueError("Nome de usuário do GitLab inválido.")
+    url = "https://gitlab.com/api/v4/users"
+    data, res = _buscar(url, params={"username": u}, collector="conector:gitlab", preserve=False)
+    if not isinstance(data, list) or not data:
+        return {"dados": {}, "url_consulta": f"https://gitlab.com/{u}", "texto": f"Nenhum usuário “{u}” no GitLab."}
+    p = data[0]
+    d = {"usuario": p.get("username"), "nome": p.get("name"), "bio": p.get("bio") or None,
+         "organizacao": p.get("organization") or None, "local": p.get("location") or None,
+         "site": (p.get("website_url") or None), "criado_em": (p.get("created_at") or "")[:10],
+         "perfil": p.get("web_url")}
+    txt = [f"GitLab @{d['usuario']}: {d['nome'] or ''}"] + [f"{k}: {v}" for k, v in d.items()
+                                                           if v and k not in ("usuario", "perfil")]
+    return {"dados": {k: v for k, v in d.items() if v is not None}, "url_consulta": d["perfil"] or url,
+            "evidencia": res.evidence_sha256 if res else None, "texto": "\n".join(txt)}
+
+
+@connector("gravatar", "Gravatar (perfil público por e-mail)",
+           "Perfil público do Gravatar associado a um e-mail (nome, contas e links que a pessoa tornou públicos). "
+           "Consulta pelo hash do e-mail; não revela se há conta em outros serviços.",
+           ["email"], sensitive=True, source_url="https://docs.gravatar.com/api/profiles/",
+           license_note="Perfil público do Gravatar; consulta pelo hash SHA-256 do e-mail")
+def gravatar(value: str) -> dict:
+    import hashlib
+    email = (value or "").strip().lower()
+    if "@" not in email:
+        raise ValueError("Informe um e-mail.")
+    h = hashlib.sha256(email.encode()).hexdigest()
+    url = f"https://gravatar.com/{h}.json"
+    data, res = _buscar(url, collector="conector:gravatar", preserve=False,
+                        headers={"User-Agent": "OSINTLab"})
+    entry = (data or {}).get("entry") if isinstance(data, dict) else None
+    if not entry:
+        return {"dados": {"avatar": f"https://gravatar.com/avatar/{h}"}, "url_consulta": f"https://gravatar.com/{h}",
+                "texto": "Sem perfil público no Gravatar para este e-mail (só o avatar padrão, se houver)."}
+    e = entry[0]
+    contas = [{"servico": a.get("shortname") or a.get("name"), "url": a.get("url")} for a in e.get("accounts", [])]
+    d = {"nome_exibido": e.get("displayName"), "localizacao": e.get("currentLocation") or None,
+         "sobre": (e.get("aboutMe") or None), "perfil": e.get("profileUrl"),
+         "contas_ligadas": [c["servico"] for c in contas] or None}
+    txt = [f"Gravatar: {d['nome_exibido'] or '(sem nome)'}"] + [f"{k}: {v}" for k, v in d.items()
+                                                               if v and k != "perfil"]
+    return {"dados": {k: v for k, v in d.items() if v is not None} | {"contas": contas},
+            "url_consulta": d["perfil"] or url, "evidencia": res.evidence_sha256 if res else None,
+            "texto": "\n".join(txt), "itens": contas}

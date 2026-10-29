@@ -69,12 +69,13 @@ def test_na_pesquisa_username_roda_os_conectores_e_sugere_o_site(monkeypatch):
                         "site": "https://blogdofulano.example/sobre", "nome": "Fulano"}, "url_consulta": "https://github.com/x"})
     monkeypatch.setattr(reg["bluesky"], "func", lambda v: {"texto": "", "dados": {}})
     monkeypatch.setattr(reg["mastodon"], "func", lambda v: {"texto": "", "dados": {}})
+    monkeypatch.setattr(reg["gitlab"], "func", lambda v: {"texto": "", "dados": {}})
     r = pesquisa.run("@fulano", buscar_complementares=True, timeout_online=3)
     assert r["consulta"]["tipos"] == ["username"]
     from osintlab import consolidacao
     vis = consolidacao.consolidar(r, r.get("etapas"))
     nomes = {c["conector"] for c in r["complementares"]}
-    assert {"github", "bluesky", "mastodon"} == nomes
+    assert {"github", "gitlab", "bluesky", "mastodon"} == nomes
     grupos = {g["titulo"]: {x["valor"] for x in g["itens"]} for g in vis["elementos"]}
     assert grupos.get("Sites de perfis") == {"blogdofulano.example"}  # o site do perfil vira domínio pesquisável
     assert vis["so_tecnicas"]  # username não usa bases de registro

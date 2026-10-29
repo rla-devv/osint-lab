@@ -143,3 +143,29 @@ def cep(value: str) -> dict:
                                                          out["uf"]) if x)]
     return {"dados": {k: v for k, v in out.items() if v}, "texto": "\n".join(txt),
             "evidencia": res.evidence_sha256 if res else None, "url_consulta": url}
+
+
+@connector("ddd", "DDD (BrasilAPI)", "Estado e cidades atendidas por um DDD, a partir de um telefone brasileiro.",
+           ["telefone"], source_url="https://brasilapi.com.br/docs#tag/DDD",
+           license_note="Dados públicos de DDD via BrasilAPI")
+def ddd(value: str) -> dict:
+    d = re.sub(r"\D", "", value)
+    if d.startswith("55") and len(d) >= 12:
+        d = d[2:]
+    if d.startswith("0"):
+        d = d[1:]
+    ddd_num = d[:2]
+    if len(ddd_num) != 2:
+        raise ValueError("Não foi possível extrair o DDD do número.")
+    url = f"https://brasilapi.com.br/api/ddd/v1/{ddd_num}"
+    try:
+        data, res = http.get_json(url, collector="conector:ddd", retries=1)
+    except Exception as e:  # noqa: BLE001
+        if "404" in str(e):
+            return {"dados": {}, "url_consulta": url, "texto": f"DDD {ddd_num} não encontrado."}
+        raise
+    cidades = sorted(data.get("cities") or [])
+    out = {"ddd": ddd_num, "estado": data.get("state"), "cidades": cidades}
+    txt = [f"DDD {ddd_num}: {out['estado']} — {len(cidades)} cidade(s)"] + [", ".join(cidades[:40])]
+    return {"dados": out, "texto": "\n".join(txt), "evidencia": res.evidence_sha256 if res else None,
+            "url_consulta": url}
